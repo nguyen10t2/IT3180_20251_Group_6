@@ -4,6 +4,7 @@ import { Users } from '../models/users';
 import { House } from '../models/house';
 import { Resident } from '../models/resident';
 
+// Lấy danh sách người dùng với phân trang dựa trên created_at và giới hạn số lượng
 export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: number) => {
     try {
         const rows = await db.select({
@@ -46,6 +47,7 @@ export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: nu
     }
 };
 
+// Cập nhật mật khẩu người dùng
 export const updateUserPassword = async (userId: string, newPassword: string) => {
     try {
         const _ = await db.update(Users)
@@ -57,6 +59,7 @@ export const updateUserPassword = async (userId: string, newPassword: string) =>
     }
 };
 
+// Lấy thông tin người dùng theo ID (không bao gồm mật khẩu)
 export const getUserById = async (userId: string) => {
     try {
         const rows = await db.select()
@@ -74,6 +77,7 @@ export const getUserById = async (userId: string) => {
     }
 };
 
+// Kiểm tra sự tồn tại của người dùng theo email
 export const isExistingUserByEmail = async (email: string) => {
     try {
         const count = await db.select()
@@ -87,6 +91,7 @@ export const isExistingUserByEmail = async (email: string) => {
     }
 };
 
+// Lấy thông tin người dùng theo email (không bao gồm mật khẩu)
 export const getUserByEmail = async (email: string) => {
     try {
         const rows = await db.select()
@@ -104,6 +109,7 @@ export const getUserByEmail = async (email: string) => {
     }
 };
 
+// Tạo người dùng mới
 export const createUser = async (email: string, password: string, name: string) => {
     try {
         const [newUser] = await db.insert(Users)
@@ -117,6 +123,7 @@ export const createUser = async (email: string, password: string, name: string) 
     }
 };
 
+// Xác minh người dùng
 export const verifyUser = async (email: string) => {
     try {
         const _ = await db.update(Users)
@@ -128,6 +135,7 @@ export const verifyUser = async (email: string) => {
     }
 };
 
+// Cập nhật resident_id cho người dùng
 export const updateResidentId = async (userId: string, residentId: string) => {
     try {
         const _ = await db.update(Users)
@@ -139,6 +147,7 @@ export const updateResidentId = async (userId: string, residentId: string) => {
     }
 };
 
+// Lấy danh sách người dùng đang chờ phê duyệt
 export const getPendingUsers = async () => {
     try {
         const rows = await db.select({
@@ -179,6 +188,7 @@ export const getPendingUsers = async () => {
     }
 };
 
+// Lấy danh sách người dùng đang chờ phê duyệt nhưng chưa có resident_id
 export const getPendigUsersWithoutResident = async () => {
     try {
         const rows = await db.select({
@@ -205,6 +215,7 @@ export const getPendigUsersWithoutResident = async () => {
     }
 };
 
+// Lấy thông tin người dùng cùng với thông tin cư dân và nhà ở
 export const getUserWithResident = async (userId: string) => {
     try {
         const rows = await db.select({
@@ -243,6 +254,7 @@ export const getUserWithResident = async (userId: string) => {
     }
 };
 
+// Phê duyệt người dùng
 export const approveUser = async (userId: string, approverId: string) => {
     try {
         const rows = await db.update(Users)
@@ -260,6 +272,7 @@ export const approveUser = async (userId: string, approverId: string) => {
     }
 };
 
+// Từ chối người dùng
 export const rejectUser = async (userId: string, reason: string) => {
     try {
         const rows = await db.update(Users)
