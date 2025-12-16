@@ -1,5 +1,5 @@
 import { pgTable, uuid, timestamp, text, boolean,index} from "drizzle-orm/pg-core";
-import { is, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { Feedbacks } from "./feedbacks";
 import { Users } from "./users";
 

@@ -4,7 +4,6 @@
 
 -- User roles
 INSERT INTO user_role (name, permission) VALUES
-    ('admin', 100),
     ('manager', 50),
     ('accountant', 20),
     ('resident', 1);
@@ -66,11 +65,11 @@ UPDATE house SET house_resident_id = (SELECT id FROM resident WHERE id_card = '0
 UPDATE house SET house_resident_id = (SELECT id FROM resident WHERE id_card = '001234567895') WHERE room_number = '301';
 
 -- Sample admin user (password: Admin@123 - hashed with bcrypt)
-INSERT INTO users (email, password, status, role) VALUES
-    ('admin@bluemoon.com', '$2b$10$rQZ8K.5L5hJ5k5k5k5k5k.5k5k5k5k5k5k5k5k5k5k5k5k5k5k5k5k', 'active', 1);
+INSERT INTO users (email, password, name, status, role) VALUES
+    ('manager@test.com', '$argon2id$v=19$m=65536,t=2,p=1$3pgov6s6ii5pDaZWSuRKncmBfk/ehgg9k2vdHKS+USI$h6TAoW6kEycnqih2EYLvm9mzii8LdpdFQB3h+nbIlQ0', 'manager', 'active', 1);
 
 -- Sample notifications
 INSERT INTO notifications (title, context, type, target, is_pinned, published_at, created_by) VALUES
-    ('Thông báo bảo trì thang máy', 'Thang máy sẽ được bảo trì vào ngày 20/12/2025 từ 8h-12h. Mong cư dân thông cảm.', 'general', 'all', TRUE, NOW(), (SELECT id FROM users WHERE email = 'admin@bluemoon.com')),
-    ('Nhắc nhở đóng phí tháng 12', 'Kính mời quý cư dân đóng phí quản lý tháng 12/2025 trước ngày 25/12/2025.', 'payment', 'all', FALSE, NOW(), (SELECT id FROM users WHERE email = 'admin@bluemoon.com')),
-    ('Sự kiện Giáng sinh 2025', 'Chung cư BlueMoon tổ chức sự kiện Giáng sinh vào tối 24/12/2025 tại sảnh tầng 1.', 'event', 'all', TRUE, NOW(), (SELECT id FROM users WHERE email = 'admin@bluemoon.com'));
+    ('Thông báo bảo trì thang máy', 'Thang máy sẽ được bảo trì vào ngày 20/12/2025 từ 8h-12h. Mong cư dân thông cảm.', 'general', 'all', TRUE, NOW(), (SELECT id FROM users WHERE email = 'manager@test.com')),
+    ('Nhắc nhở đóng phí tháng 12', 'Kính mời quý cư dân đóng phí quản lý tháng 12/2025 trước ngày 25/12/2025.', 'payment', 'all', FALSE, NOW(), (SELECT id FROM users WHERE email = 'manager@test.com')),
+    ('Sự kiện Giáng sinh 2025', 'Chung cư BlueMoon tổ chức sự kiện Giáng sinh vào tối 24/12/2025 tại sảnh tầng 1.', 'event', 'all', TRUE, NOW(), (SELECT id FROM users WHERE email = 'manager@test.com'));

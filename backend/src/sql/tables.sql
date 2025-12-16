@@ -1,3 +1,4 @@
+-- Active: 1762699987142@@127.0.0.1@5432@elysia
 CREATE TABLE user_role (
     id SERIAL PRIMARY KEY,
     name VARCHAR(25) UNIQUE NOT NULL,
@@ -114,7 +115,6 @@ CREATE TABLE notifications (
     target notification_target NOT NULL,
     target_id UUID,
     is_pinned BOOLEAN DEFAULT FALSE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     read_at TIMESTAMP NOT NULL DEFAULT NOW(),
     scheduled_at TIMESTAMP,
     published_at TIMESTAMP,
