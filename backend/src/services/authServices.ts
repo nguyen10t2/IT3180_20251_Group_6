@@ -1,7 +1,7 @@
 import { db } from '../database/db';
 import { eq, lt } from 'drizzle-orm';
 import { Users } from '../models/users';
-import { RefreshTokens } from '../models/refreshToken';
+import { RefreshToken } from '../models/auth';
 
 export const loginService = async (email: string, password: string) => {
   try {
@@ -38,8 +38,8 @@ export const loginService = async (email: string, password: string) => {
 export const getRefreshTokenByUserId = async (userId: string) => {
   try {
     const rows = await db.select()
-      .from(RefreshTokens)
-      .where(eq(RefreshTokens.user_id, userId));
+      .from(RefreshToken)
+      .where(eq(RefreshToken.user_id, userId));
 
     if (rows.length === 0) {
       return { error: "Refresh token not found", status: 404 };
@@ -53,7 +53,7 @@ export const getRefreshTokenByUserId = async (userId: string) => {
 
 export const saveRefreshToken = async (userId: string, token: string, expiresAt: Date) => {
   try {
-    const result = await db.insert(RefreshTokens)
+    const result = await db.insert(RefreshToken)
       .values({
         user_id: userId,
         token: token,
@@ -69,8 +69,8 @@ export const saveRefreshToken = async (userId: string, token: string, expiresAt:
 
 export const deleteRefreshToken = async (token: string) => {
   try {
-    await db.delete(RefreshTokens)
-      .where(eq(RefreshTokens.token, token));
+    await db.delete(RefreshToken)
+      .where(eq(RefreshToken.token, token));
 
     return { data: 'Refresh token deleted successfully' };
   } catch (_) {
@@ -81,8 +81,8 @@ export const deleteRefreshToken = async (token: string) => {
 export const cleanupExpiredTokens = async () => {
     try {
     const now = new Date();
-    await db.delete(RefreshTokens)
-      .where(lt(RefreshTokens.expires_at, now));
+    await db.delete(RefreshToken)
+      .where(lt(RefreshToken.expires_at, now));
 
     return { data: 'Expired tokens cleaned up successfully' };
   } catch (_) {
