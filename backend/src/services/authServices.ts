@@ -31,7 +31,7 @@ export const loginService = async (email: string, password: string) => {
     return { data: safeUser };
 
   } catch (_) {
-    return { error: 'Internal Server Error', status: 500 };
+    return { error: 'Internal Server Error' };
   }
 };
 
@@ -47,7 +47,7 @@ export const getRefreshTokenByUserId = async (userId: string) => {
 
     return { data: rows[0] };
   } catch (_) {
-    return { error: 'Internal Server Error', status: 500 };
+    return { error: 'Internal Server Error' };
   }
 };
 
@@ -63,7 +63,7 @@ export const saveRefreshToken = async (userId: string, token: string, expiresAt:
 
     return { data: result[0] };
   } catch (_) {
-    return { error: 'Internal Server Error', status: 500 };
+    return { error: 'Internal Server Error' };
   }
 };
 
@@ -74,7 +74,7 @@ export const deleteRefreshToken = async (token: string) => {
 
     return { data: 'Refresh token deleted successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error', status: 500 };
+    return { error: 'Internal Server Error' };
   }
 };
 
@@ -86,6 +86,6 @@ export const cleanupExpiredTokens = async () => {
 
     return { data: 'Expired tokens cleaned up successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error', status: 500 };
+    return { error: 'Internal Server Error' };
   }
 };
