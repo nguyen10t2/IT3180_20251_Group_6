@@ -51,15 +51,19 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(100) UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    name VARCHAR(255) NOT NULL,
     status status NOT NULL DEFAULT 'inactive',
+    verify BOOLEAN NOT NULL DEFAULT FALSE,
     role INT NOT NULL REFERENCES user_role(id) ON DELETE RESTRICT DEFAULT 3,
     resident_id UUID REFERENCES resident(id) ON DELETE SET NULL,
-    approved_by UUID NOT NULL,
+    approved_by UUID,
     approved_at TIMESTAMP,
     rejected_reason TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+ALTER TABLE users ADD CONSTRAINT fk_users_approved_by 
+    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL;
 
 CREATE TABLE fee_types (
     id SERIAL PRIMARY KEY,
