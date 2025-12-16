@@ -4,6 +4,11 @@ export const generateRandomString = async (length: number = 64) => {
     return await Bun.password.hash(randomBytes(length).toString('hex'));
 }
 
+const key = await generateRandomString(128);
+console.log(key);
+
+
+
 const password = '111111';
 const hashedPassword = await Bun.password.hash(password);
 console.log('Hashed Password:', hashedPassword);

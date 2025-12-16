@@ -1,3 +1,4 @@
+-- Active: 1762699987142@@127.0.0.1@5432@elysia
 -- Indexes for performance
 
 -- House indexes
@@ -13,7 +14,7 @@ CREATE INDEX idx_resident_status ON resident(status);
 -- Users indexes
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_resident_id ON users(resident_id);
-CREATE INDEX idx_users_feed ON users(role, created_at, status) WHERE resident_id IS NOT NULL; 
+CREATE INDEX idx_users_feed ON users(role, created_at, status);
 CREATE INDEX idx_users_status ON users(status);
 CREATE INDEX idx_users_role ON users(role);
 

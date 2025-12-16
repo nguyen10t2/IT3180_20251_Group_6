@@ -1,4 +1,4 @@
-import { pgTable, varchar, uuid, timestamp, text, integer, index} from "drizzle-orm/pg-core";
+import { pgTable, varchar, uuid, timestamp, text, integer, index, boolean, foreignKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { Status } from "./enum";
 import { UserRole } from "./user_role";
@@ -13,6 +13,11 @@ export const Users = pgTable('users', {
         .unique(),
     password: text('password')
         .notNull(),
+    name: varchar('name', { length: 255 })
+        .notNull(),
+    verify: boolean('verify')
+        .notNull()
+        .default(false),
     status: Status('status')
         .notNull()
         .default('inactive'),
@@ -22,8 +27,7 @@ export const Users = pgTable('users', {
         .references(() => UserRole.id, { onDelete: 'restrict' }),
     resident_id: uuid('resident_id')
         .references(() => Resident.id, { onDelete: 'set null' }),
-    approved_by: uuid('approved_by')
-        .notNull(),
+    approved_by: uuid('approved_by'),
     approved_at: timestamp('approved_at', {withTimezone: true}),
     rejected_reason: text('rejected_reason'),
     created_at: timestamp('created_at', {withTimezone: true})
@@ -37,4 +41,10 @@ export const Users = pgTable('users', {
   index('idx_users_status').on(table.status),
   index('idx_users_role').on(table.role),
   index('idx_users_resident_id').on(table.resident_id),
+  index('idx_users_feed').on(table.role, table.created_at, table.status),
+  foreignKey({
+    columns: [table.approved_by],
+    foreignColumns: [table.id],
+    name: 'fk_users_approved_by',
+  }).onDelete('set null'),
 ]);
