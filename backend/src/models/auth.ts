@@ -26,6 +26,8 @@ export const OTP = pgTable('otp', {
         .notNull(),
     code: varchar('code', { length: 10 })
         .notNull(),
+    is_used: boolean('is_used')
+        .default(false),
     expires_at: timestamp('expires_at', {withTimezone: true})
         .notNull(),
     created_at: timestamp('created_at', {withTimezone: true})
@@ -41,8 +43,6 @@ export const ResetPasswordToken = pgTable('reset_password_token', {
         .notNull(),
     token: text('token')
         .notNull(),
-    is_used: boolean('is_used')
-        .default(false),
     expires_at: timestamp('expires_at', {withTimezone: true})
         .notNull(),
     created_at: timestamp('created_at', {withTimezone: true})
