@@ -102,12 +102,12 @@ export const cleanupExpiredTokens = async () => {
 // -- Otp Services --
 
 // Tạo OTP mới
-export const createOtp = async (email: string, otp: string, expires_at: Date) => {
+export const createOtp = async (email: string, code: string, expires_at: Date) => {
   try {
     await db.insert(OTP)
       .values({
         email: email,
-        code: otp,
+        code,
         expires_at: expires_at,
       });
   } catch (_) {
