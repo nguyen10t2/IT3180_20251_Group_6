@@ -1,6 +1,6 @@
 import { index, pgTable, varchar, uuid, boolean,timestamp, numeric, text, integer} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { RoomType } from "./enum";
+import { Room } from "./enum";
 
 export const House = pgTable('house', {
     house_id: uuid('id')
@@ -9,7 +9,7 @@ export const House = pgTable('house', {
     room_number: varchar('room_number', { length: 10 })
         .notNull()
         .unique(),
-    room_type: RoomType('room_type')
+    room_type: Room('room_type')
         .notNull(),
     area: numeric('area', { precision: 10, scale: 2 })
         .notNull(),
