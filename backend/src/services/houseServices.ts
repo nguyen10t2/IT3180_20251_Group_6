@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../database/db";
 import { House } from "../models/house";
 import { Resident } from "../models/resident";
-import { RoomType } from "../models/enum";
+import { RoomTypeEnum } from "../models/enum";
 import { HouseType } from "../types/houseTypes";
 
 
@@ -36,7 +36,7 @@ export const getAll = async () => {
 
 export const createHouse = async (
     room_number: string,
-    room_type: RoomType,
+    room_type: RoomTypeEnum,
     area: string,
     head_resident_id: string | null,
     notes: string
@@ -121,7 +121,7 @@ export const updateHouse = async (house_id: string, data: HouseType) => {
 
         return { data: result };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: _ };
     }
 };
 

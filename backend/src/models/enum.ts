@@ -7,7 +7,7 @@ export const Gender = pgEnum('gender', ['male', 'female', 'other']);
 
 export const ResidentStatus = pgEnum('resident_status', ['tamtru', 'thuongtru', 'tamvang']);
 
-export const Room = pgEnum('room_type', ['penhouse', 'studio', 'normal']);
+export const RoomType = pgEnum('room_type', ['penhouse', 'studio', 'normal']);
 
 export const FeeCategory = pgEnum('fee_category', ['fixed', 'variable']);
 
@@ -23,4 +23,4 @@ export const FeedbackStatus = pgEnum('feedback_status', ['pending', 'in_progress
 
 export const FeedbackPriority = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
 
-export type RoomType = typeof Room.enumValues[number];
+export type RoomTypeEnum = typeof RoomType.enumValues[number];
