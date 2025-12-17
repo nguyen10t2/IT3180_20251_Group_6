@@ -1,7 +1,29 @@
-import Elysia, { Context } from "elysia";
+import { Elysia } from "elysia";
+import * as jose from "jose";
+import { PayloadJWT } from "../types/contextTypes";
 
 
 export const authenticationPlugins = (app: Elysia) => app
-    .onBeforeHandle(async (ctx: Context) => {
-        // Thực thi các thao tác xác thực ở đây
-    });
+  .derive(async (ctx) => {
+
+    const authHeader = ctx.request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      ctx.set.status = 401;
+      return { error: 'Unauthorized' };
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+      const { payload } = await jose.jwtVerify(
+        token,
+        new TextEncoder().encode(Bun.env.JWT_SECRET)
+      );
+
+      return { user: payload as PayloadJWT };
+
+    } catch (error) {
+      ctx.set.status = 401;
+      return { error: 'Invalid token' };
+    }
+  });
