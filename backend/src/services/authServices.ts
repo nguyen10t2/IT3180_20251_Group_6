@@ -209,6 +209,7 @@ export const resendCount = async (email: string) => {
 
 // -- Reset Password Token Services --
 
+// Tạo reset password token mới
 export const createResetPassword = async (email: string, token: string, expiresAt: Date) => {
   try {
     const result = await db.insert(ResetPasswordToken)
@@ -224,6 +225,7 @@ export const createResetPassword = async (email: string, token: string, expiresA
   }
 };
 
+// Lấy reset password token gần nhất bằng email
 export const getResetPasswordToken = async (email: string) => {
   try {
     const rows = await db.select()
@@ -244,6 +246,7 @@ export const getResetPasswordToken = async (email: string) => {
   }
 };
 
+// Xoá reset password token bằng email
 export const deleteResetPasswordTokenByEmail = async (email: string) => {
   try {
     const pastTenMinutes = new Date(Date.now() - 10 * 60000);
