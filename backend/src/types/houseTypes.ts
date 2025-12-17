@@ -1,19 +1,6 @@
 import { RoomType, RoomTypeEnum } from "../models/enum";
 import { t } from "elysia";
-
-export type HouseType = {
-    room_number?: string;
-    room_type?: RoomTypeEnum;
-    area?: string;
-    member_count?: number;
-    house_resident_id?: string | null;
-    has_vehicle?: boolean;
-    vehicle_count?: number;
-    notes?: string | null;
-};
-
-const enumToTypeBox = <T extends readonly string[]>(values: T) =>
-  t.Enum(Object.fromEntries(values.map(v => [v, v])));
+import { enumToTypeBox } from "../helpers/enumHelper";
 
 export const UpdateHouseBody = t.Object({
   room_number: t.Optional(t.String()),

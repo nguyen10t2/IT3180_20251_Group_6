@@ -3,7 +3,8 @@ import { db } from "../database/db";
 import { House } from "../models/house";
 import { Resident } from "../models/resident";
 import { RoomTypeEnum } from "../models/enum";
-import { HouseType } from "../types/houseTypes";
+import { UpdateHouseBody } from "../types/houseTypes";
+import { Static } from "elysia";
 
 
 export const getAll = async () => {
@@ -100,12 +101,12 @@ export const getHousebyId = async (house_id: string) => {
     }
 };
 
-export const updateHouse = async (house_id: string, data: HouseType) => {
+export const updateHouse = async (house_id: string, data: Static<typeof UpdateHouseBody>) => {
     try {
         const updateData: Partial<typeof House.$inferInsert> = {};
 
         for (const key in data) {
-            const value = data[key as keyof HouseType];
+            const value = data[key as keyof typeof data];
             if (value !== undefined) {
                 (updateData as any)[key] = value;
             }
