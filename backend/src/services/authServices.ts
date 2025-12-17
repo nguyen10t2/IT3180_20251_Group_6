@@ -1,8 +1,9 @@
 import { db } from '../database/db';
-import { eq, lt } from 'drizzle-orm';
+import { desc, eq, lt } from 'drizzle-orm';
 import { Users } from '../models/users';
 import { RefreshToken } from '../models/auth';
 
+// Lấy thông tin user để đăng nhập (ko bao gồm mật khẩu)
 export const loginService = async (email: string, password: string) => {
   try {
     const rows = await db.select({
@@ -35,11 +36,14 @@ export const loginService = async (email: string, password: string) => {
   }
 };
 
+// Lấy refresh token gần nhất của user
 export const getRefreshTokenByUserId = async (userId: string) => {
   try {
     const rows = await db.select()
       .from(RefreshToken)
-      .where(eq(RefreshToken.user_id, userId));
+      .where(eq(RefreshToken.user_id, userId))
+      .orderBy(desc(RefreshToken.expires_at))
+      .limit(1);
 
     if (rows.length === 0) {
       return { error: "Refresh token not found", status: 404 };
@@ -51,6 +55,7 @@ export const getRefreshTokenByUserId = async (userId: string) => {
   }
 };
 
+// Lưu refresh token mới
 export const saveRefreshToken = async (userId: string, token: string, expiresAt: Date) => {
   try {
     const result = await db.insert(RefreshToken)
@@ -67,10 +72,11 @@ export const saveRefreshToken = async (userId: string, token: string, expiresAt:
   }
 };
 
-export const deleteRefreshToken = async (token: string) => {
+// Xoá refresh token của user
+export const deleteRefreshTokenByUserId = async (userId: string) => {
   try {
     await db.delete(RefreshToken)
-      .where(eq(RefreshToken.token, token));
+      .where(eq(RefreshToken.user_id, userId));
 
     return { data: 'Refresh token deleted successfully' };
   } catch (_) {
@@ -78,6 +84,7 @@ export const deleteRefreshToken = async (token: string) => {
   }
 };
 
+// Xoá các refresh token đã hết hạn
 export const cleanupExpiredTokens = async () => {
     try {
     const now = new Date();

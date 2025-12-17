@@ -6,6 +6,8 @@ CREATE TABLE refresh_token (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_refresh_token_user_id ON refresh_token(user_id);
+CREATE INDEX idx_refresh_token_expires_at ON refresh_token(expires_at);
 
 CREATE TABLE otp (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -14,6 +16,8 @@ CREATE TABLE otp (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_otp_email ON otp(email);
+CREATE INDEX idx_otp_expires_at ON otp(expires_at);
 
 CREATE TABLE reset_password_token (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -23,3 +27,5 @@ CREATE TABLE reset_password_token (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_reset_password_token_email ON reset_password_token(email);
+CREATE INDEX idx_reset_password_token_expires_at ON reset_password_token(expires_at);
