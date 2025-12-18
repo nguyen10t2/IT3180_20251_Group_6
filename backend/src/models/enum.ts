@@ -22,3 +22,5 @@ export const FeedbackType = pgEnum('feedback_type', ['complaint', 'suggestion', 
 export const FeedbackStatus = pgEnum('feedback_status', ['pending', 'in_progress', 'resolved', 'rejected']);
 
 export const FeedbackPriority = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
+
+export type RoomTypeEnum = typeof RoomType.enumValues[number];
