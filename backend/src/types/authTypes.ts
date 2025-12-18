@@ -3,7 +3,6 @@ import { t } from "elysia";
 export const LoginBody = t.Object({
     email: t.String({ format: "email"}),
     password: t.String(),
-    name: t.String(),
 });
 
 export const RefreshTokenBody = t.Object({

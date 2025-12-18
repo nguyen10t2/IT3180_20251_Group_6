@@ -1,9 +1,9 @@
 import { Elysia, status, t } from "elysia";
 import { pluginDB } from "./database";
-import { authRoutes } from "./routes/authRoutes";
+// import { authRoutes } from "./routes/authRoutes";
 import { mapErrorStatus } from "./constants/errorContant";
 import { createUser, getUserById } from "./services/userServices";
-import { authenticationPlugins } from "./plugins/authenticationPlugins";
+// import { authenticationPlugins } from "./plugins/authenticationPlugins";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -26,15 +26,15 @@ new Elysia()
       name: t.String(),
     }),
   })
-  .use(authRoutes)
-  .use(authenticationPlugins)
-  .get("/profile", async ({ user }) => {
-    const userData = await getUserById(user?.id!);
-    if (userData.error) {
-      return status(mapErrorStatus[userData.error], { message: userData.error });
-    }
-    return { data: userData.data };
-  })
+  // .use(authRoutes)
+  // .use(authenticationPlugins)
+  // .get("/profile", async ({ user }) => {
+  //   const userData = await getUserById(user?.id!);
+  //   if (userData.error) {
+  //     return status(mapErrorStatus[userData.error], { message: userData.error });
+  //   }
+  //   return { data: userData.data };
+  // })
   .listen({ hostname, port });
 
 console.log(
