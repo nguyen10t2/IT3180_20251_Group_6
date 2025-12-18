@@ -10,7 +10,7 @@ export const Resident = pgTable('resident', {
     .default(sql`uuid_generate_v4()`),
   house_id: uuid('house_id')
     .references(() => House.house_id, { onDelete: 'set null'}),
-  full_name: varchar('full_name', { length: 255 })
+  full_name: varchar('fullname', { length: 255 })
     .notNull(),
   id_card: varchar('id_card', { length: 20 })
     .notNull()
