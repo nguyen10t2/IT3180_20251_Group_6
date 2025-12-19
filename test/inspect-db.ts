@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// @ts-nocheck
 
 /**
  * Quick database inspection tool
@@ -26,7 +27,6 @@ async function inspectDatabase() {
   console.log(`${colors.cyan}╚${'═'.repeat(78)}╝${colors.reset}\n`);
 
   try {
-    // Count users
     const [userCount] = await db.select({ count: sql<number>`count(*)::int` }).from(Users);
     console.log(`${colors.green}Users:${colors.reset} ${userCount.count} total`);
     
