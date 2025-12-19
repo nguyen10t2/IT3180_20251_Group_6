@@ -5,7 +5,7 @@
 - Cấu trúc đã tách lớp constants, services, models và plugins; Drizzle schema được khai báo đầy đủ trong `backend/src/models`.
 
 ## Điểm mạnh
-- Có phân tách tầng dịch vụ (ví dụ `userServices`) thay vì truy vấn trực tiếp trong route.
+- Có phân tách tầng dịch vụ (ví dụ `userServices.ts`) thay vì truy vấn trực tiếp trong route.
 - Sử dụng Drizzle giúp type-safe khi thao tác cơ sở dữ liệu.
 - Sử dụng decorator plugin để gắn kết nối DB vào Elysia (`pluginDB`).
 
@@ -14,7 +14,7 @@
 - Không có kiểm thử tự động; script `test` đang trả về lỗi mặc định.
 - Các route xác thực bị comment; hiện chỉ có GET `/` và POST `/create` hoạt động.
 - `createUser` lưu mật khẩu dạng plain text, chưa có hashing → rủi ro bảo mật nghiêm trọng.
-- Chưa kiểm tra/validate biến môi trường (ví dụ `DATABASE_URL` được truy cập trực tiếp trong `./backend/src/database/db.ts`, có thể gây crash khi thiếu).
+- Chưa kiểm tra/validate biến môi trường (ví dụ `DATABASE_URL` được truy cập trực tiếp trong `backend/src/database/db.ts`, có thể gây crash khi thiếu).
 - Xác thực dữ liệu đầu vào còn tối thiểu, thiếu ràng buộc email/độ dài mật khẩu, chưa có kiểm soát trạng thái người dùng.
 
 ## Khuyến nghị ưu tiên
