@@ -10,7 +10,7 @@ export const Notifications = pgTable("notifications", {
         .default(sql`uuid_generate_v4()`),
     title: varchar("title", { length: 255 })
         .notNull(),
-    context: text("context")
+    content: text("content")
         .notNull(),
     type: NotificationType("type")
         .notNull(),
@@ -20,13 +20,10 @@ export const Notifications = pgTable("notifications", {
     is_pinned: boolean("is_pinned")
         .notNull()
         .default(false),
-    user_id: uuid("user_id")
-        .notNull()
-        .references(() => Users.id, { onDelete: "cascade" }),
     read_at: timestamp("read_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
-    sheduled_at: timestamp("scheduled_at", { withTimezone: true }),
+    scheduled_at: timestamp("scheduled_at", { withTimezone: true }),
     publish_at: timestamp("publish_at", { withTimezone: true }),
     expired_at: timestamp("expired_at", { withTimezone: true }),
     create_by: uuid("create_by")
