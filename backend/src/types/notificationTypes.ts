@@ -17,6 +17,6 @@ export const CreateScheduledNotificationBody = t.Object({
     type: t.Optional(enumToTypeBox(NotificationType.enumValues)),
     target: t.Optional(enumToTypeBox(NotificationTarget.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
-    scheduled_at: t.String({ format: "date-time" }),
+    scheduled_at: t.Date(),
     created_by: t.String({ format: "uuid" }),
 })

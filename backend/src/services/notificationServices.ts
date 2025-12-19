@@ -41,6 +41,8 @@ export const createNotification = async (
 
         return { data: 'Notification created successfully' };
     } catch (_) {
+        console.log(_);
+        
         return { error: INTERNAL_SERVER_ERROR };
     }
 };
@@ -70,10 +72,10 @@ export const getNotificationsForUser = async (user_id: string, household_id: str
             ))
             .where(
                 and(
-                    lt(Notifications.publish_at, now),
+                    lt(Notifications.published_at, now),
                     or(
-                        isNull(Notifications.expired_at),
-                        gt(Notifications.expired_at, now)
+                        isNull(Notifications.expires_at),
+                        gt(Notifications.expires_at, now)
                     ),
                     or(
                         eq(Notifications.target, NotificationTarget.enumValues[0]),
@@ -90,7 +92,7 @@ export const getNotificationsForUser = async (user_id: string, household_id: str
             )
             .orderBy(
                 desc(Notifications.is_pinned),
-                desc(Notifications.publish_at)
+                desc(Notifications.published_at)
             )
             .limit(100);
 
@@ -117,9 +119,12 @@ export const markNotificationAsRead = async (user_id: string, household_id: stri
             )
             ON CONFLICT (notification_id, user_id) DO NOTHING
         `);
-
+        console.log(res.count);
+        
         return { data: res.count };
-    } catch (_) {
+    } catch (_) {   
+        console.log(_);
+        
         return { error: INTERNAL_SERVER_ERROR };
     }
 };
@@ -141,6 +146,8 @@ export const createScheduledNotification = async (
 
         return { data: rows };
     } catch (_) {
+        console.log(_);
+        
         return { error: INTERNAL_SERVER_ERROR };
     }
 }

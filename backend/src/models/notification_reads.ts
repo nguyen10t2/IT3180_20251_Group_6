@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { uuid, timestamp, pgTable, index} from "drizzle-orm/pg-core";
+import { uuid, timestamp, pgTable, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { Users } from "./users";
 import { Notifications } from "./notifications";
 
@@ -17,4 +17,7 @@ export const NotificationReads = pgTable("notification_reads", {
 }, (table) => [
     index("idx_notification_reads_notification_id").on(table.notification_id),
     index("idx_notification_reads_user_id").on(table.user_id),
+    uniqueIndex(
+      "notification_reads_notification_id_user_id_unique"
+    ).on(table.notification_id, table.user_id),
 ]);

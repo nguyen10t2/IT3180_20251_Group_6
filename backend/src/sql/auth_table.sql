@@ -1,4 +1,4 @@
--- Active: 1762699987142@@127.0.0.1@5432@bluemoon@public
+-- Active: 1763580614738@@127.0.0.1@5432@elysia
 CREATE TABLE refresh_token (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -13,6 +13,7 @@ CREATE TABLE otp (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(100) NOT NULL,
     code VARCHAR(10) NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

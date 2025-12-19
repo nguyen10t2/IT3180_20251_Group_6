@@ -24,8 +24,8 @@ export const Notifications = pgTable("notifications", {
         .notNull()
         .defaultNow(),
     scheduled_at: timestamp("scheduled_at", { withTimezone: true }),
-    publish_at: timestamp("publish_at", { withTimezone: true }),
-    expired_at: timestamp("expired_at", { withTimezone: true }),
+    published_at: timestamp("published_at", { withTimezone: true }),
+    expires_at: timestamp("expires_at", { withTimezone: true }),
     created_by: uuid("created_by")
         .references(() => Users.id, { onDelete: "set null" }),
     created_at: timestamp("created_at", { withTimezone: true })
@@ -37,7 +37,7 @@ export const Notifications = pgTable("notifications", {
 }, (table) => [
     index('idx_notifications_type').on(table.type),
     index('idx_notifications_target').on(table.target),
-    index('idx_notifications_publish_at').on(table.publish_at),
+    index('idx_notifications_publish_at').on(table.published_at),
     index('idx_notifications_is_pinned').on(table.is_pinned)
         .where(sql`${table.is_pinned} IS TRUE`),
     index('idx_notifications_created_by').on(table.created_by)

@@ -63,7 +63,7 @@ export const updateStatus = async (id: string, new_status: ResidentStatusEnum) =
     }
 };
 
-export const getResidentByUserId = async (user_id: string) => {
+export const  getResidentByUserId = async (user_id: string) => {
     try {
         const rows = await db.select({
             ...getTableColumns(Resident),
@@ -71,8 +71,7 @@ export const getResidentByUserId = async (user_id: string) => {
         })
             .from(Resident)
             .leftJoin(House, eq(House.house_id, Resident.house_id))
-            .innerJoin(Users, eq(Users.id, Resident.id))
-            .where(eq(Users.id, user_id));
+            .innerJoin(Users, eq(Users.resident_id, Resident.id));
         
         return singleOrNotFound(rows);
     } catch (_) {
@@ -150,7 +149,9 @@ export const updateResident = async (
             .returning();
 
         return singleOrNotFound(result);
-    } catch {
+    } catch (_) {
+        console.log(_);
+        
         return { error: INTERNAL_SERVER_ERROR };
     }
 };
