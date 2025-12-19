@@ -9,7 +9,7 @@
 //     const authHeader = ctx.request.headers.get('Authorization');
 //     if (!authHeader || !authHeader.startsWith('Bearer ')) {
 //       ctx.set.status = 401;
-//       return { error: 'Unauthorized' };
+//       return { error: UNAUTHORIZED };
 //     }
 
 //     const token = authHeader.split(' ')[1];
@@ -28,5 +28,5 @@
 //     }
 //   })
 //   .onBeforeHandle(({ user, status }) => {
-//     if (!user) return status(401, 'Unauthorized');
+//     if (!user) return status(401, UNAUTHORIZED);
 //   });

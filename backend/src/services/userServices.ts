@@ -3,6 +3,7 @@ import { db } from '../database/db';
 import { Users } from '../models/users';
 import { House } from '../models/house';
 import { Resident } from '../models/resident';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND } from '../constants/errorContant';
 
 // Lấy danh sách người dùng với phân trang dựa trên created_at và giới hạn số lượng
 export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: number) => {
@@ -43,7 +44,7 @@ export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: nu
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -55,7 +56,7 @@ export const updateUserPassword = async (userId: string, newPassword: string) =>
             .where(eq(Users.id, userId));
         return { data: 'Password updated successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -67,13 +68,13 @@ export const getUserById = async (userId: string) => {
             .where(eq(Users.id, userId));
 
         if (rows.length === 0) {
-            return { error: 'Not Found' };
+            return { error: NOT_FOUND };
         }
 
         const { password, ...userWithoutPassword } = rows[0];
         return { data: userWithoutPassword };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -87,7 +88,7 @@ export const isExistingUserByEmail = async (email: string) => {
 
         return { data: count.length > 0 };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -99,13 +100,13 @@ export const getUserByEmail = async (email: string) => {
             .where(eq(Users.email, email));
 
         if (rows.length === 0) {
-            return { error: 'Not Found' };
+            return { error: NOT_FOUND };
         }
 
         const { password, ...userWithoutPassword } = rows[0];
         return { data: userWithoutPassword };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -119,7 +120,7 @@ export const createUser = async (email: string, password: string, name: string) 
         const { password: _, ...userWithoutPassword } = newUser;
         return { data: userWithoutPassword };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -131,19 +132,19 @@ export const verifyUser = async (email: string) => {
             .where(eq(Users.email, email));
         return { data: 'User verified successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
 // Cập nhật resident_id cho người dùng
 export const updateResidentId = async (userId: string, residentId: string) => {
     try {
-        const _ = await db.update(Users)
+        await db.update(Users)
             .set({ resident_id: residentId })
             .where(eq(Users.id, userId));
         return { data: 'Resident ID updated successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -184,7 +185,7 @@ export const getPendingUsers = async () => {
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -211,7 +212,7 @@ export const getPendigUsersWithoutResident = async () => {
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -245,47 +246,39 @@ export const getUserWithResident = async (userId: string) => {
             .where(eq(Users.id, userId));
 
         if (rows.length === 0) {
-            return { error: 'Not Found' };
+            return { error: NOT_FOUND };
         }
 
         return { data: rows[0] };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
 // Phê duyệt người dùng
 export const approveUser = async (userId: string, approverId: string) => {
     try {
-        const rows = await db.update(Users)
+        await db.update(Users)
             .set({ status: 'active', approved_by: approverId, approved_at: new Date() })
             .where(eq(Users.id, userId))
             .returning();
 
-        if (rows.length === 0) {
-            return { error: 'Not Found' };
-        }
-
         return { data: 'User approved successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
 // Từ chối người dùng
 export const rejectUser = async (userId: string, reason: string) => {
     try {
-        const rows = await db.update(Users)
+        await db.update(Users)
             .set({ status: 'suspended', rejected_reason: reason })
             .where(eq(Users.id, userId))
             .returning();
 
-        if (rows.length === 0) {
-            return { error: 'Not Found' };
-        }
-
         return { data: 'User rejected successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };

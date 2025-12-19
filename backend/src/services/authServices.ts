@@ -2,6 +2,8 @@ import { db } from '../database/db';
 import { and, desc, eq, lt, count, gte, or } from 'drizzle-orm';
 import { Users } from '../models/users';
 import { RefreshToken, OTP, ResetPasswordToken } from '../models/auth';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
+import { singleOrNotFound } from '../helpers/dataHelpers';
 
 // Lấy thông tin user để đăng nhập (ko bao gồm mật khẩu)
 export const loginService = async (email: string, password: string) => {
@@ -16,7 +18,7 @@ export const loginService = async (email: string, password: string) => {
       .where(eq(Users.email, email));
 
     if (rows.length === 0) {
-      return { error: "Unauthorized", status: 401 };
+      return { error: UNAUTHORIZED };
     }
 
     const user = rows[0];
@@ -24,7 +26,7 @@ export const loginService = async (email: string, password: string) => {
     const isMatch = await Bun.password.verify(password, user.password);
 
     if (!isMatch) {
-      return { error: "Unauthorized", status: 401 };
+      return { error: UNAUTHORIZED };
     }
 
     const { password: _, ...safeUser } = user;
@@ -32,7 +34,7 @@ export const loginService = async (email: string, password: string) => {
     return { data: safeUser };
 
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -48,12 +50,12 @@ export const getRefreshTokenByUserId = async (userId: string) => {
       .limit(1);
 
     if (rows.length === 0) {
-      return { error: "Refresh token not found", status: 404 };
+      return { error: NOT_FOUND };
     }
 
     return { data: rows[0] };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -70,7 +72,7 @@ export const createRefreshToken = async (userId: string, token: string, expiresA
 
     return { data: result[0] };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -82,7 +84,7 @@ export const deleteRefreshTokenByUserId = async (userId: string) => {
 
     return { data: 'Refresh token deleted successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -95,7 +97,7 @@ export const cleanupExpiredTokens = async () => {
 
     return { data: 'Expired tokens cleaned up successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -111,7 +113,7 @@ export const createOtp = async (email: string, code: string, expires_at: Date) =
         expires_at: expires_at,
       });
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -129,13 +131,9 @@ export const getOtpByEmail = async (email: string) => {
       .orderBy(desc(OTP.expires_at))
       .limit(1);
 
-    if (rows.length === 0) {
-      return { error: "OTP not found", status: 404 };
-    }
-
-    return { data: rows[0] };
+    return singleOrNotFound(rows);
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -147,7 +145,7 @@ export const deleteOtpByEmail = async (email: string) => {
 
     return { data: 'OTP deleted successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -166,7 +164,7 @@ export const updateOtpByEmail = async (email: string) => {
 
     return { data: 'OTP updated successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -184,7 +182,7 @@ export const cleanupExpiredOtps = async () => {
 
     return { data: 'Expired OTPs cleaned up successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -203,7 +201,7 @@ export const resendCount = async (email: string) => {
 
     return { data: value };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -221,7 +219,7 @@ export const createResetPassword = async (email: string, token: string, expiresA
       .returning();
     return { data: result[0] };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -236,13 +234,9 @@ export const getResetPasswordToken = async (email: string) => {
       .orderBy(desc(ResetPasswordToken.expires_at))
       .limit(1);
 
-    if (rows.length === 0) {
-      return { error: "Reset password token not found", status: 404 };
-    }
-
-    return { data: rows[0] };
+    return singleOrNotFound(rows);
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
 
@@ -259,6 +253,6 @@ export const deleteResetPasswordTokenByEmail = async (email: string) => {
       );
     return { data: 'Reset password token deleted successfully' };
   } catch (_) {
-    return { error: 'Internal Server Error' };
+    return { error: INTERNAL_SERVER_ERROR };
   }
 };
