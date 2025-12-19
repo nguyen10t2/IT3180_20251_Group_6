@@ -4,6 +4,9 @@ import { eq, desc, asc, getTableColumns, isNotNull, and, lt, or, isNull, gt, sql
 import { db } from "../database/db";
 import { NotificationTargetEnum, NotificationTypeEnum, NotificationType, NotificationTarget } from "../models/enum";
 import { NotificationReads } from "../models/notification_reads";
+import { INTERNAL_SERVER_ERROR, NOT_FOUND } from "../constants/errorContant";
+import { Static } from "elysia";
+import { CreateNotificationBody, CreateScheduledNotificationBody } from "../types/notificationTypes";
 
 // Lấy tất cả thông báo
 export const getAll = async () => {
@@ -13,37 +16,32 @@ export const getAll = async () => {
             created_by_name: Users.name,
         })
             .from(Notifications)
-            .leftJoin(Users, eq(Notifications.create_by, Users.id))
+            .leftJoin(Users, eq(Notifications.created_by, Users.id))
             .orderBy(desc(Notifications.created_at));
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
 // Tạo thông báo mới
 export const createNotification = async (
-    title: string,
-    content: string,
-    type: NotificationTypeEnum,
-    target: NotificationTargetEnum,
-    target_id: string | null,
-    created_by: string
+    data: Static<typeof CreateNotificationBody>
 ) => {
     try {
         await db.insert(Notifications).values({
-            title,
-            content,
-            type: type || NotificationType.enumValues[0],
-            target: target || NotificationTarget.enumValues[0],
-            target_id,
-            create_by: created_by,
+            title: data.title,
+            context: data.context,
+            type: data.type ?? NotificationType.enumValues[0],
+            target: data.target ?? NotificationTarget.enumValues[0],
+            target_id: data.target_id ?? null,
+            created_by: data.created_by,
         });
 
         return { data: 'Notification created successfully' };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -53,7 +51,7 @@ export const deleteNotification = async (id: string) => {
         await db.delete(Notifications).where(eq(Notifications.id, id));
         return { data: 'Notification deleted successfully' };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -78,13 +76,13 @@ export const getNotificationsForUser = async (user_id: string, household_id: str
                         gt(Notifications.expired_at, now)
                     ),
                     or(
-                        eq(Notifications.target, 'all'),
+                        eq(Notifications.target, NotificationTarget.enumValues[0]),
                         and(
-                            eq(Notifications.target, 'household'),
+                            eq(Notifications.target, NotificationTarget.enumValues[1]),
                             eq(Notifications.target_id, household_id)
                         ),
                         and(
-                            eq(Notifications.target, 'individual'),
+                            eq(Notifications.target, NotificationTarget.enumValues[2]),
                             eq(Notifications.target_id, user_id)
                         )
                     )
@@ -99,7 +97,7 @@ export const getNotificationsForUser = async (user_id: string, household_id: str
         return { data: rows };
 
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -122,34 +120,28 @@ export const markNotificationAsRead = async (user_id: string, household_id: stri
 
         return { data: res.count };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
 // Tạo thông báo theo lịch trình
 export const createScheduledNotification = async (
-    title: string,
-    content: string,
-    type: NotificationTypeEnum,
-    target: NotificationTargetEnum,
-    target_id: string | null,
-    scheduled_at: Date,
-    create_by: string
+    data: Static<typeof CreateScheduledNotificationBody>
 ) => {
     try {
         const rows = await db.insert(Notifications).values({
-            title,
-            content,
-            type: type || NotificationType.enumValues[0],
-            target: target || NotificationTarget.enumValues[0],
-            target_id,
-            scheduled_at: scheduled_at,
-            create_by: create_by,
+            title: data.title,
+            context: data.context,
+            type: data.type ?? NotificationType.enumValues[0],
+            target: data.target ?? NotificationTarget.enumValues[0],
+            target_id: data.target_id ?? null,
+            scheduled_at: new Date(data.scheduled_at),
+            created_by: data.created_by,
         });
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 }
 
@@ -169,6 +161,6 @@ export const getScheduledNotifications = async () => {
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal Server Error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };

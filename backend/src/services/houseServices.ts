@@ -5,6 +5,8 @@ import { Resident } from "../models/resident";
 import { RoomTypeEnum } from "../models/enum";
 import { UpdateHouseBody } from "../types/houseTypes";
 import { Static } from "elysia";
+import { INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { singleOrNotFound } from "../helpers/dataHelpers";
 
 
 export const getAll = async () => {
@@ -31,7 +33,7 @@ export const getAll = async () => {
 
         return { data: rows };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -65,7 +67,7 @@ export const createHouse = async (
 
         return { data: result };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -91,13 +93,9 @@ export const getHousebyId = async (house_id: string) => {
             .where(eq(House.house_id, house_id))
             .leftJoin(Resident, eq(House.house_resident_id, Resident.id));
 
-        if (rows.length === 0) {
-            return { error: 'Not found' };
-        }
-
-        return { data: rows[0] };
+        return singleOrNotFound(rows);
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
 
@@ -133,6 +131,6 @@ export const deleteHouse = async (house_id: string) => {
 
         return { data: 'House deleted successfully' };
     } catch (_) {
-        return { error: 'Internal server error' };
+        return { error: INTERNAL_SERVER_ERROR };
     }
 };
