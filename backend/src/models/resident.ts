@@ -15,7 +15,7 @@ export const Resident = pgTable('resident', {
   id_card: varchar('id_card', { length: 20 })
     .notNull()
     .unique(),
-  date_of_birth: date('date_of_birth')
+  date_of_birth: date('date_of_birth', { mode: 'date' })
     .notNull(),
   phone: varchar('phone', { length: 15 })
     .notNull()
@@ -39,5 +39,6 @@ export const Resident = pgTable('resident', {
   index('idx_resident_full_name').on(table.full_name),
   index('idx_resident_id_card').on(table.id_card),
   index('idx_resident_phone').on(table.phone),
+
   index('idx_resident_status').on(table.status)
 ]);
