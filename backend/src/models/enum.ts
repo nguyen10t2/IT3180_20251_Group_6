@@ -23,6 +23,14 @@ export const FeedbackStatus = pgEnum('feedback_status', ['pending', 'in_progress
 
 export const FeedbackPriority = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
 
+export type StatusEnum = typeof Status.enumValues[number];
+export type GenderEnum = typeof Gender.enumValues[number];
+export type ResidentStatusEnum = typeof ResidentStatus.enumValues[number];
 export type RoomTypeEnum = typeof RoomType.enumValues[number];
+export type FeeCategoryEnum = typeof FeeCategory.enumValues[number];
+export type FeeStatusEnum = typeof FeeStatus.enumValues[number];
 export type NotificationTypeEnum = typeof NotificationType.enumValues[number];
 export type NotificationTargetEnum = typeof NotificationTarget.enumValues[number];
+export type FeedbackTypeEnum = typeof FeedbackType.enumValues[number];
+export type FeedbackStatusEnum = typeof FeedbackStatus.enumValues[number];
+export type FeedbackPriorityEnum = typeof FeedbackPriority.enumValues[number];
