@@ -67,6 +67,8 @@ export const createHouse = async (
 
         return { data: result };
     } catch (_) {
+        console.log(_);
+        
         return { error: INTERNAL_SERVER_ERROR };
     }
 };

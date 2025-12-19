@@ -1,4 +1,4 @@
--- Active: 1762699987142@@127.0.0.1@5432@elysia
+-- Active: 1763580614738@@127.0.0.1@5432@elysia
 CREATE TABLE user_role (
     id SERIAL PRIMARY KEY,
     name VARCHAR(25) UNIQUE NOT NULL,
@@ -118,18 +118,20 @@ CREATE TABLE notifications (
     read_at TIMESTAMP NOT NULL DEFAULT NOW(),
     scheduled_at TIMESTAMP,
     published_at TIMESTAMP,
-    expired_at TIMESTAMP,
+    expires_at TIMESTAMP,
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
 CREATE TABLE notification_reads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     notification_id UUID REFERENCES notifications(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     read_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+ALTER TABLE notification_reads
+ADD CONSTRAINT notification_reads_unique
+UNIQUE (notification_id, user_id);
 
 CREATE TABLE feedbacks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -112,7 +112,10 @@ export const createOtp = async (email: string, code: string, expires_at: Date) =
         code,
         expires_at: expires_at,
       });
+    return { data: 'OTP created successfully' };
   } catch (_) {
+    console.log(_);
+    
     return { error: INTERNAL_SERVER_ERROR };
   }
 };
