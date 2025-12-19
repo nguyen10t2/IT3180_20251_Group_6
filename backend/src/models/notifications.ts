@@ -20,9 +20,6 @@ export const Notifications = pgTable("notifications", {
     is_pinned: boolean("is_pinned")
         .notNull()
         .default(false),
-    user_id: uuid("user_id")
-        .notNull()
-        .references(() => Users.id, { onDelete: "cascade" }),
     read_at: timestamp("read_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
