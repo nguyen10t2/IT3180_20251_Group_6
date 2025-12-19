@@ -10,11 +10,11 @@
 - Sử dụng decorator plugin để gắn kết nối DB vào Elysia (`pluginDB`).
 
 ## Vấn đề/rủi ro hiện tại
-- Chưa có tài liệu hướng dẫn thiết lập, biến môi trường, migrate DB. README backend vẫn là template Elysia rút gọn, chưa có hướng dẫn riêng cho dự án.
+- Chưa có tài liệu hướng dẫn thiết lập, biến môi trường, migrate DB. README backend vẫn là template Elysia rút gọn, chưa có hướng dẫn riêng cho dự án về cấu hình `.env` và chạy migrate/seed.
 - Không có kiểm thử tự động; script `test` đang trả về lỗi mặc định.
 - Các route xác thực bị comment; hiện chỉ có GET `/` và POST `/create` hoạt động.
 - `createUser` lưu mật khẩu dạng plain text, chưa có hashing → rủi ro bảo mật nghiêm trọng.
-- Chưa kiểm tra/validate biến môi trường (ví dụ `DATABASE_URL` được truy cập trực tiếp trong `backend/src/database/db.ts`, có thể gây crash khi thiếu).
+- Chưa kiểm tra/validate biến môi trường (ví dụ `DATABASE_URL` được truy cập trực tiếp trong `backend/src/database/db.ts` với toán tử non-null `!`, có thể crash khi biến thiếu).
 - Xác thực dữ liệu đầu vào còn tối thiểu, thiếu ràng buộc email/độ dài mật khẩu, chưa có kiểm soát trạng thái người dùng.
 
 ## Khuyến nghị ưu tiên
