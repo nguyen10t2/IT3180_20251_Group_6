@@ -49,11 +49,7 @@ export const getRefreshTokenByUserId = async (userId: string) => {
       .orderBy(desc(RefreshToken.expires_at))
       .limit(1);
 
-    if (rows.length === 0) {
-      return { error: NOT_FOUND };
-    }
-
-    return { data: rows[0] };
+    return singleOrNotFound(rows);
   } catch (_) {
     return { error: INTERNAL_SERVER_ERROR };
   }
@@ -79,10 +75,10 @@ export const createRefreshToken = async (userId: string, token: string, expiresA
 // Xoá refresh token của user
 export const deleteRefreshTokenByUserId = async (userId: string) => {
   try {
-    await db.delete(RefreshToken)
+    const result = await db.delete(RefreshToken)
       .where(eq(RefreshToken.user_id, userId));
 
-    return { data: 'Refresh token deleted successfully' };
+    return { data: result };
   } catch (_) {
     return { error: INTERNAL_SERVER_ERROR };
   }
@@ -92,10 +88,10 @@ export const deleteRefreshTokenByUserId = async (userId: string) => {
 export const cleanupExpiredTokens = async () => {
   try {
     const now = new Date();
-    await db.delete(RefreshToken)
+    const result = await db.delete(RefreshToken)
       .where(lt(RefreshToken.expires_at, now));
 
-    return { data: 'Expired tokens cleaned up successfully' };
+    return { data: result };
   } catch (_) {
     return { error: INTERNAL_SERVER_ERROR };
   }
@@ -143,10 +139,10 @@ export const getOtpByEmail = async (email: string) => {
 // Xóa tất cả Otp bằng email
 export const deleteOtpByEmail = async (email: string) => {
   try {
-    await db.delete(OTP)
+    const result = await db.delete(OTP)
       .where(eq(OTP.email, email));
 
-    return { data: 'OTP deleted successfully' };
+    return { data: result };
   } catch (_) {
     return { error: INTERNAL_SERVER_ERROR };
   }
@@ -247,14 +243,14 @@ export const getResetPasswordToken = async (email: string) => {
 export const deleteResetPasswordTokenByEmail = async (email: string) => {
   try {
     const pastTenMinutes = new Date(Date.now() - 10 * 60000);
-    await db.delete(ResetPasswordToken)
+    const result = await db.delete(ResetPasswordToken)
       .where(
         or(
           eq(ResetPasswordToken.email, email),
           lt(ResetPasswordToken.expires_at, pastTenMinutes)
         )
       );
-    return { data: 'Reset password token deleted successfully' };
+    return { data: result };
   } catch (_) {
     return { error: INTERNAL_SERVER_ERROR };
   }
