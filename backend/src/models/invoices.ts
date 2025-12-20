@@ -30,7 +30,7 @@ export const Invoices = pgTable('invoices', {
         .notNull(),
     paid_at: timestamp('paid_at', { withTimezone: true }),
     notes: text('notes'),
-    create_by: uuid('create_by')
+    created_by: uuid('created_by')
         .notNull()
         .references(() => Users.id, { onDelete: 'set null' }),
     confirmed_by: uuid('confirmed_by')
@@ -46,5 +46,5 @@ export const Invoices = pgTable('invoices', {
     index('idx_invoices_period').on(table.period_month, table.period_year),
     index('idx_invoices_status').on(table.status),
     index('idx_invoices_due_date').on(table.due_date),
-    index('idx_invoices_create_by').on(table.create_by)
+    index('idx_invoices_create_by').on(table.created_by)
 ]);

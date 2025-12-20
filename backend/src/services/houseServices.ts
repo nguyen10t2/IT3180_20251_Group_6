@@ -3,7 +3,7 @@ import { db } from "../database/db";
 import { House } from "../models/house";
 import { Resident } from "../models/resident";
 import { RoomTypeEnum } from "../models/enum";
-import { UpdateHouseBody } from "../types/houseTypes";
+import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 import { Static } from "elysia";
 import { INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { singleOrNotFound } from "../helpers/dataHelpers";
@@ -38,30 +38,26 @@ export const getAll = async () => {
 };
 
 export const createHouse = async (
-    room_number: string,
-    room_type: RoomTypeEnum,
-    area: string,
-    head_resident_id: string | null,
-    notes: string
+    data: Static<typeof CreateHouseBody>
 ) => {
     try {
         let house_hold_head = null;
-        if (head_resident_id) {
+        if (data.head_resident_id) {
             const resident = await db.select()
                 .from(Resident)
-                .where(eq(Resident.id, head_resident_id))
+                .where(eq(Resident.id, data.head_resident_id))
                 .limit(1)
             if (resident.length !== 0) {
-                house_hold_head = head_resident_id;
+                house_hold_head = data.head_resident_id;
             }
         }
 
         const [result] = await db.insert(House).values({
-            room_number,
-            room_type,
-            area,
+            room_number: data.room_number,
+            room_type: data.room_type,
+            area: data.area.toString(),
             house_resident_id: house_hold_head,
-            notes
+            notes: data.notes ?? null,
         })
             .returning();
 
