@@ -1,5 +1,11 @@
 import { t } from "elysia";
 
+export const RegisterBody = t.Object({
+    email: t.String({ format: "email"}),
+    password: t.String(),
+    name: t.String(),
+});
+
 export const LoginBody = t.Object({
     email: t.String({ format: "email"}),
     password: t.String(),
