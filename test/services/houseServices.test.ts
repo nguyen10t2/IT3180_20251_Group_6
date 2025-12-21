@@ -9,7 +9,7 @@ export async function runHouseServiceTests() {
   testRunner.startTest('houseServices.getAll');
   try {
     const result = await houseServices.getAll();
-    
+
     if (result.error) {
       testRunner.fail('Failed to get houses: ' + result.error);
       log.error('Get all houses failed');
@@ -28,14 +28,13 @@ export async function runHouseServiceTests() {
   testRunner.startTest('houseServices.createHouse');
   try {
     const roomNumber = generateRandomNumber(5);
-    const result = await houseServices.createHouse(
-      roomNumber,
-      'penhouse',
-      '80',
-      null,
-      'Test house created by automated test'
-    );
-    
+    const result = await houseServices.createHouse({
+      room_number: roomNumber,
+      room_type: 'penhouse',
+      area: 30,
+      notes: 'Created by automated test at ' + new Date().toISOString(),
+    });
+
     if (result.error) {
       testRunner.fail('Failed to create house: ' + result.error);
       log.error('Create house failed');
@@ -55,7 +54,7 @@ export async function runHouseServiceTests() {
   try {
     const invalidId = '00000000-0000-0000-0000-000000000000';
     const result = await houseServices.getHousebyId(invalidId);
-    
+
     if (result.error) {
       assert.hasProperty(result, 'error', 'Should return error for invalid ID');
       testRunner.pass();
@@ -74,11 +73,11 @@ export async function runHouseServiceTests() {
   try {
     // First get all houses to find a valid ID
     const allHouses = await houseServices.getAll();
-    
+
     if (allHouses.data && allHouses.data.length > 0) {
       const firstHouseId = allHouses.data[0].house_id;
       const result = await houseServices.getHousebyId(firstHouseId);
-      
+
       if (result.error) {
         testRunner.fail('Failed to get house by ID: ' + result.error);
         log.error('Get house by ID failed');
@@ -101,15 +100,15 @@ export async function runHouseServiceTests() {
   testRunner.startTest('houseServices.updateHouse');
   try {
     const allHouses = await houseServices.getAll();
-    
+
     if (allHouses.data && allHouses.data.length > 0) {
       const firstHouseId = allHouses.data[0].house_id;
       const updateData = {
         notes: 'Updated by automated test at ' + new Date().toISOString()
       };
-      
+
       const result = await houseServices.updateHouse(firstHouseId, updateData);
-      
+
       if (result.error) {
         testRunner.fail('Failed to update house: ' + result.error);
         log.error('Update house failed');

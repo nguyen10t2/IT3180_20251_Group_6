@@ -1,11 +1,10 @@
 import { Elysia, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { ErrorStatus } from "../constants/errorContant";
+import { ErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import * as jose from 'jose';
 import { HttpError, PayloadJWT } from "../types/contextTypes";
 import { LoginBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
-import { error } from "console";
 
 // Định nghĩa các route liên quan đến xác thực
 
@@ -25,7 +24,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       return status(error.status, { message: error.body });
     }
     
-    return status(500, { message: "Internal Server Error" });
+    return status(500, { message: INTERNAL_SERVER_ERROR });
   })
   .post("/login", async ({ body, cookie }) => {
     const { email, password } = body;
@@ -48,7 +47,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: REFRESHTOKEN_TTL_NUMBER / 1000,
+      maxAge: REFRESHTOKEN_TTL_NUMBER + 1000,
       value: refreshToken,
     });
 
