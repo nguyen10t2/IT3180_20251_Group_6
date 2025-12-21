@@ -4,6 +4,7 @@ import { Users } from '../models/users';
 import { RefreshToken, OTP, ResetPasswordToken } from '../models/auth';
 import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
 import { singleOrNotFound } from '../helpers/dataHelpers';
+import { UserRole } from '../models/user_role';
 
 // Lấy thông tin user để đăng nhập (ko bao gồm mật khẩu)
 export const loginService = async (email: string, password: string) => {
@@ -12,9 +13,10 @@ export const loginService = async (email: string, password: string) => {
       id: Users.id,
       email: Users.email,
       password: Users.password,
-      role: Users.role,
+      role: UserRole.name,
     })
       .from(Users)
+      .leftJoin(UserRole, eq(Users.role, UserRole.id))
       .where(eq(Users.email, email));
 
     if (rows.length === 0) {

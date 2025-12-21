@@ -1,32 +1,34 @@
-// import { Elysia } from "elysia";
-// import * as jose from "jose";
-// import { PayloadJWT } from "../types/contextTypes";
+import { Elysia, NotFoundError, InternalServerError, status } from "elysia";
+import * as jose from "jose";
+import { HttpError, PayloadJWT } from "../types/contextTypes";
 
 
-// export const authenticationPlugins = (app: Elysia) => app
-//   .derive(async (ctx) => {
+export const authenticationPlugins = (app: Elysia) => app
+  .onError(({ error, status }) => {
+    if (error instanceof HttpError) {
+      return status(error.status, error.body);
+    }
 
-//     const authHeader = ctx.request.headers.get('Authorization');
-//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-//       ctx.set.status = 401;
-//       return { error: UNAUTHORIZED };
-//     }
+    return status(500, { message: "Internal Server Error" });
+  })
+  .derive(async (ctx) => {
 
-//     const token = authHeader.split(' ')[1];
+    const authHeader = ctx.request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw new HttpError(401, "Token authentication required");
+    }
 
-//     try {
-//       const { payload } = await jose.jwtVerify(
-//         token,
-//         new TextEncoder().encode(Bun.env.JWT_SECRET)
-//       );
+    const token = authHeader.split(' ')[1];
 
-//       return { user: payload as PayloadJWT };
+    try {
+      const { payload } = await jose.jwtVerify(
+        token,
+        new TextEncoder().encode(Bun.env.JWT_SECRET)
+      );
 
-//     } catch (error) {
-//       ctx.set.status = 401;
-//       return { error: 'Invalid token' };
-//     }
-//   })
-//   .onBeforeHandle(({ user, status }) => {
-//     if (!user) return status(401, UNAUTHORIZED);
-//   });
+      return { user: payload as PayloadJWT };
+
+    } catch (error) {
+      throw new HttpError(401, "Token is invalid or has expired");
+    }
+  });

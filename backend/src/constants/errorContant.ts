@@ -4,7 +4,7 @@ export const UNAUTHORIZED = 'Unauthorized';
 export const BAD_REQUEST = 'Bad request';
 export const FORBIDDEN = 'Forbidden';
 
-export const mapErrorStatus: Record<string, number> = {
+export const ErrorStatus: Record<string, number> = {
     [INTERNAL_SERVER_ERROR]: 500,
     [NOT_FOUND]: 404,
     [UNAUTHORIZED]: 401,
