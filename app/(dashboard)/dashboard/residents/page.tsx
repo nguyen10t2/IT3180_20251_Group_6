@@ -1,6 +1,19 @@
 "use client";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus } from "lucide-react";
+import { CellAction } from "./cell-action";
 import { Badge } from "@/components/ui/badge";
+
 import { Phone, Mail, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DataTable } from "@/components/ui/data-table";
@@ -139,29 +152,7 @@ export const columns: ColumnDef<Resident>[] = [
   // Cột hành động (Dấu 3 chấm)
   {
     id: "actions",
-    
-    cell: ({ row }) => {
-      const resident = row.original;
- 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-8 w-8 p-0 bg-white">
-              <span className="sr-only">Mở menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(resident.phone)}>
-              Copy số điện thoại
-            </DropdownMenuItem>
-            <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">Xóa cư dân</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <CellAction data={row.original} />
   },
 ];
 
@@ -183,7 +174,46 @@ const data: Resident[] = [
 export default function ResidentsPage() {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6 text-slate-800">Danh sách cư dân căn hộ</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-slate-800">Danh sách Cư dân</h1>
+        
+        {/* NÚT THÊM MỚI + MODAL */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="mr-2 h-4 w-4" /> Thêm cư dân
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Thêm cư dân mới</DialogTitle>
+              <DialogDescription>
+                Nhập thông tin cư dân vào bên dưới. Nhấn Lưu để hoàn tất.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* FORM NHẬP LIỆU */}
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Họ tên</Label>
+                <Input id="name" placeholder="Nguyễn Văn A" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="apartment" className="text-right">Căn hộ</Label>
+                <Input id="apartment" placeholder="P101" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">SĐT</Label>
+                <Input id="phone" placeholder="098..." className="col-span-3" />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="submit">Lưu thông tin</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       
       <DataTable columns={columns} data={data} searchKey="name" />
     </div>
