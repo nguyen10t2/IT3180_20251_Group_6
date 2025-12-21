@@ -1,24 +1,20 @@
-//Kiểu dữ liệu cho dân cư
 export interface Resident {
-  id: string;
-  fullName: string;
-  roomNumber: string;
+  id: string;          
+  house_id: string | null; 
+  full_name: string;   
+  id_card: string;
+  phone: string;
+  gender: string;      
+  status: string;    
 }
 
-//Kiểu dữ liệu các khoản thu
-export interface Fee {
+export interface Invoice {
   id: string;
-  name: string;
-  amount: number;
-  type: 'Bắt buộc' | 'Tự nguyện';
-}
-
-//Kiểu dữ liệu lịch sử đóng tiền
-export interface Transaction {
-  id: string;
-  residentId: string;
-  feeId: string;
-  amount: number;
-  paymentDate: string;
-  note?: string;
+  invoice_number: string;
+  house_id: string;   
+  total_amount: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  period_month: number;
+  period_year: number;
+  due_date: string;
 }
