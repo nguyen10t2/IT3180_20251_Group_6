@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Building2, KeyRound, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react"; // 👈 Import useState
+import { useState } from "react"; 
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +52,7 @@ export default function LoginPage() {
                 id="password" 
                 type={showPassword ? "text" : "password"} 
                 placeholder="••••••••" 
-                className="pl-9 pr-10" // Thêm pr-10 để chữ không đè lên icon mắt
+                className="pl-9 pr-10" 
               />
 
               <button
@@ -61,9 +61,9 @@ export default function LoginPage() {
                 className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" /> // Nếu đang hiện thì hiện icon đóng mắt
+                  <EyeOff className="h-4 w-4" /> 
                 ) : (
-                  <Eye className="h-4 w-4" />    // Nếu đang ẩn thì hiện icon mở mắt
+                  <Eye className="h-4 w-4" />    
                 )}
               </button>
             </div>
