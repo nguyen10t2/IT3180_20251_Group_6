@@ -24,7 +24,7 @@ export const Sidebar = () => {
             <Building2 className="h-8 w-8 text-blue-500" />
           </div>
           <h1 className="text-xl font-bold">
-            Apartment<span className="text-blue-500">Management</span>
+            Apart<span className="text-blue-500">Management</span>
           </h1>
         </Link>
         <div className="space-y-1">
