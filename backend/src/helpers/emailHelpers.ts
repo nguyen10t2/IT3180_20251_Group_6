@@ -27,7 +27,7 @@ export class EmailHelper {
 
     const mailOptions = {
       from: `"APP" <${this.smtpEmail}>`,
-      toEmail,
+      to: toEmail,
       subject: "Xác thực email của bạn",
       text: `Mã OTP của bạn là: ${otp}`,
       html: htmlBody
