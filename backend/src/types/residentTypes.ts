@@ -9,7 +9,9 @@ export const CreateResidentBody = t.Object({
     phone: t.String(),
     gender: enumToTypeBox(Gender.enumValues),
     role: t.Number(),
-    status: enumToTypeBox(ResidentStatus.enumValues)
+    status: enumToTypeBox(ResidentStatus.enumValues),
+    house_id: t.Optional(t.String({ format: "uuid" })),
+    occupation: t.Optional(t.String()),
 });
 
 export const UpdateResidentBody = t.Object({
@@ -19,5 +21,7 @@ export const UpdateResidentBody = t.Object({
     phone: t.String(),
     gender: t.Optional(enumToTypeBox(Gender.enumValues)),
     role: t.Optional(t.Number()),
-    status: t.Optional(enumToTypeBox(ResidentStatus.enumValues))
-})
+    status: t.Optional(enumToTypeBox(ResidentStatus.enumValues)),
+    house_id: t.Optional(t.String({ format: "uuid" })),
+    occupation: t.Optional(t.String()),
+});

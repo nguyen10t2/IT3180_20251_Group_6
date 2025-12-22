@@ -16,7 +16,7 @@ export const UpdateHouseBody = t.Object({
 export const CreateHouseBody = t.Object({
   room_number: t.String(),
   room_type: enumToTypeBox(RoomType.enumValues),
-  area: t.Numeric({ precision: 10, scale: 2 }),
+  area: t.Optional(t.Numeric({ precision: 10, scale: 2 })),
   head_resident_id: t.Optional(t.String({ format: 'uuid' })),
   notes: t.Optional(t.String()),
 })
