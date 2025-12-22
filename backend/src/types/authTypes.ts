@@ -1,5 +1,15 @@
 import { t } from "elysia";
 
+export const ChangePasswordBody = t.Object({
+    old_password: t.String(),
+    new_password: t.String(),
+});
+
+export const ResetPasswordBody = t.Object({
+    email: t.String({ format: "email" }),
+    new_password: t.String(),
+});
+
 export const RegisterBody = t.Object({
     email: t.String({ format: "email"}),
     password: t.String(),
@@ -11,14 +21,7 @@ export const LoginBody = t.Object({
     password: t.String(),
 });
 
-export const RefreshTokenBody = t.Object({
-    user_id: t.String({ format: "uuid" }),
-    token: t.String(),
-    expires_at: t.String({ format: "date-time" }),
-});
-
 export const OtpBody = t.Object({
     email: t.String({ format: "email" }),
     code: t.String(),
-    expires_at: t.String({ format: "date-time" }),
 });
