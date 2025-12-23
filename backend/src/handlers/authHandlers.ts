@@ -1,12 +1,10 @@
 import { Elysia, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { ErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import * as jose from 'jose';
-import { HttpError, PayloadJWT } from "../types/contextTypes";
+import { PayloadJWT } from "../types/contextTypes";
 import { LoginBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
-
-// Định nghĩa các route liên quan đến xác thực
 
 const getToken = async (payload?: PayloadJWT, expiry?: string) => {
   const signJwt = new jose.SignJWT(payload).setProtectedHeader({
@@ -19,13 +17,6 @@ const getToken = async (payload?: PayloadJWT, expiry?: string) => {
 };
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
-  .onError(({ error, status }) => {
-    if (error instanceof HttpError) {
-      return status(error.status, { message: error.body });
-    }
-    
-    return status(500, { message: INTERNAL_SERVER_ERROR });
-  })
   .post("/login", async ({ body, cookie }) => {
     const { email, password } = body;
     const res = await loginService(email, password);
