@@ -1,20 +1,9 @@
 import { Elysia, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
-import * as jose from 'jose';
-import { PayloadJWT } from "../types/contextTypes";
+import { ErrorStatus, HttpError } from "../constants/errorContant";
 import { LoginBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
-
-const getToken = async (payload?: PayloadJWT, expiry?: string) => {
-  const signJwt = new jose.SignJWT(payload).setProtectedHeader({
-    alg: "HS256",
-  });
-  if (expiry) {
-    signJwt.setExpirationTime(expiry);
-  }
-  return await signJwt.sign(new TextEncoder().encode(Bun.env.JWT_SECRET));
-};
+import { getToken } from "../helpers/tokenHelpers";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post("/login", async ({ body, cookie }) => {
@@ -38,7 +27,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: REFRESHTOKEN_TTL_NUMBER + 1000,
+      maxAge: REFRESHTOKEN_TTL_NUMBER - 1000,
       value: refreshToken,
     });
 
@@ -48,4 +37,4 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     cookie: t.Object({
       refreshToken: t.Optional(t.String()),
     }),
-  });
+  })
