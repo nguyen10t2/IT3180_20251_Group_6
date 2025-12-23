@@ -1,16 +1,10 @@
 import { Elysia, NotFoundError, InternalServerError, status } from "elysia";
 import * as jose from "jose";
-import { HttpError, PayloadJWT } from "../types/contextTypes";
+import { PayloadJWT } from "../types/contextTypes";
+import { HttpError } from "../constants/errorContant";
 
 
 export const authenticationPlugins = (app: Elysia) => app
-  .onError(({ error, status }) => {
-    if (error instanceof HttpError) {
-      return status(error.status, error.body);
-    }
-
-    return status(500, { message: "Internal Server Error" });
-  })
   .derive(async (ctx) => {
 
     const authHeader = ctx.request.headers.get('Authorization');
