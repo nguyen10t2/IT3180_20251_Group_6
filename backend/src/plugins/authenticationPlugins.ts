@@ -1,11 +1,11 @@
-import { Elysia, NotFoundError, InternalServerError, status } from "elysia";
+import { Elysia, NotFoundError, InternalServerError, status, Context } from "elysia";
 import * as jose from "jose";
 import { PayloadJWT } from "../types/contextTypes";
 import { HttpError } from "../constants/errorContant";
 
 
 export const authenticationPlugins = (app: Elysia) => app
-  .derive(async (ctx) => {
+  .derive(async (ctx: Context) => {
 
     const authHeader = ctx.request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
