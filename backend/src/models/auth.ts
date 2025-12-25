@@ -1,6 +1,7 @@
-import { pgTable, varchar, uuid, timestamp, text, boolean} from "drizzle-orm/pg-core";
+import { pgTable, varchar, uuid, timestamp, text, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { Users } from "./users";
+import { table } from "node:console";
 
 
 export const RefreshToken = pgTable('refresh_token', {
@@ -10,14 +11,14 @@ export const RefreshToken = pgTable('refresh_token', {
     user_id: uuid('user_id')
         .references(() => Users.id, { onDelete: 'cascade' }),
     token: text('token')
-        .notNull(),
+        .notNull()
+        .unique(),
     expires_at: timestamp('expires_at', {withTimezone: true})
         .notNull(),
     created_at: timestamp('created_at', {withTimezone: true})
         .notNull()
         .defaultNow(),
 });
-
 export const OTP = pgTable('otp', {
     id: uuid('id')
         .primaryKey()

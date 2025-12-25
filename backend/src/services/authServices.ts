@@ -57,6 +57,21 @@ export const getRefreshTokenByUserId = async (userId: string) => {
   }
 };
 
+// Lấy token theo giá trị token
+export const getRefreshTokenByToken = async (token: string) => {
+  try {
+    const rows = await db.select()
+      .from(RefreshToken)
+      .where(eq(RefreshToken.token, token))
+      .orderBy(desc(RefreshToken.expires_at))
+      .limit(1);
+
+    return singleOrNotFound(rows);
+  } catch (_) {
+    return { error: INTERNAL_SERVER_ERROR };
+  }
+}
+
 // Lưu refresh token mới
 export const createRefreshToken = async (userId: string, token: string, expiresAt: Date) => {
   try {
