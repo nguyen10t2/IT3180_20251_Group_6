@@ -4,7 +4,7 @@ import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/erro
 import { LoginBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
-import { generateRandomString, hashedPassword } from "../helpers/password";
+import { generateRandomString, hashedPassword, verifyPassword } from "../helpers/password";
 import { createUser, isExistingUserByEmail } from "../services/userServices";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { deleteRefreshTokensByUserId } from "../services/authServices";
@@ -15,8 +15,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     try {
       const { email, password } = body;
 
-      const { data } = await loginService(email, password);
-      if (!data) throw new HttpError(ErrorStatus.NOT_FOUND, "Thông tin đăng nhập không chính xác");
+      const { data } = await loginService(email);
+      if (!data ||
+        !(await verifyPassword(password, data.hashed_password))
+      ) throw new HttpError(ErrorStatus.NOT_FOUND, "Thông tin đăng nhập không chính xác");
 
       const accessToken = await getToken(data, ACCESSTOKEN_TTL);
       const refreshToken = await generateRandomString(64);
@@ -24,7 +26,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       await createRefreshToken(
         data.id,
         refreshToken,
-        new Date(Date.now() + REFRESHTOKEN_TTL_NUMBER)
+        new Date(Date.now() + REFRESHTOKEN_TTL_NUMBER * 1000)
       );
 
       cookie.refreshToken.set({

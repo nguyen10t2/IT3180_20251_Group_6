@@ -16,7 +16,7 @@ export const houseHoldHeadHistorySchema = pgTable("house_hold_head_history", {
   new_head_id: uuid("new_head_id").notNull().references(() => userSchema.id, { onDelete: "restrict" }),
   reason: text("reason").notNull(),
   changed_by: uuid("changed_by").notNull().references(() => userSchema.id, { onDelete: "restrict" }),
-  changed_at: timestamp("changed_at").notNull().default(sql`now()`),
+  changed_at: timestamp("changed_at", { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [
   index("idx_household_head_history_house").on(table.house_id),
   index("idx_household_head_history_date").on(table.changed_at),

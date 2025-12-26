@@ -29,9 +29,9 @@ export const residentSchema = pgTable("resident", {
   move_in_date: date("move_in_date"),
   move_out_date: date("move_out_date"),
   move_out_reason: varchar("move_out_reason", { length: 255 }),
-  deleted_at: timestamp("deleted_at"),
-  created_at: timestamp("created_at").notNull().default(sql`now()`),
-  updated_at: timestamp("updated_at").notNull().default(sql`now()`),
+  deleted_at: timestamp("deleted_at", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [
   unique("unique_id_card_active").on(table.id_card, table.deleted_at),
   unique("unique_phone_active").on(table.phone, table.deleted_at),

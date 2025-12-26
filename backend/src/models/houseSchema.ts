@@ -26,9 +26,9 @@ export const houseSchema = pgTable("house", {
   car_count: integer("car_count").default(0),
   notes: text("notes"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
-  deleted_at: timestamp("deleted_at"),
-  created_at: timestamp("created_at").notNull().default(sql`now()`),
-  updated_at: timestamp("updated_at").notNull().default(sql`now()`),
+  deleted_at: timestamp("deleted_at", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [
   check("motorbike_count_check", sql`${table.motorbike_count} >= 0`),
   check("car_count_check", sql`${table.car_count} >= 0`),

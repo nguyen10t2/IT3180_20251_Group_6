@@ -17,9 +17,9 @@ CREATE TABLE house (
     car_count INT DEFAULT 0 CHECK (car_count >= 0),
     notes TEXT,
     status status NOT NULL DEFAULT 'active',
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_house_head_resident ON house(head_resident_id);
 CREATE INDEX idx_room_number ON house(room_number);
@@ -41,9 +41,9 @@ CREATE TABLE resident (
     move_in_date DATE,
     move_out_date DATE,
     move_out_reason TEXT,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_id_card_active UNIQUE (id_card, deleted_at),
     CONSTRAINT unique_phone_active UNIQUE (phone, deleted_at)
 );
@@ -69,15 +69,15 @@ CREATE TABLE users (
     status status NOT NULL DEFAULT 'inactive',
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     approved_by UUID,
-    approved_at TIMESTAMP,
+    approved_at TIMESTAMPTZ,
     rejected_reason TEXT,
-    last_login_at TIMESTAMP,
+    last_login_at TIMESTAMPTZ,
     last_login_ip VARCHAR(45),
     failed_login_attempts INT DEFAULT 0,
-    locked_until TIMESTAMP,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    locked_until TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_email_active UNIQUE (email, deleted_at)
 );
 ALTER TABLE users ADD CONSTRAINT fk_users_approved_by 
@@ -98,9 +98,9 @@ CREATE TABLE fee_types (
     is_active BOOLEAN DEFAULT TRUE,
     effective_from DATE,
     effective_to DATE,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_fee_name_active UNIQUE (name, deleted_at)
 );
 CREATE INDEX idx_fee_name ON fee_types(name);
@@ -119,15 +119,15 @@ CREATE TABLE invoices (
     total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
     status fee_status NOT NULL DEFAULT 'pending',
     due_date DATE NOT NULL,
-    paid_at TIMESTAMP,
+    paid_at TIMESTAMPTZ,
     paid_amount DECIMAL(12, 2),
     payment_note VARCHAR(50),
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     confirmed_by UUID REFERENCES users(id) ON DELETE SET NULL,
     notes TEXT,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_invoice_per_period UNIQUE (house_id, period_month, period_year, invoice_type, deleted_at)
 );
 CREATE INDEX idx_invoice_house_id ON invoices(house_id);
@@ -144,7 +144,7 @@ CREATE TABLE invoice_details (
     price DECIMAL(12, 2) NOT NULL CHECK (price >= 0),
     total DECIMAL(12, 2) NOT NULL CHECK (total >= 0),
     notes TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_invoice_detail_invoice_id ON invoice_details(invoice_id);
 CREATE INDEX idx_invoice_detail_fee_id ON invoice_details(fee_type_id);
@@ -157,13 +157,13 @@ CREATE TABLE notifications (
     target notification_target NOT NULL DEFAULT 'all',
     target_id UUID,
     is_pinned BOOLEAN DEFAULT FALSE,
-    scheduled_at TIMESTAMP,
-    published_at TIMESTAMP,
-    expires_at TIMESTAMP,
+    scheduled_at TIMESTAMPTZ,
+    published_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_notification_target_id ON notifications(target_id);
 CREATE INDEX idx_notification_created_by ON notifications(created_by);
@@ -175,7 +175,7 @@ CREATE TABLE notification_reads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     notification_id UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    read_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    read_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_notification_read UNIQUE (notification_id, user_id)
 );
 
@@ -190,11 +190,11 @@ CREATE TABLE feedbacks (
     attachments TEXT[],
     status feedback_status NOT NULL DEFAULT 'pending',
     assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
-    resolved_at TIMESTAMP,
+    resolved_at TIMESTAMPTZ,
     resolution_notes TEXT,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    deleted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_feedback_user_id ON feedbacks(user_id);
 CREATE INDEX idx_feedback_house_id ON feedbacks(house_id);
@@ -207,7 +207,7 @@ CREATE TABLE feedback_comments (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     content TEXT NOT NULL,
     is_internal BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_feedback_comment_feedback_id ON feedback_comments(feedback_id);
 CREATE INDEX idx_feedback_comment_user_id ON feedback_comments(user_id);
@@ -216,8 +216,8 @@ CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT idx_refresh_token_expires CHECK (expires_at > created_at)
 );
 CREATE INDEX idx_refresh_token_user_id ON refresh_tokens(user_id);
@@ -231,7 +231,7 @@ CREATE TABLE household_head_history (
     new_head_id UUID NOT NULL REFERENCES resident(id) ON DELETE RESTRICT,
     reason TEXT NOT NULL,
     changed_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    changed_at TIMESTAMP NOT NULL DEFAULT NOW()
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_household_head_history_house ON household_head_history(house_id);
 CREATE INDEX idx_household_head_history_date ON household_head_history(changed_at);

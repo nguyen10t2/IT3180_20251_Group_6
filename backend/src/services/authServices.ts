@@ -1,11 +1,9 @@
 import { db } from '../database/db';
 import { and, desc, eq, lt, isNull } from 'drizzle-orm';
 import { userSchema } from '../models/userSchema';
-import { userRoleSchema } from '../models/userSchema';
 import { refreshTokenSchema } from '../models/authSchema';
-import Redis from 'ioredis';
 import client from '../helpers/redisHelpers';
-import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
+import { userRoleSchema } from '../models/userSchema';
 
 // Redis client cho OTP
 const redis = client;
@@ -14,13 +12,11 @@ const redis = client;
 // LOGIN SERVICE
 // ============================================
 
-export const loginService = async (email: string, password: string) => {
+export const loginService = async (email: string) => {
   const rows = await db.select({
     id: userSchema.id,
-    email: userSchema.email,
     role: userRoleSchema.name,
-    status: userSchema.status,
-    email_verified: userSchema.email_verified,
+    hashed_password: userSchema.hashed_password
   })
     .from(userSchema)
     .leftJoin(userRoleSchema, eq(userSchema.role, userRoleSchema.id))
