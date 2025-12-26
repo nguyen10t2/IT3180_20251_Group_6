@@ -7,6 +7,7 @@ import { getToken } from "../helpers/tokenHelpers";
 import { generateRandomString, hashedPassword } from "../helpers/password";
 import { createUser, isExistingUserByEmail } from "../services/userServices";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
+import { error } from "node:console";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post("/login", async ({ body, cookie }) => {
@@ -35,7 +36,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
       return { accessToken };
     }
-    catch (_) {
+    catch (error) {
+      console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   }, {
@@ -55,7 +57,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
       return status(201, { message: 'Đã tạo thành công người dùng', data: res.data });
     }
-    catch (_) {
+    catch (error) {
+      console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
 
@@ -74,7 +77,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       const res = await deleteRefreshTokenByUserId(userId);
       return status(200, { message: 'Logout thành công' })
     }
-    catch (_) {
+    catch (error) {
+      console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
