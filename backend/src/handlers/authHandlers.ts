@@ -1,27 +1,28 @@
-import { Context, Elysia, t } from "elysia"
-import { createRefreshToken, deleteRefreshTokenByUserId, loginService } from "../services/authServices";
+import { Elysia, t } from "elysia"
+import { createRefreshToken, loginService } from "../services/authServices";
 import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
-import { LoginBody, RegisterBody } from "../types/authTypes";
-import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
+import { LoginBody } from "../types/authTypes";
+import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
 import { generateRandomString, hashedPassword } from "../helpers/password";
 import { createUser, isExistingUserByEmail } from "../services/userServices";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { error } from "node:console";
+import { deleteRefreshTokensByUserId } from "../services/authServices";
+import { RegisterBody } from "../types/authTypes";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post("/login", async ({ body, cookie }) => {
     try {
       const { email, password } = body;
-      const res = await loginService(email, password);
-      const user = res.data!;
-      const accessToken = await getToken(user, ACCESSTOKEN_TTL);
 
-      // Create Refresh Token Randomly
+      const { data } = await loginService(email, password);
+      if (!data) throw new HttpError(ErrorStatus.NOT_FOUND, "Thông tin đăng nhập không chính xác");
+
+      const accessToken = await getToken(data, ACCESSTOKEN_TTL);
       const refreshToken = await generateRandomString(64);
 
-      const save = await createRefreshToken(
-        user.id,
+      await createRefreshToken(
+        data.id,
         refreshToken,
         new Date(Date.now() + REFRESHTOKEN_TTL_NUMBER)
       );
@@ -35,10 +36,9 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       });
 
       return { accessToken };
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      throw new HttpError(ErrorStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
     }
   }, {
     body: LoginBody,
@@ -74,7 +74,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       })
 
       const userId = user.id!;
-      const res = await deleteRefreshTokenByUserId(userId);
+      const res = await deleteRefreshTokensByUserId(userId);
       return status(200, { message: 'Logout thành công' })
     }
     catch (error) {
