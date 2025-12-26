@@ -1,0 +1,12 @@
+CREATE TYPE status AS ENUM ('active', 'inactive', 'suspended');
+CREATE TYPE gender AS ENUM ('male', 'female', 'other');
+CREATE TYPE resident_status AS ENUM ('thuongtru', 'tamtru', 'tamvang', 'dachuyendi');
+CREATE TYPE room_type AS ENUM ('penhouse', 'studio', 'normal');
+CREATE TYPE fee_category AS ENUM ('fixed', 'variable');
+CREATE TYPE fee_status AS ENUM ('pending', 'paid', 'overdue', 'cancelled');
+CREATE TYPE notification_type AS ENUM ('general', 'emergency', 'event', 'payment');
+CREATE TYPE notification_target AS ENUM ('all', 'household', 'individual');
+CREATE TYPE feedback_type AS ENUM ('complaint', 'suggestion', 'maintenance', 'other');
+CREATE TYPE feedback_status AS ENUM ('pending', 'in_progress', 'resolved', 'rejected');
+CREATE TYPE feedback_priority AS ENUM ('low', 'medium', 'high', 'urgent');
+CREATE TYPE house_role_type AS ENUM ('owner', 'member', 'tenant');
