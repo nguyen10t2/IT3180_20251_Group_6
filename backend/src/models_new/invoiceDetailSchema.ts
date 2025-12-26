@@ -1,6 +1,6 @@
 import {
   pgTable,
-  serial,
+  uuid,
   integer,
   decimal,
   timestamp,
@@ -11,9 +11,9 @@ import { sql } from "drizzle-orm";
 import { invoiceSchema } from "./invoiceSchema";
 import { feeTypeSchema } from "./feeTypeSchema";
 
-export const invoiceDetailSchema = pgTable('invoice_detail', {
-  id: serial('id').primaryKey(),
-  invoice_id: serial('invoice_id').references(() => invoiceSchema.id),
+export const invoiceDetailSchema = pgTable("invoice_detail", {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  invoice_id: uuid('invoice_id').references(() => invoiceSchema.id),
   fee_id: integer('fee_id').references(() => feeTypeSchema.id),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),

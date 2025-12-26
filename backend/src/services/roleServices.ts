@@ -1,35 +1,36 @@
 import { eq } from "drizzle-orm";
-import { INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { db } from "../database/db";
-import { UserRole } from "../models/user_role";
-import { singleOrNotFound } from "../helpers/dataHelpers";
-import { permission } from "node:process";
-
+import { userRoleSchema } from "../models_new/userSchema";
 
 export const getRoleById = async (roleId: number) => {
-    try {
-        const row = await db.select({
-            permission: UserRole.permission
-        })
-            .from(UserRole)
-            .where(eq(UserRole.id, roleId));
+  const rows = await db.select({
+    id: userRoleSchema.id,
+    name: userRoleSchema.name,
+    permission: userRoleSchema.permission,
+    description: userRoleSchema.description
+  })
+    .from(userRoleSchema)
+    .where(eq(userRoleSchema.id, roleId));
 
-        return singleOrNotFound(row);
-    } catch (_) {
-        return { error: INTERNAL_SERVER_ERROR };
-    }
+  return { data: rows[0] ?? null };
 };
 
 export const getRoleByName = async (roleName: string) => {
-    try {
-        const row = await db.select({
-            permission: UserRole.permission
-        })
-            .from(UserRole)
-            .where(eq(UserRole.name, roleName));
+  const rows = await db.select({
+    id: userRoleSchema.id,
+    name: userRoleSchema.name,
+    permission: userRoleSchema.permission,
+    description: userRoleSchema.description
+  })
+    .from(userRoleSchema)
+    .where(eq(userRoleSchema.name, roleName));
 
-        return singleOrNotFound(row);
-    } catch (_) {
-        return { error: INTERNAL_SERVER_ERROR };
-    }
+  return { data: rows[0] ?? null };
+};
+
+export const getAllRoles = async () => {
+  const rows = await db.select()
+    .from(userRoleSchema);
+
+  return { data: rows };
 };
