@@ -1,182 +1,218 @@
-// resident.service.ts
-import { eq, asc, getTableColumns } from 'drizzle-orm';
+import { eq, asc, and, isNull, getTableColumns } from 'drizzle-orm';
 import { db } from '../database/db';
-import { Resident } from '../models/resident';
-import { ResidentStatusEnum } from '../models/enum';
-import { CreateResidentBody, UpdateResidentBody } from '../types/residentTypes';
-import { Static } from 'elysia'
-import { INTERNAL_SERVER_ERROR, NOT_FOUND } from '../constants/errorContant';
-import { House } from '../models/house';
-import { Users } from '../models/users';
-import { singleOrNotFound } from '../helpers/dataHelpers';
+import { residentSchema, type NewResident } from '../models_new/residentSchema';
+import { houseSchema } from '../models_new/houseSchema';
+import { userSchema } from '../models_new/userSchema';
+import type { ResidentStatusEnum } from '../models_new/pgEnum';
 
+// Lấy tất cả cư dân (chưa bị xóa)
 export const getAll = async () => {
-  try {
-    const rows = await db.select({
-      ...getTableColumns(Resident),
-      room_number: House.room_number
-    })
-      .from(Resident)
-      .leftJoin(House, eq(House.house_id, Resident.house_id))
-      .orderBy(asc(Resident.full_name));
+  const rows = await db.select({
+    ...getTableColumns(residentSchema),
+    room_number: houseSchema.room_number
+  })
+    .from(residentSchema)
+    .leftJoin(houseSchema, eq(houseSchema.id, residentSchema.house_id))
+    .where(isNull(residentSchema.deleted_at))
+    .orderBy(asc(residentSchema.full_name));
 
-    return { data: rows };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows };
 };
 
-export const getResidentByHouseId = async (house_id: string) => {
-  try {
-    const rows = await db.select()
-      .from(Resident)
-      .where(eq(Resident.house_id, house_id));
-      
-    return { data: rows };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+// Lấy cư dân theo house_id
+export const getResidentsByHouseId = async (houseId: string) => {
+  const rows = await db.select()
+    .from(residentSchema)
+    .where(and(
+      eq(residentSchema.house_id, houseId),
+      isNull(residentSchema.deleted_at)
+    ));
+
+  return { data: rows };
 };
 
+// Lấy cư dân theo số điện thoại
 export const getResidentByPhone = async (phone: string) => {
-  try {
-    const rows = await db.select()
-      .from(Resident)
-      .where(eq(Resident.phone, phone));
+  const rows = await db.select()
+    .from(residentSchema)
+    .where(and(
+      eq(residentSchema.phone, phone),
+      isNull(residentSchema.deleted_at)
+    ));
 
-    return singleOrNotFound(rows);
+  return { data: rows[0] ?? null };
+};
 
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-}
-
+// Lấy cư dân theo ID
 export const getResidentById = async (id: string) => {
-  try {
-    const rows = await db
-      .select()
-      .from(Resident)
-      .where(eq(Resident.id, id));
+  const rows = await db.select({
+    ...getTableColumns(residentSchema),
+    room_number: houseSchema.room_number
+  })
+    .from(residentSchema)
+    .leftJoin(houseSchema, eq(houseSchema.id, residentSchema.house_id))
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ));
 
-    return singleOrNotFound(rows);
-  } catch {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-export const updateStatus = async (id: string, new_status: ResidentStatusEnum) => {
-  try {
-    await db.update(Resident)
-      .set({
-        status: new_status
-      });
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-export const getResidentByUserId = async (user_id: string) => {
-  try {
-    const rows = await db.select({
-      ...getTableColumns(Resident),
-      room_number: House.room_number
+// Cập nhật trạng thái cư trú
+export const updateResidenceStatus = async (id: string, newStatus: ResidentStatusEnum) => {
+  const [updated] = await db.update(residentSchema)
+    .set({
+      residence_status: newStatus,
+      updated_at: new Date()
     })
-      .from(Resident)
-      .leftJoin(House, eq(House.house_id, Resident.house_id))
-      .innerJoin(Users, eq(Users.resident_id, Resident.id));
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .returning();
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: updated ?? null };
 };
 
-export const getResidentIdByUserId = async (user_id: string) => {
-  try {
-    const rows = await db.select()
-      .from(Resident)
-      .innerJoin(Users, eq(Resident.id, Users.resident_id))
-      .where(eq(Users.id, user_id));
+// Lấy cư dân theo user_id
+export const getResidentByUserId = async (userId: string) => {
+  const rows = await db.select({
+    ...getTableColumns(residentSchema),
+    room_number: houseSchema.room_number
+  })
+    .from(residentSchema)
+    .leftJoin(houseSchema, eq(houseSchema.id, residentSchema.house_id))
+    .innerJoin(userSchema, eq(userSchema.resident_id, residentSchema.id))
+    .where(and(
+      eq(userSchema.id, userId),
+      isNull(residentSchema.deleted_at)
+    ));
 
-    if (rows.length === 0) {
-      return { error: NOT_FOUND };
-    }
-
-    return { data: rows[0].resident.id };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
+// Lấy resident_id theo user_id
+export const getResidentIdByUserId = async (userId: string) => {
+  const rows = await db.select({
+    resident_id: residentSchema.id
+  })
+    .from(residentSchema)
+    .innerJoin(userSchema, eq(residentSchema.id, userSchema.resident_id))
+    .where(and(
+      eq(userSchema.id, userId),
+      isNull(residentSchema.deleted_at)
+    ));
+
+  return { data: rows[0]?.resident_id ?? null };
+};
+
+// Lấy cư dân theo CMND/CCCD
 export const getResidentByIdCard = async (idCard: string) => {
-  try {
-    const rows = await db
-      .select()
-      .from(Resident)
-      .where(eq(Resident.id_card, idCard))
-      .limit(1);
+  const rows = await db.select()
+    .from(residentSchema)
+    .where(and(
+      eq(residentSchema.id_card, idCard),
+      isNull(residentSchema.deleted_at)
+    ))
+    .limit(1);
 
-    return singleOrNotFound(rows);
-  } catch {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-export const createResident = async (
-  data: Static<typeof CreateResidentBody>
-) => {
-  try {
-    const result = await db
-      .insert(Resident)
-      .values(data)
-      .returning();
+// Tạo cư dân mới
+export const createResident = async (data: NewResident) => {
+  const [result] = await db.insert(residentSchema)
+    .values({
+      ...data,
+      move_in_date: data.move_in_date ?? new Date().toISOString().split('T')[0]
+    })
+    .returning();
 
-    return { data: result[0] };
-  } catch {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: result };
 };
 
-export const updateResident = async (
-  id: string,
-  data: Static<typeof UpdateResidentBody>
-) => {
-  try {
-    const updateData: Partial<typeof Resident.$inferInsert> = {};
+// Cập nhật cư dân
+export const updateResident = async (id: string, data: Partial<NewResident>) => {
+  const updateData: Partial<NewResident> = {};
 
-    for (const key in data) {
-      const value = data[key as keyof typeof data];
-      if (value !== undefined) {
-        (updateData as any)[key] = value;
-      }
+  for (const key in data) {
+    const value = data[key as keyof typeof data];
+    if (value !== undefined) {
+      (updateData as any)[key] = value;
     }
-
-    const result = await db
-      .update(Resident)
-      .set({
-        ...updateData,
-        updated_at: new Date()
-      })
-      .where(eq(Resident.id, id))
-      .returning();
-
-    return singleOrNotFound(result);
-  } catch (_) {
-    console.log(_);
-
-    return { error: INTERNAL_SERVER_ERROR };
   }
+
+  const [result] = await db.update(residentSchema)
+    .set({
+      ...updateData,
+      updated_at: new Date()
+    })
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .returning();
+
+  return { data: result ?? null };
 };
 
+// Soft delete cư dân
 export const deleteResident = async (id: string) => {
-  try {
-    const result = await db
-      .delete(Resident)
-      .where(eq(Resident.id, id))
-      .returning();
+  await db.update(residentSchema)
+    .set({ deleted_at: new Date() })
+    .where(eq(residentSchema.id, id));
 
-    return singleOrNotFound(result);
-  } catch {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: 'Resident deleted successfully' };
+};
+
+// Chuyển đi - cập nhật trạng thái và ngày chuyển
+export const moveOutResident = async (id: string, reason: string) => {
+  const [result] = await db.update(residentSchema)
+    .set({
+      residence_status: 'dachuyendi',
+      move_out_date: new Date().toISOString().split('T')[0],
+      move_out_reason: reason,
+      house_id: null,
+      updated_at: new Date()
+    })
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .returning();
+
+  return { data: result ?? null };
+};
+
+// Cập nhật house_id cho cư dân
+export const updateResidentHouse = async (id: string, houseId: string | null) => {
+  const [result] = await db.update(residentSchema)
+    .set({
+      house_id: houseId,
+      updated_at: new Date()
+    })
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .returning();
+
+  return { data: result ?? null };
+};
+
+// Cập nhật house_role cho cư dân
+export const updateResidentHouseRole = async (id: string, houseRole: 'owner' | 'member' | 'tenant') => {
+  const [result] = await db.update(residentSchema)
+    .set({
+      house_role: houseRole,
+      updated_at: new Date()
+    })
+    .where(and(
+      eq(residentSchema.id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .returning();
+
+  return { data: result ?? null };
 };
