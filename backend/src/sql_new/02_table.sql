@@ -47,9 +47,16 @@ CREATE TABLE resident (
     CONSTRAINT unique_id_card_active UNIQUE (id_card, deleted_at),
     CONSTRAINT unique_phone_active UNIQUE (phone, deleted_at)
 );
--- Add FK after table is created
 ALTER TABLE house ADD CONSTRAINT fk_house_head_resident 
     FOREIGN KEY (head_resident_id) REFERENCES resident(id) ON DELETE SET NULL;
+CREATE INDEX idx_house_id ON resident(house_id);
+CREATE INDEX idx_deleted_at ON resident(deleted_at);
+CREATE INDEX idx_full_name ON resident(full_name);
+CREATE INDEX idx_id_card ON resident(id_card);
+CREATE INDEX idx_phone ON resident(phone);
+CREATE INDEX idx_house_role ON resident(house_role);
+CREATE INDEX idx_residence_status ON resident(residence_status);
+
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -75,6 +82,11 @@ CREATE TABLE users (
 );
 ALTER TABLE users ADD CONSTRAINT fk_users_approved_by 
     FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX idx_user_resident_id ON users(resident_id);
+CREATE INDEX idx_user_role ON users(role);
+CREATE INDEX idx_user_status ON users(status);
+CREATE INDEX idx_user_email ON users(email);
+CREATE INDEX idx_user_deleted_at ON users(deleted_at);
 
 CREATE TABLE fee_types (
     id SERIAL PRIMARY KEY,
@@ -91,6 +103,11 @@ CREATE TABLE fee_types (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_fee_name_active UNIQUE (name, deleted_at)
 );
+CREATE INDEX idx_fee_name ON fee_types(name);
+CREATE INDEX idx_fee_category ON fee_types(category);
+CREATE INDEX idx_fee_is_active ON fee_types(is_active);
+CREATE INDEX idx_fee_effective ON fee_types(effective_from, effective_to);
+CREATE INDEX idx_fee_deleted_at ON fee_types(deleted_at);
 
 CREATE TABLE invoices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -104,7 +121,7 @@ CREATE TABLE invoices (
     due_date DATE NOT NULL,
     paid_at TIMESTAMP,
     paid_amount DECIMAL(12, 2),
-    payment_note TEXT,
+    payment_note VARCHAR(50),
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     confirmed_by UUID REFERENCES users(id) ON DELETE SET NULL,
     notes TEXT,
@@ -113,17 +130,24 @@ CREATE TABLE invoices (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_invoice_per_period UNIQUE (house_id, period_month, period_year, invoice_type, deleted_at)
 );
+CREATE INDEX idx_invoice_house_id ON invoices(house_id);
+CREATE INDEX idx_invoice_period ON invoices(period_month, period_year);
+CREATE INDEX idx_invoice_status ON invoices(status);
+CREATE INDEX idx_invoice_due_date ON invoices(due_date);
+CREATE INDEX idx_invoice_create_by ON invoices(created_by);
 
 CREATE TABLE invoice_details (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
     fee_type_id INT NOT NULL REFERENCES fee_types(id) ON DELETE RESTRICT,
     quantity DECIMAL(10, 2) NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    unit_price DECIMAL(12, 2) NOT NULL CHECK (unit_price >= 0),
-    amount DECIMAL(12, 2) NOT NULL CHECK (amount >= 0),
+    price DECIMAL(12, 2) NOT NULL CHECK (price >= 0),
+    total DECIMAL(12, 2) NOT NULL CHECK (total >= 0),
     notes TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_invoice_detail_invoice_id ON invoice_details(invoice_id);
+CREATE INDEX idx_invoice_detail_fee_id ON invoice_details(fee_type_id);
 
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -141,6 +165,11 @@ CREATE TABLE notifications (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_notification_target_id ON notifications(target_id);
+CREATE INDEX idx_notification_created_by ON notifications(created_by);
+CREATE INDEX idx_notification_deleted_at ON notifications(deleted_at);
+CREATE INDEX idx_notification_scheduled_at ON notifications(scheduled_at);
+CREATE INDEX idx_notification_published_at ON notifications(published_at);
 
 CREATE TABLE notification_reads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -154,7 +183,7 @@ CREATE TABLE feedbacks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     house_id UUID REFERENCES house(id) ON DELETE SET NULL,
-    type feedback_type NOT NULL,
+    type feedback_type NOT NULL DEFAULT 'other',
     priority feedback_priority NOT NULL DEFAULT 'medium',
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -167,6 +196,10 @@ CREATE TABLE feedbacks (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_feedback_user_id ON feedbacks(user_id);
+CREATE INDEX idx_feedback_house_id ON feedbacks(house_id);
+CREATE INDEX idx_feedback_status ON feedbacks(status);
+CREATE INDEX idx_feedback_created_at ON feedbacks(created_at);
 
 CREATE TABLE feedback_comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -176,18 +209,20 @@ CREATE TABLE feedback_comments (
     is_internal BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_feedback_comment_feedback_id ON feedback_comments(feedback_id);
+CREATE INDEX idx_feedback_comment_user_id ON feedback_comments(user_id);
 
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL,
-    device_info JSONB,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT idx_refresh_token_expires CHECK (expires_at > created_at)
 );
 CREATE INDEX idx_refresh_token_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_token_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX idx_refresh_token_token_hash ON refresh_tokens(token_hash);
 
 CREATE TABLE household_head_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
