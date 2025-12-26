@@ -1,6 +1,6 @@
 import { t } from "elysia";
 import { enumToTypeBox } from "../helpers/enumHelper";
-import { FeeStatus } from "../models/enum";
+import { fee_status } from "../models/pgEnum";
 
 export const CreateInvoice = t.Object({
     house_id: t.String({ format: "uuid" }),
@@ -21,7 +21,7 @@ export const UpdateInvoice = t.Object({
     due_date: t.Optional(t.Date()),
     invoice_type: t.Optional(t.Number()),
     notes: t.Optional(t.String()),
-    status: t.Optional(enumToTypeBox(FeeStatus.enumValues)),
+    status: t.Optional(enumToTypeBox(fee_status.enumValues)),
     paid_at: t.Optional(t.Date()),
     confirmed_by: t.Optional(t.String({ format: "uuid" })),
 })

@@ -1,12 +1,12 @@
 import { t } from "elysia";
 import { enumToTypeBox } from "../helpers/enumHelper";
-import { NotificationTarget, NotificationType } from "../models/enum";
+import { notification_target, notification_type } from "../models/pgEnum";
 
 export const CreateNotificationBody = t.Object({
     title: t.String(),
     context: t.String(),
-    type: t.Optional(enumToTypeBox(NotificationType.enumValues)),
-    target: t.Optional(enumToTypeBox(NotificationTarget.enumValues)),
+    type: t.Optional(enumToTypeBox(notification_type.enumValues)),
+    target: t.Optional(enumToTypeBox(notification_target.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
     created_by: t.String({ format: "uuid" }),
 });
@@ -14,8 +14,8 @@ export const CreateNotificationBody = t.Object({
 export const CreateScheduledNotificationBody = t.Object({
     title: t.String(),
     context: t.String(),
-    type: t.Optional(enumToTypeBox(NotificationType.enumValues)),
-    target: t.Optional(enumToTypeBox(NotificationTarget.enumValues)),
+    type: t.Optional(enumToTypeBox(notification_type.enumValues)),
+    target: t.Optional(enumToTypeBox(notification_target.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
     scheduled_at: t.Date(),
     created_by: t.String({ format: "uuid" }),
