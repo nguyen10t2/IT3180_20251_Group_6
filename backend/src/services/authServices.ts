@@ -1,274 +1,311 @@
 import { db } from '../database/db';
-import { and, desc, eq, lt, count, gte, or } from 'drizzle-orm';
-import { Users } from '../models/users';
-import { RefreshToken, OTP, ResetPasswordToken } from '../models/auth';
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
-import { singleOrNotFound } from '../helpers/dataHelpers';
-import { UserRole } from '../models/user_role';
+import { and, desc, eq, lt, isNull } from 'drizzle-orm';
+import { userSchema } from '../models/userSchema';
+import { userRoleSchema } from '../models/userSchema';
+import { refreshTokenSchema } from '../models/authSchema';
+import Redis from 'ioredis';
+import client from '../helpers/redisHelpers';
+import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
 
-// Lấy thông tin user để đăng nhập (ko bao gồm mật khẩu)
+// Redis client cho OTP
+const redis = client;
+
+// ============================================
+// LOGIN SERVICE
+// ============================================
+
 export const loginService = async (email: string, password: string) => {
-  try {
-    const rows = await db.select({
-      id: Users.id,
-      email: Users.email,
-      password: Users.password,
-      role: UserRole.name,
-    })
-      .from(Users)
-      .leftJoin(UserRole, eq(Users.role, UserRole.id))
-      .where(eq(Users.email, email));
+  const rows = await db.select({
+    id: userSchema.id,
+    email: userSchema.email,
+    role: userRoleSchema.name,
+    status: userSchema.status,
+    email_verified: userSchema.email_verified,
+  })
+    .from(userSchema)
+    .leftJoin(userRoleSchema, eq(userSchema.role, userRoleSchema.id))
+    .where(and(
+      eq(userSchema.email, email),
+      isNull(userSchema.deleted_at)
+    ));
 
-    if (rows.length === 0) {
-      return { error: UNAUTHORIZED };
-    }
-
-    const user = rows[0];
-
-    const isMatch = await Bun.password.verify(password, user.password);
-
-    if (!isMatch) {
-      return { error: UNAUTHORIZED };
-    }
-
-    const { password: _, ...safeUser } = user;
-
-    return { data: safeUser };
-
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-// -- Refresh Token Services --
+// ============================================
+// REFRESH TOKEN SERVICES
+// ============================================
 
-// Lấy refresh token gần nhất của user
+// Lấy refresh token theo user_id
 export const getRefreshTokenByUserId = async (userId: string) => {
-  try {
-    const rows = await db.select()
-      .from(RefreshToken)
-      .where(eq(RefreshToken.user_id, userId))
-      .orderBy(desc(RefreshToken.expires_at))
-      .limit(1);
+  const rows = await db.select()
+    .from(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.user_id, userId))
+    .orderBy(desc(refreshTokenSchema.expires_at))
+    .limit(1);
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-// Lấy token theo giá trị token
-export const getRefreshTokenByToken = async (token: string) => {
-  try {
-    const rows = await db.select()
-      .from(RefreshToken)
-      .where(eq(RefreshToken.token, token))
-      .orderBy(desc(RefreshToken.expires_at))
-      .limit(1);
+// Lấy refresh token theo token hash
+export const getRefreshTokenByHash = async (tokenHash: string) => {
+  const rows = await db.select()
+    .from(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.token_hash, tokenHash))
+    .limit(1);
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
+};
+
+// Tạo refresh token mới
+export const createRefreshToken = async (userId: string, tokenHash: string, expiresAt: Date) => {
+  const [result] = await db.insert(refreshTokenSchema)
+    .values({
+      user_id: userId,
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+    })
+    .returning();
+
+  return { data: result };
+};
+
+// Xóa refresh token của user
+export const deleteRefreshTokensByUserId = async (userId: string) => {
+  await db.delete(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.user_id, userId));
+
+  return { data: 'Tokens deleted' };
+};
+
+// Xóa refresh token cụ thể
+export const deleteRefreshToken = async (tokenHash: string) => {
+  await db.delete(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.token_hash, tokenHash));
+
+  return { data: 'Token deleted' };
+};
+
+// Cleanup expired tokens
+export const cleanupExpiredTokens = async () => {
+  const now = new Date();
+  await db.delete(refreshTokenSchema)
+    .where(lt(refreshTokenSchema.expires_at, now));
+
+  return { data: 'Cleanup completed' };
+};
+
+// ============================================
+// OTP SERVICES (Redis-based)
+// ============================================
+
+const OTP_TTL = 5 * 60; // 5 phút
+const MAX_ATTEMPTS = 5;
+const RESEND_WINDOW = 10 * 60; // 10 phút
+const MAX_RESEND = 3;
+
+interface OTPData {
+  code: string;
+  createdAt: number;
+  attempts: number;
 }
 
-// Lưu refresh token mới
-export const createRefreshToken = async (userId: string, token: string, expiresAt: Date) => {
-  try {
-    const result = await db.insert(RefreshToken)
-      .values({
-        user_id: userId,
-        token: token,
-        expires_at: expiresAt,
-      })
-      .returning();
-
-    return { data: result[0] };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Xoá refresh token của user
-export const deleteRefreshTokenByUserId = async (userId: string) => {
-  try {
-    const result = await db.delete(RefreshToken)
-      .where(eq(RefreshToken.user_id, userId));
-
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Xoá các refresh token đã hết hạn
-export const cleanupExpiredTokens = async () => {
-  try {
-    const now = new Date();
-    const result = await db.delete(RefreshToken)
-      .where(lt(RefreshToken.expires_at, now));
-
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// -- Otp Services --
-
 // Tạo OTP mới
-export const createOtp = async (email: string, code: string, expires_at: Date) => {
-  try {
-    await db.insert(OTP)
-      .values({
-        email: email,
-        code,
-        expires_at: expires_at,
-      });
-    return { data: 'OTP created successfully' };
-  } catch (_) {
-    console.log(_);
-    
-    return { error: INTERNAL_SERVER_ERROR };
+export const createOtp = async (email: string) => {
+  const resendKey = `otp_resend:${email}`;
+  const otpKey = `otp:${email}`;
+
+  // Check resend limit
+  const resendCount = await redis.get(resendKey);
+  if (resendCount && parseInt(resendCount) >= MAX_RESEND) {
+    return {
+      data: null,
+      error: 'RESEND_LIMIT_EXCEEDED',
+      nextResendAt: await redis.ttl(resendKey)
+    };
   }
+
+  // Generate 6-digit OTP
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Store OTP with TTL
+  const otpData: OTPData = {
+    code,
+    createdAt: Date.now(),
+    attempts: 0
+  };
+
+  await redis.setex(otpKey, OTP_TTL, JSON.stringify(otpData));
+
+  // Increment resend counter
+  await redis.incr(resendKey);
+  await redis.expire(resendKey, RESEND_WINDOW);
+
+  return { data: { code, expiresIn: OTP_TTL } };
 };
 
-// Lấy Otp gần nhất bằng email
-export const getOtpByEmail = async (email: string) => {
-  try {
-    const rows = await db.select()
-      .from(OTP)
-      .where(
-        and(
-          eq(OTP.email, email),
-          eq(OTP.is_used, false)
-        )
-      )
-      .orderBy(desc(OTP.expires_at))
-      .limit(1);
+// Xác thực OTP
+export const verifyOtp = async (email: string, code: string) => {
+  const otpKey = `otp:${email}`;
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
+  const otpDataStr = await redis.get(otpKey);
+  if (!otpDataStr) {
+    return { data: null, error: 'OTP_EXPIRED' };
   }
+
+  const otpData: OTPData = JSON.parse(otpDataStr);
+
+  // Check attempts
+  if (otpData.attempts >= MAX_ATTEMPTS) {
+    await redis.del(otpKey);
+    return { data: null, error: 'MAX_ATTEMPTS_EXCEEDED' };
+  }
+
+  // Verify code
+  if (otpData.code !== code) {
+    otpData.attempts++;
+    await redis.setex(otpKey, OTP_TTL, JSON.stringify(otpData));
+    return {
+      data: null,
+      error: 'INVALID_OTP',
+      remainingAttempts: MAX_ATTEMPTS - otpData.attempts
+    };
+  }
+
+  // Success - delete OTP
+  await redis.del(otpKey);
+  await redis.del(`otp_resend:${email}`);
+
+  return { data: { verified: true } };
 };
 
-// Xóa tất cả Otp bằng email
-export const deleteOtpByEmail = async (email: string) => {
-  try {
-    const result = await db.delete(OTP)
-      .where(eq(OTP.email, email));
+// Lấy thông tin resend
+export const getOtpResendInfo = async (email: string) => {
+  const resendKey = `otp_resend:${email}`;
+  const count = await redis.get(resendKey);
+  const ttl = await redis.ttl(resendKey);
 
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return {
+    data: {
+      remaining: MAX_RESEND - (count ? parseInt(count) : 0),
+      nextResendAt: ttl > 0 ? ttl : null
+    }
+  };
 };
 
-export const updateOtpByEmail = async (email: string) => {
-  try {
-    await db.update(OTP)
-      .set({
-        is_used: true,
-      })
-      .where(
-        and(
-          eq(OTP.email, email),
-          eq(OTP.is_used, false)
-        )
-      );
-
-    return { data: 'OTP updated successfully' };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+// Xóa OTP (khi không cần nữa)
+export const deleteOtp = async (email: string) => {
+  await redis.del(`otp:${email}`);
+  await redis.del(`otp_resend:${email}`);
+  return { data: 'OTP deleted' };
 };
 
-// Xoá các Otp đã hết hạn
-export const cleanupExpiredOtps = async () => {
-  try {
-    const now = new Date();
-    await db.delete(OTP)
-      .where(
-        or(
-          lt(OTP.expires_at, now),
-          eq(OTP.is_used, true)
-        )
-      );
+// ============================================
+// RESET PASSWORD TOKEN SERVICES (Redis-based)
+// ============================================
 
-    return { data: 'Expired OTPs cleaned up successfully' };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+const RESET_TOKEN_TTL = 15 * 60; // 15 phút
+
+// Tạo reset password token
+export const createResetPasswordToken = async (email: string, token: string) => {
+  const key = `reset_password:${email}`;
+
+  await redis.setex(key, RESET_TOKEN_TTL, token);
+
+  return { data: { token, expiresIn: RESET_TOKEN_TTL } };
 };
 
-// Đếm số lần gửi lại OTP trong 10 phút gần nhất của email
-export const resendCount = async (email: string) => {
-  try {
-    const now = new Date();
-    const pastTenMinutes = new Date(now.getTime() - 10 * 60000);
-
-    const [{ value }] = await db.select({ value: count() })
-      .from(OTP)
-      .where(and(
-        eq(OTP.email, email),
-        gte(OTP.created_at, pastTenMinutes)
-      ));
-
-    return { data: value };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// -- Reset Password Token Services --
-
-// Tạo reset password token mới
-export const createResetPassword = async (email: string, token: string, expiresAt: Date) => {
-  try {
-    const result = await db.insert(ResetPasswordToken)
-      .values({
-        email: email,
-        token: token,
-        expires_at: expiresAt,
-      })
-      .returning();
-    return { data: result[0] };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Lấy reset password token gần nhất bằng email
+// Lấy reset password token
 export const getResetPasswordToken = async (email: string) => {
-  try {
-    const rows = await db.select()
-      .from(ResetPasswordToken)
-      .where(and(
-        eq(ResetPasswordToken.email, email),
-      ))
-      .orderBy(desc(ResetPasswordToken.expires_at))
-      .limit(1);
+  const key = `reset_password:${email}`;
+  const token = await redis.get(key);
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: token };
 };
 
-// Xoá reset password token bằng email
-export const deleteResetPasswordTokenByEmail = async (email: string) => {
-  try {
-    const pastTenMinutes = new Date(Date.now() - 10 * 60000);
-    const result = await db.delete(ResetPasswordToken)
-      .where(
-        or(
-          eq(ResetPasswordToken.email, email),
-          lt(ResetPasswordToken.expires_at, pastTenMinutes)
-        )
-      );
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
+// Xác thực reset password token
+export const verifyResetPasswordToken = async (email: string, token: string) => {
+  const key = `reset_password:${email}`;
+  const storedToken = await redis.get(key);
+
+  if (!storedToken) {
+    return { data: null, error: 'TOKEN_EXPIRED' };
   }
+
+  if (storedToken !== token) {
+    return { data: null, error: 'INVALID_TOKEN' };
+  }
+
+  return { data: { verified: true } };
+};
+
+// Xóa reset password token (sau khi đổi mật khẩu thành công)
+export const deleteResetPasswordToken = async (email: string) => {
+  await redis.del(`reset_password:${email}`);
+  return { data: 'Token deleted' };
+};
+
+// ============================================
+// ACCOUNT LOCK SERVICES (Redis-based)
+// ============================================
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION = 15 * 60; // 15 phút
+
+// Kiểm tra account có bị lock không
+export const isAccountLocked = async (email: string) => {
+  const key = `account_lock:${email}`;
+  const lockUntil = await redis.get(key);
+
+  if (!lockUntil) {
+    return { data: { locked: false } };
+  }
+
+  const lockTime = parseInt(lockUntil);
+  if (Date.now() > lockTime) {
+    await redis.del(key);
+    await redis.del(`login_attempts:${email}`);
+    return { data: { locked: false } };
+  }
+
+  return {
+    data: {
+      locked: true,
+      unlockAt: new Date(lockTime)
+    }
+  };
+};
+
+// Ghi nhận đăng nhập thất bại
+export const recordFailedLogin = async (email: string) => {
+  const attemptsKey = `login_attempts:${email}`;
+  const lockKey = `account_lock:${email}`;
+
+  const attempts = await redis.incr(attemptsKey);
+  await redis.expire(attemptsKey, LOCK_DURATION);
+
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    const lockUntil = Date.now() + LOCK_DURATION * 1000;
+    await redis.setex(lockKey, LOCK_DURATION, lockUntil.toString());
+    return {
+      data: {
+        locked: true,
+        unlockAt: new Date(lockUntil)
+      }
+    };
+  }
+
+  return {
+    data: {
+      locked: false,
+      remainingAttempts: MAX_LOGIN_ATTEMPTS - attempts
+    }
+  };
+};
+
+// Reset login attempts (sau khi đăng nhập thành công)
+export const resetLoginAttempts = async (email: string) => {
+  await redis.del(`login_attempts:${email}`);
+  await redis.del(`account_lock:${email}`);
+  return { data: 'Reset completed' };
 };
