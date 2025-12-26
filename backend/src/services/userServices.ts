@@ -52,7 +52,7 @@ export const updateUserPassword = async (userId: string, newPassword: string) =>
       eq(userSchema.id, userId),
       isNull(userSchema.deleted_at)
     ));
-  return { data: 'Password updated successfully' };
+  return { message: 'Password updated successfully' };
 };
 
 // Lấy thông tin người dùng theo ID (không bao gồm mật khẩu)
