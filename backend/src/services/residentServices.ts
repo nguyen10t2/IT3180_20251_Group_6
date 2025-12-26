@@ -26,6 +26,18 @@ export const getAll = async () => {
   }
 };
 
+export const getResidentByHouseId = async (house_id: string) => {
+  try {
+    const rows = await db.select()
+      .from(Resident)
+      .where(eq(Resident.house_id, house_id));
+      
+    return { data: rows };
+  } catch (_) {
+    return { error: INTERNAL_SERVER_ERROR };
+  }
+};
+
 export const getResidentByPhone = async (phone: string) => {
   try {
     const rows = await db.select()
