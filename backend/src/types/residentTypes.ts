@@ -1,15 +1,15 @@
 import { t } from "elysia";
 import { enumToTypeBox } from "../helpers/enumHelper";
-import { Gender, ResidentStatus } from "../models/enum";
+import { gender, resident_status } from "../models/pgEnum";
 
 export const CreateResidentBody = t.Object({
     full_name: t.String(),
     id_card: t.String(),
     date_of_birth: t.Date(),
     phone: t.String(),
-    gender: enumToTypeBox(Gender.enumValues),
+    gender: enumToTypeBox(gender.enumValues),
     role: t.Number(),
-    status: enumToTypeBox(ResidentStatus.enumValues),
+    status: enumToTypeBox(resident_status.enumValues),
     house_id: t.Optional(t.String({ format: "uuid" })),
     occupation: t.Optional(t.String()),
 });
@@ -19,9 +19,9 @@ export const UpdateResidentBody = t.Object({
     id_card: t.Optional(t.String()),
     date_of_birth: t.Optional(t.Date()),
     phone: t.String(),
-    gender: t.Optional(enumToTypeBox(Gender.enumValues)),
+    gender: t.Optional(enumToTypeBox(gender.enumValues)),
     role: t.Optional(t.Number()),
-    status: t.Optional(enumToTypeBox(ResidentStatus.enumValues)),
+    status: t.Optional(enumToTypeBox(resident_status.enumValues)),
     house_id: t.Optional(t.String({ format: "uuid" })),
     occupation: t.Optional(t.String()),
 });

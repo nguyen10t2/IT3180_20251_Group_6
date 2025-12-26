@@ -11,13 +11,13 @@ export const ResetPasswordBody = t.Object({
 });
 
 export const RegisterBody = t.Object({
-    email: t.String({ format: "email"}),
+    email: t.String({ format: "email" }),
     password: t.String(),
     name: t.String(),
 });
 
 export const LoginBody = t.Object({
-    email: t.String({ format: "email"}),
+    email: t.String({ format: "email" }),
     password: t.String(),
 });
 
