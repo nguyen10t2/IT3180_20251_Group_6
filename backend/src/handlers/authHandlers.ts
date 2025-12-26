@@ -1,6 +1,6 @@
 import { Context, Elysia, t } from "elysia"
 import { createRefreshToken, deleteRefreshTokenByUserId, loginService } from "../services/authServices";
-import { ErrorStatus, HttpError } from "../constants/errorContant";
+import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { LoginBody, RegisterBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
@@ -10,71 +10,71 @@ import { authenticationPlugins } from "../plugins/authenticationPlugins";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post("/login", async ({ body, cookie }) => {
-    const { email, password } = body;
-    const res = await loginService(email, password);
-    if (res.error) throw new HttpError(ErrorStatus[res.error], res.error);
+    try {
+      const { email, password } = body;
+      const res = await loginService(email, password);
+      const user = res.data!;
+      const accessToken = await getToken(user, ACCESSTOKEN_TTL);
 
-    const user = res.data!;
-    const accessToken = await getToken(user, ACCESSTOKEN_TTL);
+      // Create Refresh Token Randomly
+      const refreshToken = await generateRandomString(64);
 
-    // Create Refresh Token Randomly
-    const refreshToken = await generateRandomString(64);
+      const save = await createRefreshToken(
+        user.id,
+        refreshToken,
+        new Date(Date.now() + REFRESHTOKEN_TTL_NUMBER)
+      );
 
-    const save = await createRefreshToken(
-      user.id,
-      refreshToken,
-      new Date(Date.now() + REFRESHTOKEN_TTL_NUMBER)
-    );
+      cookie.refreshToken.set({
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: REFRESHTOKEN_TTL_NUMBER - 1000,
+        value: refreshToken,
+      });
 
-    if (save.error) throw new HttpError(ErrorStatus[save.error], save.error);
-
-    cookie.refreshToken.set({
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: REFRESHTOKEN_TTL_NUMBER - 1000,
-      value: refreshToken,
-    });
-
-    return { accessToken };
+      return { accessToken };
+    }
+    catch (_) {
+      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+    }
   }, {
     body: LoginBody,
   })
   .post("/register", async ({ body, status }) => {
-    const { email, password, name } = body;
+    try {
+      const { email, password, name } = body;
 
-    const exist = await isExistingUserByEmail(email);
+      const exist = await isExistingUserByEmail(email);
+      if (exist.data) {
+        return status(409, { message: 'Email đã tồn tại, vui lòng nhập lại !' });
+      }
 
-    if (exist.error) {
-      throw new HttpError(ErrorStatus[exist.error], exist.error);
+      const hashPass = await hashedPassword(password);
+      const res = await createUser(email, hashPass, name);
+
+      return status(201, { message: 'Đã tạo thành công người dùng', data: res.data });
     }
-    if (exist.data) {
-      return status(409, { message: 'Email đã tồn tại, vui lòng nhập lại !' });
+    catch (_) {
+      throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
-
-    const hashPass = await hashedPassword(password);
-    const res = await createUser(email, hashPass, name);
-
-    if (res.error) {
-      throw new HttpError(ErrorStatus[res.error], res.error);
-    }
-
-    return status(201, { message: 'Đã tạo thành công người dùng', data: res.data });
 
   }, {
     body: RegisterBody,
   })
   .use(authenticationPlugins)
   .post('/logout', async ({ cookie, user, status }) => {
-    cookie.refreshToken.set({
-      value: '',
-      maxAge: 0
-    })
+    try {
+      cookie.refreshToken.set({
+        value: '',
+        maxAge: 0
+      })
 
-    const userId = user.id!;
-    const res = await deleteRefreshTokenByUserId(userId);
-    if (res.error) {
-      throw new HttpError(ErrorStatus[res.error], res.error);
+      const userId = user.id!;
+      const res = await deleteRefreshTokenByUserId(userId);
+      return status(200, { message: 'Logout thành công' })
     }
-    return status(200, { message: 'Logout thành công' })
+    catch (_) {
+      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+    }
   })
