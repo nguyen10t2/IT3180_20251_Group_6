@@ -3,8 +3,6 @@ import Redis from "ioredis";
 
 const client = new Redis(Bun.env.UPSTASH_REDIS_URL!);
 
-console.log("UPSTASH:", Bun.env.UPSTASH_REDIS_URL);
-
 client.on("error", (err) => {
   console.error("Redis error:", err);
 });
