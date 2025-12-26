@@ -4,6 +4,7 @@ import { ErrorStatus, HttpError } from "../constants/errorContant";
 import { LoginBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER, REFRESHTOKEN_TTL_STRING } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
+import { generateRandomString } from "../helpers/password";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post("/login", async ({ body, cookie }) => {
@@ -13,7 +14,9 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
     const user = res.data!;
     const accessToken = await getToken(user, ACCESSTOKEN_TTL);
-    const refreshToken = await getToken({ id: user.id }, REFRESHTOKEN_TTL_STRING);
+    
+    // Create Refresh Token Randomly
+    const refreshToken = await generateRandomString(64);
 
     const save = await createRefreshToken(
       user.id,
@@ -34,7 +37,4 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     return { accessToken };
   }, {
     body: LoginBody,
-    cookie: t.Object({
-      refreshToken: t.Optional(t.String()),
-    }),
   })

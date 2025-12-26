@@ -5,6 +5,7 @@ import { ErrorStatus, HttpError } from "./constants/errorContant";
 import { createUser, getUserById } from "./services/userServices";
 import { authenticationPlugins } from "./plugins/authenticationPlugins";
 import openapi from "@elysiajs/openapi";
+import { authorizationPlugins } from "./plugins/authorizationPlugins";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -20,29 +21,10 @@ new Elysia()
     return status(500, { message: "Internal Server Error" });
   })
   .get("/", () => "Hello Elysia")
-  .post("/create", async ({ body, set }) => {
-    const res = await createUser(body.email, body.password, body.name);
-    if (res.error) {
-      set.status = ErrorStatus[res.error];
-      return { message: res.error };
-    }
-    set.status = 200;
-    return { message: res.data };
-  }, {
-    body: t.Object({
-      email: t.String(),
-      password: t.String(),
-      name: t.String(),
-    }),
-  })
   .use(authRoutes)
-  .use(authenticationPlugins)
+  .use(authorizationPlugins("manager"))
   .get("/profile", async ({ user }) => {
-    const userData = await getUserById(user?.id!);
-    if (userData.error) {
-      return status(ErrorStatus[userData.error], { message: userData.error });
-    }
-    return { data: userData.data };
+    return await getUserById(user.id!);
   })
   .listen({ hostname, port });
 
