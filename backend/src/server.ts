@@ -25,23 +25,7 @@ new Elysia()
   })
   .get("/", () => "Hello Elysia")
   .use(authRoutes)
-  .post("/register", async ({ body }) => {
-    try {
-      const { email, password, name } = body;
-      const hashed = await Bun.password.hash(password);
-      const res = await createUser(email, hashed, name);
-      return res.data;
-    } catch (error) {
-      console.error(error);
-      throw new HttpError(ErrorStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
-    }
-  }, {
-    body: RegisterBody,
-  })
   .use(authorizationPlugins("resident"))
-  .get("/profile", async ({ user }) => {
-    return await getUserById(user.id!);
-  })
   .listen({ hostname, port });
 
 console.log(

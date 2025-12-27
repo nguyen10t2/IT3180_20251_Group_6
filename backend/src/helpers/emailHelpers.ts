@@ -22,7 +22,7 @@ export class EmailHelper {
     const htmlBody = `
             <h2>Xác thực email của bạn</h2>
             <p>Mã OTP của bạn là: <strong>${otp}</strong></p>
-            <p>OTP của bạn sẽ hết hạn trong 10 phút</p>
+            <p>OTP của bạn sẽ hết hạn trong 1 phút</p>
         `;
 
     const mailOptions = {

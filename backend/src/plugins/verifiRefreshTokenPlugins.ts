@@ -1,20 +1,23 @@
 import Elysia from "elysia";
 import { HttpError } from "../constants/errorContant";
-import { getRefreshTokenByToken } from "../services/authServices";
+import { getRefreshTokenByHash } from "../services/authServices";
 
 export const verifiRefreshTokenPlugins = (app: Elysia) => app
   .derive(async ({ cookie }) => {
-    const refreshToken = cookie.refreshToken.value as string | undefined;
+    try {
+      const refreshToken = cookie.refreshToken.value as string | undefined;
+      if (!refreshToken) {
+        throw new HttpError(401, "Unauthorized: No refresh token provided");
+      }
 
-    if (!refreshToken) {
-      throw new HttpError(401, "Refresh token is required");
+      const tokenData = await getRefreshTokenByHash(refreshToken);
+      if (!tokenData.data || Date.now() > tokenData.data.expires_at.getTime()) {
+        throw new HttpError(401, "Unauthorized: Invalid refresh token");
+      }
+
+      return { userId: tokenData.data.user_id };
+    } catch (error) {
+      console.error(error);
+      throw new HttpError(500, "Internal Server Error");
     }
-
-    const res = await getRefreshTokenByToken(refreshToken);
-
-    if (res.error || res.data!.expires_at < new Date()) {
-      throw new HttpError(401, "Invalid refresh token");
-    }
-    
-    return { refreshTokenData: res.data! };
   });
