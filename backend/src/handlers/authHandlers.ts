@@ -15,7 +15,7 @@ import client from "../helpers/redisHelpers";
 import * as jose from "jose";
 import { deletePendingUser, getPendingUser } from "../helpers/pendingUserHelpers";
 
-export const authRoutes = new Elysia({ prefix: "/auth" })
+export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth'] } })
   .post("/login", async ({ body, cookie }) => {
     try {
       const { email, password } = body;
