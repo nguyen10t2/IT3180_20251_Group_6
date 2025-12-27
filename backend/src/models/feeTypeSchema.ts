@@ -23,9 +23,9 @@ export const feeTypeSchema = pgTable("fee_types", {
   is_active: boolean("is_active").notNull().default(true),
   effective_from: date("effective_from"),
   effective_to: date("effective_to"),
-  deleted_at: timestamp("deleted_at"),
-  created_at: timestamp("created_at").notNull().default(sql`now()`),
-  updated_at: timestamp("updated_at").notNull().default(sql`now()`),
+  deleted_at: timestamp("deleted_at", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [
   unique("unique_fee_name_active").on(table.name, table.deleted_at),
   index("idx_fee_name").on(table.name),

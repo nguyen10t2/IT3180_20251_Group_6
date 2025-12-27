@@ -30,7 +30,7 @@ export const invoiceSchema = pgTable('invoices', {
   payment_note: varchar('payment_note', { length: 50 }),
   confirmed_by: uuid('confirmed_by').references(() => userSchema.id, { onDelete: 'set null' }),
   notes: text('notes'),
-  deleted_at: timestamp('deleted_at'),
+  deleted_at: timestamp('deleted_at', { withTimezone: true }),
   created_by: uuid('created_by').notNull().references(() => userSchema.id, { onDelete: 'set null' }),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

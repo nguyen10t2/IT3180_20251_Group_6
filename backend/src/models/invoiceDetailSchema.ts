@@ -19,7 +19,7 @@ export const invoiceDetailSchema = pgTable("invoice_detail", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   notes: text('notes'),
-  created_at: timestamp('created_at').notNull().default(sql`now()`),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [
   index("idx_invoice_detail_invoice_id").on(table.invoice_id),
   index("idx_invoice_detail_fee_id").on(table.fee_id),

@@ -16,7 +16,7 @@ export const feedbackCommentSchema = pgTable("feedback_comments", {
   user_id: uuid("user_id").notNull().references(() => userSchema.id, { onDelete: "restrict" }),
   content: text("content").notNull(),
   is_internal: boolean("is_internal").notNull().default(false),
-  created_at: timestamp("created_at").default(sql`now()`),
+  created_at: timestamp("created_at", { withTimezone: true }).default(sql`now()`),
 }, (table) => [
   index("idx_feedback_comment_feedback_id").on(table.feedback_id),
   index("idx_feedback_comment_user_id").on(table.user_id),
