@@ -7,6 +7,7 @@ import { authenticationPlugins } from "./plugins/authenticationPlugins";
 import openapi from "@elysiajs/openapi";
 import { authorizationPlugins } from "./plugins/authorizationPlugins";
 import { RegisterBody } from "./types/authTypes";
+import { notificationRoutes } from "./handlers/notificationHandler";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -25,6 +26,7 @@ new Elysia()
   })
   .get("/", () => "Hello Elysia")
   .use(authRoutes)
+  .use(notificationRoutes)
   .post("/register", async ({ body }) => {
     try {
       const { email, password, name } = body;
