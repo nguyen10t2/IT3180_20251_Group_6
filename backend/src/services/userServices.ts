@@ -52,7 +52,15 @@ export const updateUserPassword = async (userId: string, newPassword: string) =>
       eq(userSchema.id, userId),
       isNull(userSchema.deleted_at)
     ));
-  return { data: 'Password updated successfully' };
+};
+
+export const updateUserPasswordByEmail = async (email: string, newPassword: string) => {
+  await db.update(userSchema)
+    .set({ hashed_password: newPassword, updated_at: new Date() })
+    .where(and(
+      eq(userSchema.email, email),
+      isNull(userSchema.deleted_at)
+    ));
 };
 
 // Lấy thông tin người dùng theo ID (không bao gồm mật khẩu)
