@@ -7,7 +7,5 @@ client.on("error", (err) => {
   console.error("Redis error:", err);
 });
 
-await client.set("foo", "bar", "EX", 60);
-
 export default client;
 export const redisPlugin = new Elysia().decorate("redis", client);
