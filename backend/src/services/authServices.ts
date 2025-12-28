@@ -16,6 +16,7 @@ const redis = client;
 export const loginService = async (email: string) => {
   const rows = await db.select({
     id: userSchema.id,
+    email: userSchema.email,
     role: userRoleSchema.name,
     hashed_password: userSchema.hashed_password
   })

@@ -4,6 +4,7 @@ import { residentSchema, type NewResident } from '../models/residentSchema';
 import { houseSchema } from '../models/houseSchema';
 import { userSchema } from '../models/userSchema';
 import type { ResidentStatusEnum } from '../models/pgEnum';
+import { UpdateResidentBodyType } from '../types/residentTypes';
 
 // Lấy tất cả cư dân (chưa bị xóa)
 export const getAll = async () => {
@@ -125,7 +126,7 @@ export const createResident = async (data: NewResident) => {
   const [result] = await db.insert(residentSchema)
     .values({
       ...data,
-      move_in_date: data.move_in_date ?? new Date().toISOString().split('T')[0]
+      move_in_date: data.move_in_date ?? new Date(),
     })
     .returning();
 
@@ -133,27 +134,14 @@ export const createResident = async (data: NewResident) => {
 };
 
 // Cập nhật cư dân
-export const updateResident = async (id: string, data: Partial<NewResident>) => {
-  const updateData: Partial<NewResident> = {};
-
-  for (const key in data) {
-    const value = data[key as keyof typeof data];
-    if (value !== undefined) {
-      (updateData as any)[key] = value;
-    }
-  }
-
+export const updateResident = async (id: string, data: UpdateResidentBodyType) => {
   const [result] = await db.update(residentSchema)
-    .set({
-      ...updateData,
-      updated_at: new Date()
-    })
+    .set(data)
     .where(and(
       eq(residentSchema.id, id),
       isNull(residentSchema.deleted_at)
     ))
     .returning();
-
   return { data: result ?? null };
 };
 
@@ -171,7 +159,7 @@ export const moveOutResident = async (id: string, reason: string) => {
   const [result] = await db.update(residentSchema)
     .set({
       residence_status: 'dachuyendi',
-      move_out_date: new Date().toISOString().split('T')[0],
+      move_out_date: new Date(),
       move_out_reason: reason,
       house_id: null,
       updated_at: new Date()

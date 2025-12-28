@@ -3,7 +3,7 @@ import { db } from "../database/db";
 import { houseSchema, type NewHouse } from "../models/houseSchema";
 import { residentSchema } from "../models/residentSchema";
 import { houseHoldHeadHistorySchema } from "../models/houseHoldHeadHistorySchema";
-import { CreateHouseBodyType } from "../types/houseTypes";
+import { CreateHouseBodyType, UpdateHouseBodyType } from "../types/houseTypes";
 
 // Lấy tất cả căn hộ (chưa bị xóa)
 export const getAll = async () => {
@@ -94,19 +94,12 @@ export const createHouse = async (data: CreateHouseBodyType) => {
 };
 
 // Cập nhật căn hộ
-export const updateHouse = async (id: string, data: Partial<NewHouse>) => {
-  const updateData: Partial<NewHouse> = {};
-
-  for (const key in data) {
-    const value = data[key as keyof typeof data];
-    if (value !== undefined) {
-      (updateData as any)[key] = value;
-    }
-  }
+export const updateHouse = async (id: string, data: UpdateHouseBodyType) => {
 
   const [result] = await db.update(houseSchema)
     .set({
-      ...updateData,
+      ...data,
+      area: data.area ? data.area.toString() : undefined,
       updated_at: new Date(),
     })
     .where(and(
