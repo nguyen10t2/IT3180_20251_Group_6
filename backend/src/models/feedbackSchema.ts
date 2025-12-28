@@ -11,7 +11,7 @@ import { userSchema } from "./userSchema";
 import { houseSchema } from "./houseSchema";
 import { feedback_type, feedback_priority, feedback_status } from "./pgEnum";
 
-export const feedbackSchema = pgTable("feedback", {
+export const feedbackSchema = pgTable("feedbacks", {
   id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
   user_id: uuid("user_id").notNull().references(() => userSchema.id, { onDelete: "restrict" }),
   house_id: uuid("house_id").notNull().references(() => houseSchema.id, { onDelete: "set null" }),
