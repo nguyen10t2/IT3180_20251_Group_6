@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
 import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
-import { LoginBody, ResetPasswordBody } from "../types/authTypes";
+import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
 import { generateRandomString, hashedPassword, verifyPassword } from "../helpers/password";
@@ -86,13 +86,13 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
   })
   .post("/register/accept", async ({ body, status }) => {
     try {
-      const { email, otp } = body;
+      const { email, code } = body;
       const otpData: OTPData | null = await getOtpFromRedis(email);
       if (!otpData) {
         return status(400, { message: 'OTP không hợp lệ hoặc đã hết hạn' });
       }
 
-      if (otpData.code !== otp) {
+      if (otpData.code !== code) {
         return status(400, { message: 'OTP không đúng, vui lòng thử lại' });
       }
       
@@ -113,10 +113,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   }, {
-    body: t.Object({
-      email: t.String({ format: 'email' }),
-      otp: t.String({ minLength: 6, maxLength: 6 }),
-    })
+    body: OtpBody,
   })
   .post("/resend-otp", async ({ body, status }) => {
     try {
@@ -172,13 +169,13 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
   })
   .post("/forgot-password/accept", async ({ body, status }) => {
     try {
-      const { email, otp } = body;
+      const { email, code } = body;
       const otpData: OTPData | null = await getOtpFromRedis(email);
       if (!otpData) {
         return status(400, { message: 'OTP không hợp lệ hoặc đã hết hạn' });
       }
 
-      if (otpData.code !== otp) {
+      if (otpData.code !== code) {
         return status(400, { message: 'OTP không đúng, vui lòng thử lại' });
       }
 
@@ -200,10 +197,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   }, {
-    body: t.Object({
-      email: t.String({ format: 'email' }),
-      otp: t.String({ minLength: 6, maxLength: 6 }),
-    })
+    body: OtpBody,
   })
   .post("/reset-password", async ({ body, status }) => {
     try {
