@@ -1,14 +1,13 @@
 import { Elysia, status, t } from "elysia";
 import { pluginDB } from "./database";
 import { authRoutes } from "./handlers/authHandlers";
-import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "./constants/errorContant";
-import { createUser, getUserById } from "./services/userServices";
-import { authenticationPlugins } from "./plugins/authenticationPlugins";
+import { HttpError} from "./constants/errorContant";
 import openapi from "@elysiajs/openapi";
 import { authorizationPlugins } from "./plugins/authorizationPlugins";
 import { RegisterBody } from "./types/authTypes";
 import { userRoutes } from "./handlers/userHandlers";
 import { notificationRoutes } from "./handlers/notificationHandler";
+import { residentRoutes } from "./handlers/residentHandlers";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -21,14 +20,15 @@ new Elysia()
       return status(error.status, { message: error.body });
     }
 
-    if (code === 'VALIDATION') return status(400, { message: "Thông tin không hợp lệ !" });
+    if (code === 'VALIDATION') return status(400, { message: error.message });
 
     return status(500, { message: "Internal Server Error" });
   })
-  .get("/", () => "Hello Elysia", { detail: { tags: ['Root'] } })
+  .get("/", ({ redirect }) => redirect("/openapi"), { detail: { tags: ['Root'] } })
   .use(authRoutes)
   .use(authorizationPlugins("resident"))
   .use(userRoutes)
+  .use(residentRoutes)
   .use(notificationRoutes)
   .listen({ hostname, port });
 

@@ -75,7 +75,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
           console.error("Lỗi khi gửi OTP", error);
         }
       })();
-      return status(201, { message: 'Đăng kí thành công' });
+      return status(201, { message: 'Gửi đăng kí thành công, vui lòng check email' });
     }
     catch (error) {
       console.error(error);
