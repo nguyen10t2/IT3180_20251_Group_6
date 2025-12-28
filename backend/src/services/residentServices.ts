@@ -135,7 +135,6 @@ export const createResident = async (data: NewResident) => {
 
 // Cập nhật cư dân
 export const updateResident = async (id: string, data: UpdateResidentBodyType) => {
-
   const [result] = await db.update(residentSchema)
     .set(data)
     .where(and(
@@ -143,7 +142,6 @@ export const updateResident = async (id: string, data: UpdateResidentBodyType) =
       isNull(residentSchema.deleted_at)
     ))
     .returning();
-
   return { data: result ?? null };
 };
 
