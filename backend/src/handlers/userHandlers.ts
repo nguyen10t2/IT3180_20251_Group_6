@@ -23,23 +23,22 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
     }
   })
   .post("/changePass", async ({ body, user, status }) => {
-
     try {
       const userEmail = user.email!;
       const userId = user.id!;
-
+      
       const userInf = await getUserWithPasswordByEmail(userEmail);
 
       const oldHashedPass = userInf.data.hashed_password;
-
-      const isOldPass = await verifyPassword(oldHashedPass, body.old_password);
+      
+      const isOldPass = await verifyPassword(body.old_password, oldHashedPass);
 
       if (!isOldPass)
         return status(401, { message: 'Mật khẩu cũ không đúng' });
-
+      
       const newHashedPass = await hashedPassword(body.new_password);
-      return await updateUserPassword(userId, newHashedPass);
-
+      await updateUserPassword(userId, newHashedPass);
+      return status(200, { message: 'Đổi mật khẩu thành công' });
     } catch (error) {
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
