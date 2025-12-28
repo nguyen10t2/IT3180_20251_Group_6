@@ -22,7 +22,7 @@ export const UpdateResidentBody = t.Object({
     phone: t.Optional(t.String()),
     gender: t.Optional(enumToTypeBox(gender.enumValues)),
     role: t.Optional(t.Number()),
-    status: t.Optional(enumToTypeBox(resident_status.enumValues)),
+    residence_status: t.Optional(enumToTypeBox(resident_status.enumValues)),
     house_id: t.Optional(t.String({ format: "uuid" })),
     occupation: t.Optional(t.String()),
 });
