@@ -24,27 +24,9 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
 			throw new HttpError(500, INTERNAL_SERVER_ERROR);
 		}
 	})
-	.post("/createFeedback", async ({ user, body, status }) => {
+	.post("/createFeedback", async ({ body, status }) => {
 		try {
-			const userId = user.id!;
-
-			const resident = await getResidentByUserId(userId);
-
-			if (!resident.data)
-				return status(403, { message: 'Tài khoản của bạn không thể gửi phản hồi do chưa đăng ký làm cư dân' });
-
-			const houseId = resident.data.house_id;
-			if (!houseId || houseId == null)
-				return status(400, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu để gửi phản hồi' });
-
-			const formattedData = {
-				user_id: userId,
-				house_id: houseId,
-				priority: body.priority ?? "low",
-				...body
-			}
-
-			const res = await createFeedback(formattedData);
+			const res = await createFeedback(body);
 			if (res.data)
 				return status(200, { message: 'Gửi phản hồi thành công' })
 		}

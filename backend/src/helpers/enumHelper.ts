@@ -9,7 +9,7 @@ export const enumToTypeBox = <T extends readonly [string, ...string[]]>(
       T[number],
       T[number]
     >, {
-      error: errorMsg ?? `Must be one of: ${values.join(", ")}`,
+      error: errorMsg ?? `Priority must be one of: ${values.join(", ")}`,
     }
   );
 };
