@@ -25,7 +25,7 @@ new Elysia()
 
     return status(500, { message: "Internal Server Error" });
   })
-  .get("/", () => "Hello Elysia", { detail: { tags: ['Root'] } })
+  .get("/", ({ redirect }) => redirect("/openapi"), { detail: { tags: ['Root'] } })
   .use(authRoutes)
   .use(authorizationPlugins("resident"))
   .use(userRoutes)

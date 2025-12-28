@@ -142,7 +142,8 @@ export const createUser = async (email: string, hashedPassword: string, fullName
     .values({
       email,
       hashed_password: hashedPassword,
-      full_name: fullName
+      full_name: fullName,
+      email_verified: true,
     })
     .returning();
 
