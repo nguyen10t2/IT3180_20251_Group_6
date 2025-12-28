@@ -1,5 +1,5 @@
 import { room_type } from "../models/pgEnum";
-import { t } from "elysia";
+import { t, Static } from "elysia";
 import { enumToTypeBox } from "../helpers/enumHelper";
 
 export const UpdateHouseBody = t.Object({
@@ -16,7 +16,11 @@ export const UpdateHouseBody = t.Object({
 export const CreateHouseBody = t.Object({
   room_number: t.String(),
   room_type: enumToTypeBox(room_type.enumValues),
+  building: t.String(),
   area: t.Optional(t.Numeric({ precision: 10, scale: 2 })),
   head_resident_id: t.Optional(t.String({ format: 'uuid' })),
   notes: t.Optional(t.String()),
-})
+});
+
+export type UpdateHouseBodyType = Static<typeof UpdateHouseBody>;
+export type CreateHouseBodyType = Static<typeof CreateHouseBody>;

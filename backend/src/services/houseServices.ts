@@ -3,6 +3,7 @@ import { db } from "../database/db";
 import { houseSchema, type NewHouse } from "../models/houseSchema";
 import { residentSchema } from "../models/residentSchema";
 import { houseHoldHeadHistorySchema } from "../models/houseHoldHeadHistorySchema";
+import { CreateHouseBodyType } from "../types/houseTypes";
 
 // Lấy tất cả căn hộ (chưa bị xóa)
 export const getAll = async () => {
@@ -63,14 +64,7 @@ export const getHouseById = async (id: string) => {
 };
 
 // Tạo căn hộ mới
-export const createHouse = async (data: {
-  room_number: string;
-  room_type: string;
-  building?: string;
-  area: string;
-  head_resident_id?: string | null;
-  notes?: string | null;
-}) => {
+export const createHouse = async (data: CreateHouseBodyType) => {
   let headResidentId = null;
 
   if (data.head_resident_id) {
@@ -91,7 +85,7 @@ export const createHouse = async (data: {
     room_number: data.room_number,
     room_type: data.room_type,
     building: data.building,
-    area: data.area,
+    area: data.area?.toString() ?? '0',
     head_resident_id: headResidentId,
     notes: data.notes ?? null,
   }).returning();

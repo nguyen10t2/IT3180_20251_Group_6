@@ -5,6 +5,7 @@ import { feedbackCommentSchema } from '../models/feedbackCommentSchema';
 import { houseSchema } from '../models/houseSchema';
 import { userSchema } from '../models/userSchema';
 import type { FeedbackStatusEnum, FeedbackTypeEnum, FeedbackPriorityEnum } from '../models/pgEnum';
+import { CommentFeedbackType, CreateFeedbackType } from '../types/feedbackTypes';
 
 // Lấy tất cả phản hồi (chưa bị xóa)
 export const getAll = async () => {
@@ -81,24 +82,13 @@ export const getFeedbacksByUserId = async (userId: string) => {
 };
 
 // Tạo phản hồi mới
-export const createFeedback = async (data: {
-  user_id: string;
-  house_id: string;
-  type: FeedbackTypeEnum;
-  priority: FeedbackPriorityEnum;
-  title: string;
-  content: string;
-  attachments?: string[];
-}) => {
+export const createFeedback = async (
+  data: CreateFeedbackType,
+) => {
   const [result] = await db.insert(feedbackSchema)
     .values({
-      user_id: data.user_id,
-      house_id: data.house_id,
-      type: data.type,
-      priority: data.priority,
-      title: data.title,
-      content: data.content,
-      attachments: data.attachments ?? [],
+      ...data,
+      attachments: data.attachments || [],
     })
     .returning();
 
@@ -149,19 +139,9 @@ export const getFeedbackWithComments = async (feedbackId: string, includeInterna
 };
 
 // Thêm comment vào feedback
-export const addComment = async (data: {
-  feedback_id: string;
-  user_id: string;
-  content: string;
-  is_internal?: boolean;
-}) => {
+export const addComment = async (data: CommentFeedbackType) => {
   const [result] = await db.insert(feedbackCommentSchema)
-    .values({
-      feedback_id: data.feedback_id,
-      user_id: data.user_id,
-      content: data.content,
-      is_internal: data.is_internal ?? false,
-    })
+    .values(data)
     .returning();
 
   return { data: result };
