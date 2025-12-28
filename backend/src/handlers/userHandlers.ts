@@ -30,7 +30,6 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       const userInf = await getUserWithPasswordByEmail(userEmail);
 
       const oldHashedPass = userInf.data.hashed_password;
-      
       const isOldPass = await verifyPassword(body.old_password, oldHashedPass);
 
       if (!isOldPass)
@@ -38,7 +37,8 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       
       const newHashedPass = await hashedPassword(body.new_password);
       await updateUserPassword(userId, newHashedPass);
-      return status(200, { message: 'Đổi mật khẩu thành công' });
+      return status(200, {message: "Đổi mật khẩu thành công"});
+
     } catch (error) {
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
