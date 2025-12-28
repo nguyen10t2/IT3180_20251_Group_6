@@ -1,13 +1,13 @@
-import { Elysia, status, t } from "elysia";
+import { Elysia} from "elysia";
 import { pluginDB } from "./database";
 import { authRoutes } from "./handlers/authHandlers";
 import { HttpError} from "./constants/errorContant";
 import openapi from "@elysiajs/openapi";
 import { authorizationPlugins } from "./plugins/authorizationPlugins";
-import { RegisterBody } from "./types/authTypes";
 import { userRoutes } from "./handlers/userHandlers";
 import { notificationRoutes } from "./handlers/notificationHandler";
 import { residentRoutes } from "./handlers/residentHandlers";
+import { feedbackRoutes } from "./handlers/feedbackHandlers";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -29,6 +29,7 @@ new Elysia()
   .use(authorizationPlugins("resident"))
   .use(userRoutes)
   .use(residentRoutes)
+  .use(feedbackRoutes)
   .use(notificationRoutes)
   .listen({ hostname, port });
 
