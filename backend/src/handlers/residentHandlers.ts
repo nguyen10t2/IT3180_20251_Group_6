@@ -3,28 +3,36 @@ import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { createResident, getResidentByIdCard, getResidentByPhone, getResidentByUserId, updateResident } from "../services/residentServices";
 import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
-import { updateResidentId } from "../services/userServices";
+import { getUserById, updateResidentId } from "../services/userServices";
 import { getAll } from "../services/houseServices";
-
 
 export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident'] })
   .use(authenticationPlugins)
-  .get("/getResident", async ({ user, status }) => {
+  .get("/", async ({ user, status }) => {
     try {
       const userId = user.id!;
 
       const res = await getResidentByUserId(userId);
-      if (!res.data)
-        return status(200, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
+      if (!res.data) {
+        const fetchUser = await getUserById(userId);
+        return status(200, {
+          resident: null,
+          isNewResident: true,
+          userInfo: {
+            full_name: fetchUser.data?.full_name || '',
+            email: fetchUser.data?.email || '',
+          }
+        });
+      }
 
-      return status(200, { resident: res.data });
+      return status(200, { resident: res.data, isNewResident: false } );
     }
     catch (error) {
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
-  .post("/createResident", async ({ body, status, user }) => {
+  .post("/", async ({ body, status, user }) => {
 
     try {
       const userId = user.id!;
@@ -55,7 +63,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
   }, {
     body: CreateResidentBody
   })
-  .get("/getHouseHolds", async ({ status }) => {
+  .get("/households", async ({ status }) => {
     try {
       const res = await getAll();
 
@@ -66,7 +74,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
-  .post("/updateResident", async ({ body, user, status }) => {
+  .put("/", async ({ body, user, status }) => {
     try {
       if (Object.keys(body).length === 0) 
         return status(400, { message: "Không được để trống "});
@@ -77,7 +85,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       const residentId = isResident.data.id;
       const res = await updateResident(residentId, body);
       if (res.data)
-        return status(200, { message: "Cập nhật cư dân thành công" });
+        return status(200, { message: "Cập nhật cư dân thành công", resident: res.data });
     }
     catch (error) {
       console.error(error);
@@ -86,4 +94,4 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
 
   }, {
     body: UpdateResidentBody
-  })
+  });
