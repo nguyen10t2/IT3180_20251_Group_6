@@ -3,8 +3,6 @@ import { enumToTypeBox } from "../helpers/enumHelper";
 import { feedback_priority, feedback_type } from "../models/pgEnum";
 
 export const CreateFeedbackBody = t.Object({
-    user_id: t.String({ format: "uuid" }),
-    house_id: t.String({ format: "uuid" }),
     type: enumToTypeBox(feedback_type.enumValues),
     priority: enumToTypeBox(feedback_priority.enumValues),
     title: t.String(),

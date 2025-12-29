@@ -83,7 +83,7 @@ export const getFeedbacksByUserId = async (userId: string) => {
 
 // Tạo phản hồi mới
 export const createFeedback = async (
-  data: CreateFeedbackType,
+  data: CreateFeedbackType & { user_id: string; house_id: string }
 ) => {
   const [result] = await db.insert(feedbackSchema)
     .values({

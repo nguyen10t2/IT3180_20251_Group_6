@@ -7,7 +7,7 @@ import { getResidentByUserId } from "../services/residentServices";
 
 export const notificationRoutes = new Elysia({ prefix: "/notification", detail: { tags: ['Notification'] } })
   .use(authenticationPlugins)
-  .get("/getNotifications", async ({ user, status }) => {
+  .get("/", async ({ user, status }) => {
     try {
       const userId = user.id!;
       const resident = await getResidentByUserId(userId);
@@ -19,9 +19,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
         return status(200, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' });
 
       const householdId = resident.data.house_id!;
-
       const res = await getNotificationsForUser(userId, householdId);
-
       if (res.data == null) {
         return status(200, { notifications: [] });
       }
@@ -33,7 +31,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
-  .post("/markAsRead", async ({ params, user, status }) => {
+  .put("/:notification_id/read", async ({ params, user, status }) => {
     try {
       const notifiId = params.notification_id;
       const userId = user.id!;
@@ -51,7 +49,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       notification_id: t.String({ format: 'uuid' })
     })
   })
-  .post("/markAllAsRead", async ({ user, status }) => {
+  .put("/read-all", async ({ user, status }) => {
     try {
       const userId = user.id!;
       const resident = await getResidentByUserId(userId);
