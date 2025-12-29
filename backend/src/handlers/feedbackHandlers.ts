@@ -35,7 +35,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
 
       const residentRes = await getResidentByUserId(userId);
       if (!residentRes.data) {
-        return status(400, { message: 'Người dùng không phải cư dân' });
+        return status(403, { message: 'Người dùng không phải cư dân' });
       }
       const houseId = residentRes.data.house_id;
 

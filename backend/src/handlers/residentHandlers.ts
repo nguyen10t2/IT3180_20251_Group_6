@@ -39,7 +39,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
 
       const isResident = await getResidentByUserId(userId);
       if (isResident.data)
-        return status(400, { message: "Bạn đã là cư dân, không cần tạo mới" });
+        return status(200, { message: "Bạn đã là cư dân, không cần tạo mới" });
 
       const isIdCardExist = await getResidentByIdCard(body.id_card);
       if (isIdCardExist.data)
@@ -81,7 +81,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       const userId = user.id!;
       const isResident = await getResidentByUserId(userId);
       if (!isResident.data)
-        return status(200, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
+        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
       const residentId = isResident.data.id;
       const res = await updateResident(residentId, body);
       if (res.data)

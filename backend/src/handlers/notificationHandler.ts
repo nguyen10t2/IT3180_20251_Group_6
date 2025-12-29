@@ -13,10 +13,10 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        return status(200, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
+        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
 
       if (!resident.data.house_id)
-        return status(200, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' });
+        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' });
 
       const householdId = resident.data.house_id!;
       const res = await getNotificationsForUser(userId, householdId);
@@ -55,10 +55,10 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        return status(200, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' })
+        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' })
 
       if (!resident.data.house_id)
-        return status(200, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' })
+        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' })
 
       const householdId = resident.data.house_id!;
 
