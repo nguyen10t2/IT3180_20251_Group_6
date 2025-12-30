@@ -11,7 +11,7 @@ import { sql } from "drizzle-orm";
 import { invoiceSchema } from "./invoiceSchema";
 import { feeTypeSchema } from "./feeTypeSchema";
 
-export const invoiceDetailSchema = pgTable("invoice_detail", {
+export const invoiceDetailSchema = pgTable("invoice_details", {
   id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
   invoice_id: uuid('invoice_id').references(() => invoiceSchema.id),
   fee_id: integer('fee_id').references(() => feeTypeSchema.id),

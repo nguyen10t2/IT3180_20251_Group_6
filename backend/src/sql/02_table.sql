@@ -109,13 +109,18 @@ CREATE INDEX idx_fee_is_active ON fee_types(is_active);
 CREATE INDEX idx_fee_effective ON fee_types(effective_from, effective_to);
 CREATE INDEX idx_fee_deleted_at ON fee_types(deleted_at);
 
+CREATE TABLE invoice_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description VARCHAR(255)
+);
 CREATE TABLE invoices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     invoice_number VARCHAR(50) UNIQUE NOT NULL,
     house_id UUID NOT NULL REFERENCES house(id) ON DELETE RESTRICT,
     period_month INT NOT NULL CHECK (period_month BETWEEN 1 AND 12),
     period_year INT NOT NULL CHECK (period_year >= 2000),
-    invoice_type VARCHAR(20) NOT NULL DEFAULT 'monthly',
+    invoice_types INT NOT NULL REFERENCES invoice_types(id) ON DELETE RESTRICT,
     total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
     status fee_status NOT NULL DEFAULT 'pending',
     due_date DATE NOT NULL,
@@ -128,7 +133,7 @@ CREATE TABLE invoices (
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_invoice_per_period UNIQUE (house_id, period_month, period_year, invoice_type, deleted_at)
+    CONSTRAINT unique_invoice_per_period UNIQUE (house_id, period_month, period_year, invoice_types, deleted_at)
 );
 CREATE INDEX idx_invoice_house_id ON invoices(house_id);
 CREATE INDEX idx_invoice_period ON invoices(period_month, period_year);
@@ -139,7 +144,7 @@ CREATE INDEX idx_invoice_create_by ON invoices(created_by);
 CREATE TABLE invoice_details (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
-    fee_type_id INT NOT NULL REFERENCES fee_types(id) ON DELETE RESTRICT,
+    fee_id INT NOT NULL REFERENCES fee_types(id) ON DELETE RESTRICT,
     quantity DECIMAL(10, 2) NOT NULL DEFAULT 1 CHECK (quantity > 0),
     price DECIMAL(12, 2) NOT NULL CHECK (price >= 0),
     total DECIMAL(12, 2) NOT NULL CHECK (total >= 0),
@@ -147,7 +152,7 @@ CREATE TABLE invoice_details (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_invoice_detail_invoice_id ON invoice_details(invoice_id);
-CREATE INDEX idx_invoice_detail_fee_id ON invoice_details(fee_type_id);
+CREATE INDEX idx_invoice_detail_fee_id ON invoice_details(fee_id);
 
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

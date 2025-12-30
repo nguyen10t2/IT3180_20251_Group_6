@@ -43,7 +43,7 @@ export const createInvoice = async (data: {
   period_year: number;
   total_amount?: string;
   due_date: Date;
-  invoice_type?: number;
+  invoice_types?: number;
   notes?: string | null;
   created_by: string;
 }) => {
@@ -56,7 +56,7 @@ export const createInvoice = async (data: {
     period_year: data.period_year,
     total_amount: data.total_amount ?? '0',
     due_date: data.due_date,
-    invoice_type: data.invoice_type,
+    invoice_types: data.invoice_types,
     notes: data.notes ?? null,
     created_by: data.created_by
   }).returning();

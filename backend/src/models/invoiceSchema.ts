@@ -21,7 +21,7 @@ export const invoiceSchema = pgTable('invoices', {
   house_id: uuid('house_id').references(() => houseSchema.id, { onDelete: 'cascade' }),
   period_month: integer('period_month').notNull(),
   period_year: integer('period_year').notNull(),
-  invoice_type: integer('invoice_type').references(() => invoiceTypeSchema.id, { onDelete: 'set null' }),
+  invoice_types: integer('invoice_types').references(() => invoiceTypeSchema.id, { onDelete: 'set null' }),
   total_amount: numeric('total_amount', { precision: 12, scale: 2 }).notNull().default('0'),
   status: fee_status('status').notNull().default('pending'),
   due_date: timestamp('due_date', { withTimezone: true }).notNull(),
@@ -35,7 +35,7 @@ export const invoiceSchema = pgTable('invoices', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  unique('unique_invoice_number_active').on(table.house_id, table.period_month, table.period_year, table.invoice_type, table.deleted_at),
+  unique('unique_invoice_number_active').on(table.house_id, table.period_month, table.period_year, table.invoice_types, table.deleted_at),
   index('idx_invoices_house_id').on(table.house_id),
   index('idx_invoices_period').on(table.period_month, table.period_year),
   index('idx_invoices_status').on(table.status),
