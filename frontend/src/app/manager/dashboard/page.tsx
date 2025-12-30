@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "next/navigation";
 
-export default function ResidentHome() {
+export default function ManagerDashboard() {
   const { user, signOut } = useAuthStore();
   const router = useRouter();
 
@@ -16,7 +16,7 @@ export default function ResidentHome() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Resident Home</h1>
+          <h1 className="text-2xl font-bold">Manager Dashboard</h1>
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
@@ -33,7 +33,7 @@ export default function ResidentHome() {
         </div>
 
         <p className="mt-8 text-neutral-500 text-center">
-          🚧 Trang cư dân đang được phát triển...
+          🚧 Dashboard đang được phát triển...
         </p>
       </div>
     </div>

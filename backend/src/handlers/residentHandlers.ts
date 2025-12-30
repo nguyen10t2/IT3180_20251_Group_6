@@ -28,6 +28,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       return status(200, { resident: res.data, isNewResident: false } );
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -43,12 +44,12 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
 
       const isIdCardExist = await getResidentByIdCard(body.id_card);
       if (isIdCardExist.data)
-        return status(400, { message: "CCCD đã được sử dụng, vui lòng nhập lại CCCD" });
+        throw new HttpError(400, "CCCD đã được sử dụng, vui lòng nhập lại CCCD");
 
       const isPhoneExist = await getResidentByPhone(body.phone);
       if (isPhoneExist.data)
-        return status(400, { message: "SĐT đã được sử dụng, vui lòng thay đổi SĐT khác" });
-
+        throw new HttpError(400, "SĐT đã được sử dụng, vui lòng thay đổi SĐT khác");
+      
       const newResident = await createResident(body);
 
       const residentId = newResident.data.id;
@@ -57,6 +58,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
 
       return status(201, { message: 'Đã tạo cư dân thành công', resident: newResident.data });
     } catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -70,6 +72,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       return status(200, res);
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -77,17 +80,18 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
   .put("/", async ({ body, user, status }) => {
     try {
       if (Object.keys(body).length === 0) 
-        return status(400, { message: "Không được để trống "});
+        throw new HttpError(400, "Không được để trống ");
       const userId = user.id!;
       const isResident = await getResidentByUserId(userId);
       if (!isResident.data)
-        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
+        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');
       const residentId = isResident.data.id;
       const res = await updateResident(residentId, body);
       if (res.data)
         return status(200, { message: "Cập nhật cư dân thành công", resident: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }

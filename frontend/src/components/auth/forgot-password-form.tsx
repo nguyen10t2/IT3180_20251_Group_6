@@ -2,84 +2,91 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
 import type { ForgotPasswordFormValues } from "@/lib/validations/auth";
-import { Mail, Loader2, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { authService } from "@/services/authService";
+import { toast } from "sonner";
+import Link from "next/link";
 
 type ForgotPasswordFormProps = {
-  onSubmit: (email: string) => Promise<void>;
-  isLoading?: boolean;
   className?: string;
 };
 
-export function ForgotPasswordForm({
-  className,
-  onSubmit,
-  isLoading = false,
-}: ForgotPasswordFormProps) {
+export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const handleFormSubmit = async (data: ForgotPasswordFormValues) => {
-    await onSubmit(data.email);
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
+    setLoading(true);
+    try {
+      await authService.forgotPassword(data.email);
+      localStorage.setItem("resetEmail", data.email);
+      toast.success("Mã OTP đã được gửi đến email của bạn");
+      router.push("/verify-otp-reset");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className={cn("grid gap-6", className)}>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <div className="grid gap-5">
-          {/* EMAIL FIELD */}
-          <div className="grid gap-2">
-            <Label htmlFor="email" className="text-foreground/80 font-medium">Email đăng ký</Label>
-            <div className="relative group">
-              <div className="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-amber-600 transition-colors">
-                <Mail className="h-5 w-5" />
-              </div>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                disabled={isLoading || isSubmitting}
-                className="pl-10 h-11 bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 focus-visible:ring-amber-500 focus-visible:border-amber-500 transition-all"
-                {...register("email")}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-xs font-medium text-red-500 animate-in fade-in slide-in-from-top-1">
-                {errors.email.message}
-              </p>
-            )}
+    <div className={cn("flex flex-col gap-6", className)}>
+      <Card>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Link href="/" className="text-2xl font-bold tracking-tight">
+              BLUEMON
+            </Link>
           </div>
-
-          {/* SUBMIT BUTTON */}
-          <Button 
-            type="submit" 
-            disabled={isLoading || isSubmitting}
-            className="mt-2 h-11 w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] group"
-          >
-            {isLoading || isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang gửi...
-              </>
-            ) : (
-              <>
-                Gửi mã xác thực
-                <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+          <CardTitle className="text-xl">Quên mật khẩu</CardTitle>
+          <CardDescription>
+            Nhập email của bạn để nhận mã xác thực
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Đang gửi..." : "Gửi mã xác thực"}
+              </Button>
+              <Link href="/signin">
+                <Button type="button" variant="ghost" className="w-full">
+                  Quay lại đăng nhập
+                </Button>
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

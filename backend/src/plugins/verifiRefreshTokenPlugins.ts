@@ -17,6 +17,7 @@ export const verifiRefreshTokenPlugins = (app: Elysia) => app
 
       return { userId: tokenData.data.user_id };
     } catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, "Internal Server Error");
     }

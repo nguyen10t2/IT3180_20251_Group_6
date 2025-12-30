@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { OTPInput, OTPInputContext } from "input-otp";
-
 import { cn } from "@/lib/utils";
 
 const InputOTP = React.forwardRef<
@@ -42,8 +41,8 @@ const InputOTPSlot = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex h-12 w-12 items-center justify-center border-y border-r border-input text-lg transition-all first:rounded-l-lg first:border-l last:rounded-r-lg",
-        isActive && "z-10 ring-2 ring-ring ring-offset-background",
+        "relative flex h-12 w-12 items-center justify-center border-y border-r border-neutral-300 text-lg transition-all first:border-l dark:border-neutral-700",
+        isActive && "z-10 ring-1 ring-neutral-900 dark:ring-white",
         className
       )}
       {...props}
@@ -51,7 +50,7 @@ const InputOTPSlot = React.forwardRef<
       {char}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-4 w-px animate-pulse bg-foreground duration-1000" />
+          <div className="h-4 w-px animate-pulse bg-neutral-900 duration-1000 dark:bg-white" />
         </div>
       )}
     </div>
@@ -64,7 +63,7 @@ const InputOTPSeparator = React.forwardRef<
   React.ComponentPropsWithoutRef<"div">
 >(({ ...props }, ref) => (
   <div ref={ref} role="separator" {...props}>
-    <span className="text-muted-foreground">-</span>
+    <span className="text-neutral-400">-</span>
   </div>
 ));
 InputOTPSeparator.displayName = "InputOTPSeparator";

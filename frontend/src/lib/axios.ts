@@ -1,23 +1,25 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 // Main API instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/",
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  withCredentials: true, // Quan trọng: gửi httpOnly cookie
 });
 
-// Refresh API instance (no interceptor to avoid loops)
+// Refresh API instance (không có interceptor để tránh loop)
 const refreshApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/",
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (token: string | null) => void;
+  resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }> = [];
 
@@ -26,15 +28,13 @@ const processQueue = (error: unknown, token: string | null = null) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve(token!);
     }
   });
-
-  isRefreshing = false;
   failedQueue = [];
 };
 
-// Request interceptor - Add access token to header
+// Request interceptor - Add access token
 api.interceptors.request.use((config) => {
   const { accessToken } = useAuthStore.getState();
   if (accessToken) {
@@ -43,87 +43,78 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor - Handle 401 by refreshing token
+// Response interceptor - Handle 401 + refresh token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Don't retry auth endpoints
-    const authEndpoints = [
-      "/api/auth/refresh",
-      "/api/auth/login",
-      "/api/auth/register",
-      "/api/auth/logout",
-      "/api/auth/verify-otp",
-      "/api/auth/resend-otp",
+    // Các endpoint không cần retry
+    const skipRefreshEndpoints = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/logout",
+      "/auth/refresh",
+      "/auth/register/accept",
+      "/auth/resend-otp",
+      "/auth/forgot-password",
+      "/auth/forgot-password/accept",
+      "/auth/reset-password",
     ];
-    const isAuthEndpoint = authEndpoints.some((endpoint) =>
+
+    const shouldSkip = skipRefreshEndpoints.some((endpoint) =>
       originalRequest.url?.includes(endpoint)
     );
 
-    if (isAuthEndpoint) {
+    if (shouldSkip) {
       return Promise.reject(error);
     }
 
-    // Only handle 401 errors
-    if (error.response?.status !== 401) {
-      return Promise.reject(error);
-    }
-
-    // If already refreshing, queue the request
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          originalRequest.headers["Authorization"] = `Bearer ${token}`;
-          return api(originalRequest);
+    // 401 + chưa retry → thử refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Đang refresh → queue request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
         })
-        .catch((err) => Promise.reject(err));
-    }
-
-    isRefreshing = true;
-
-    try {
-      console.log("Attempting to refresh token...");
-
-      const response = await refreshApi.post(
-        "/api/auth/refresh",
-        {},
-        { withCredentials: true }
-      );
-
-      const newToken = response.data.access_token;
-
-      if (!newToken) {
-        throw new Error("No token in refresh response");
+          .then((token) => {
+            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
       }
 
-      // Update token in store
-      const authStore = useAuthStore.getState();
-      authStore.setAccessToken(newToken);
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-      // Process queue with new token
-      processQueue(null, newToken);
+      try {
+        // Gọi refresh - cookie tự động gửi kèm
+        const { data } = await refreshApi.post("/auth/refresh");
 
-      // Retry original request
-      originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-      return api(originalRequest);
-    } catch (refreshError) {
-      console.error("Token refresh failed:", refreshError);
+        // Lưu accessToken mới
+        useAuthStore.getState().setAccessToken(data.accessToken);
 
-      processQueue(refreshError, null);
-      useAuthStore.getState().clearState();
+        processQueue(null, data.accessToken);
 
-      // Redirect to signin (client-side)
-      if (typeof window !== "undefined") {
-        window.location.href = "/signin";
+        // Retry request với token mới
+        originalRequest.headers["Authorization"] = `Bearer ${data.accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        // Refresh thất bại → logout
+        useAuthStore.getState().clearState();
+        if (typeof window !== "undefined") {
+          window.location.href = "/signin";
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
-
-      return Promise.reject(refreshError);
     }
+
+    return Promise.reject(error);
   }
 );
 
+export { refreshApi };
 export default api;

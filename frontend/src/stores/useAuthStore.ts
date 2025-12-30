@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { toast } from "sonner";
-import { authService } from "../services/authService";
-import type { AuthState } from "../types/store";
+import { authService } from "@/services/authService";
+import type { AuthState, User } from "@/types/store";
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   accessToken: null,
@@ -14,11 +14,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({ accessToken: token });
   },
 
+  setUser: (user: User) => {
+    set({ user });
+  },
+
   clearState: () => {
-    console.log("clearState called - removing all auth data");
     if (typeof window !== "undefined") {
       localStorage.removeItem("userRole");
-      // localStorage.removeItem("auth-storage"); // No longer creating this
+      localStorage.removeItem("cached_user");
     }
     set({
       accessToken: null,
@@ -27,17 +30,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     });
   },
 
-  signUp: async (fullname, email, password, role) => {
+  signUp: async (name, email, password) => {
     try {
       set({ loading: true });
-      await authService.signUp({ fullname, email, password, role });
-      // Save email for OTP verification flow
+      await authService.signUp({ name, email, password });
       if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("signupEmail", email);
-        } catch (e) {
-          console.warn("Failed to persist signupEmail to localStorage", e);
-        }
+        localStorage.setItem("signupEmail", email);
       }
       toast.success("Gửi mã OTP thành công! Vui lòng kiểm tra email.");
     } catch (error) {
@@ -53,16 +51,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       set({ loading: true });
       const { accessToken } = await authService.signIn(email, password);
-
       get().setAccessToken(accessToken);
 
       const user = await get().fetchMe();
-
       if (user?.role && typeof window !== "undefined") {
-        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("userRole", String(user.role));
       }
 
-      toast.success("🎉 Chào mừng bạn quay lại!");
+      toast.success("Chào mừng bạn quay lại!");
     } catch (err) {
       console.error(err);
       toast.error("Đăng nhập không thành công");
@@ -76,16 +72,21 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   signOut: async () => {
     try {
       const { accessToken } = get();
-      if (!accessToken) throw new Error("Không có access token!");
-
-      await authService.signOut();
+      if (accessToken) {
+        await authService.signOut();
+      }
       get().clearState();
-
-      toast.success("Đăng xuất thành công 🎉🎉");
-    } catch (err) {
+      toast.success("Đăng xuất thành công");
+    } catch (err: unknown) {
       console.error(err);
       get().clearState();
-      toast.error("Lỗi khi logout, vui lòng thử lại");
+      // Only show error if it's not a 401 (token expired = already logged out)
+      const error = err as { response?: { status?: number } };
+      if (error.response?.status !== 401) {
+        toast.error("Lỗi khi logout");
+      } else {
+        toast.success("Đăng xuất thành công");
+      }
     } finally {
       set({ loading: false });
     }
@@ -98,29 +99,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ user });
       return user;
     } catch (err) {
-      console.error("Lỗi khi lấy thông tin người dùng:", err);
-      set({ user: null });
-      toast.error("Lỗi khi lấy thông tin người dùng");
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  refreshTokenHandler: async () => {
-    try {
-      set({ loading: true });
-      const { user, fetchMe } = get();
-
-      const accessToken = await authService.refreshTokenHandler();
-      get().setAccessToken(accessToken);
-
-      // Fetch user if not available
-      if (!user) {
-        await fetchMe();
-      }
-    } catch (err) {
-      console.error("Lỗi khi làm mới token:", err);
-      get().clearState();
+      console.error(err);
+      return null;
     } finally {
       set({ loading: false });
     }

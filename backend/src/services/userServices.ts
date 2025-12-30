@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, isNull, lt, desc } from 'drizzle-orm';
 import { db } from '../database/db';
-import { userSchema } from '../models/userSchema';
+import { userRoleSchema, userSchema } from '../models/userSchema';
 import { houseSchema } from '../models/houseSchema';
 import { residentSchema } from '../models/residentSchema';
 
@@ -71,7 +71,7 @@ export const getUserById = async (userId: string) => {
     full_name: userSchema.full_name,
     avatar_url: userSchema.avatar_url,
     resident_id: userSchema.resident_id,
-    role: userSchema.role,
+    role: userRoleSchema.name,
     status: userSchema.status,
     email_verified: userSchema.email_verified,
     approved_by: userSchema.approved_by,
@@ -80,6 +80,7 @@ export const getUserById = async (userId: string) => {
     updated_at: userSchema.updated_at,
   })
     .from(userSchema)
+    .leftJoin(userRoleSchema, eq(userSchema.role, userRoleSchema.id))
     .where(and(
       eq(userSchema.id, userId),
       isNull(userSchema.deleted_at)
@@ -109,13 +110,14 @@ export const getUserByEmail = async (email: string) => {
     full_name: userSchema.full_name,
     avatar_url: userSchema.avatar_url,
     resident_id: userSchema.resident_id,
-    role: userSchema.role,
+    role: userRoleSchema.name,
     status: userSchema.status,
     email_verified: userSchema.email_verified,
     created_at: userSchema.created_at,
     updated_at: userSchema.updated_at,
   })
     .from(userSchema)
+    .leftJoin(userRoleSchema, eq(userSchema.role, userRoleSchema.id))
     .where(and(
       eq(userSchema.email, email),
       isNull(userSchema.deleted_at)

@@ -1,123 +1,105 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "@/lib/validations/auth";
 import type { ResetPasswordFormValues } from "@/lib/validations/auth";
-import { Lock, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { authService } from "@/services/authService";
+import { toast } from "sonner";
+import Link from "next/link";
 
 type ResetPasswordFormProps = {
-  onSubmit: (data: ResetPasswordFormValues) => Promise<void>;
-  isLoading?: boolean;
   className?: string;
 };
 
-export function ResetPasswordForm({
-  className,
-  onSubmit,
-  isLoading = false,
-}: ResetPasswordFormProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
+  const onSubmit = async (data: ResetPasswordFormValues) => {
+    setLoading(true);
+    const email = localStorage.getItem("resetEmail");
+    
+    if (!email) {
+      toast.error("Không tìm thấy email. Vui lòng thử lại từ đầu.");
+      router.push("/forgot-password");
+      return;
+    }
+
+    try {
+      await authService.resetPassword(email, data.newPassword);
+      localStorage.removeItem("resetEmail");
+      toast.success("Đặt lại mật khẩu thành công!");
+      router.push("/signin");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className={cn("grid gap-6", className)}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-5">
-          {/* NEW PASSWORD FIELD */}
-          <div className="grid gap-2">
-            <Label htmlFor="newPassword" className="text-foreground/80 font-medium">Mật khẩu mới</Label>
-            <div className="relative group">
-              <div className="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-rose-600 transition-colors">
-                <Lock className="h-5 w-5" />
-              </div>
-              <Input
-                id="newPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                disabled={isLoading || isSubmitting}
-                className="pl-10 pr-10 h-11 bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 focus-visible:ring-rose-500 focus-visible:border-rose-500 transition-all"
-                {...register("newPassword")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-            {errors.newPassword && (
-              <p className="text-xs font-medium text-red-500 animate-in fade-in slide-in-from-top-1">
-                {errors.newPassword.message}
-              </p>
-            )}
+    <div className={cn("flex flex-col gap-6", className)}>
+      <Card>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Link href="/" className="text-2xl font-bold tracking-tight">
+              BLUEMON
+            </Link>
           </div>
-
-          {/* CONFIRM PASSWORD FIELD */}
-          <div className="grid gap-2">
-            <Label htmlFor="confirmPassword" className="text-foreground/80 font-medium">Xác nhận mật khẩu</Label>
-            <div className="relative group">
-              <div className="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-rose-600 transition-colors">
-                <CheckCircle2 className="h-5 w-5" />
+          <CardTitle className="text-xl">Đặt lại mật khẩu</CardTitle>
+          <CardDescription>Nhập mật khẩu mới của bạn</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Nhập mật khẩu mới"
+                  {...register("newPassword")}
+                />
+                {errors.newPassword && (
+                  <p className="text-sm text-red-600">{errors.newPassword.message}</p>
+                )}
               </div>
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="••••••••"
-                disabled={isLoading || isSubmitting}
-                className="pl-10 pr-10 h-11 bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 focus-visible:ring-rose-500 focus-visible:border-rose-500 transition-all"
-                {...register("confirmPassword")}
-              />
-               <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Nhập lại mật khẩu mới"
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+                )}
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
+              </Button>
             </div>
-            {errors.confirmPassword && (
-              <p className="text-xs font-medium text-red-500 animate-in fade-in slide-in-from-top-1">
-                {errors.confirmPassword.message}
-              </p>
-            )}
-          </div>
-
-          {/* SUBMIT BUTTON */}
-          <Button 
-            type="submit" 
-            disabled={isLoading || isSubmitting}
-            className="mt-2 h-11 w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg shadow-rose-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] group"
-          >
-            {isLoading || isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang cập nhật...
-              </>
-            ) : (
-              <>
-                Xác nhận đổi mật khẩu
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

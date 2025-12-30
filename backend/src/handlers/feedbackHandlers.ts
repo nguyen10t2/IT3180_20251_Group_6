@@ -21,6 +21,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
       return status(200, { feedbacks: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -30,12 +31,12 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
       const userId = user.id!;
       const fetchUser = await getUserById(userId);
       if (!fetchUser.data || fetchUser.data.status !== 'active') {
-        return status(403, { message: 'Người dùng không hợp lệ hoặc chưa được kích hoạt' });
+        throw new HttpError(403, 'Người dùng không hợp lệ hoặc chưa được kích hoạt');
       }
 
       const residentRes = await getResidentByUserId(userId);
       if (!residentRes.data) {
-        return status(403, { message: 'Người dùng không phải cư dân' });
+        throw new HttpError(403, 'Người dùng không phải cư dân');
       }
       const houseId = residentRes.data.house_id;
 
@@ -49,6 +50,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
         return status(200, { message: 'Gửi phản hồi thành công' })
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -60,11 +62,12 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
       const res = await getFeedbackWithComments(params.feedback_id);
 
       if (!res.data)
-        return status(404, { message: 'Không tìm thấy phản hồi' });
+        throw new HttpError(404, 'Không tìm thấy phản hồi');
 
       return status(200, { feedback: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }

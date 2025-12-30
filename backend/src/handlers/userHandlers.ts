@@ -18,6 +18,7 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       return status(200, { data: userInf.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -33,13 +34,14 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       const isOldPass = await verifyPassword(body.old_password, oldHashedPass);
 
       if (!isOldPass)
-        return status(401, { message: 'Mật khẩu cũ không đúng' });
+        throw new HttpError(401, 'Mật khẩu cũ không đúng');
       
       const newHashedPass = await hashedPassword(body.new_password);
       await updateUserPassword(userId, newHashedPass);
       return status(200, {message: "Đổi mật khẩu thành công"});
 
     } catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }

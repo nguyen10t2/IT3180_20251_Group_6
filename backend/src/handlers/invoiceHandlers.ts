@@ -13,10 +13,10 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['
       const fetchResident = await getResidentByUserId(userId);
 
       if (!fetchResident.data)
-        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân để xem được hóa đơn' });
+        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân để xem được hóa đơn');
 
       if (!fetchResident.data.house_id)
-        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu để xem được hóa đơn' });
+        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu để xem được hóa đơn');
 
       const householdId = fetchResident.data.house_id!;
       const res = await getInvoicesByHouseId(householdId);
@@ -27,6 +27,7 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['
       return status(200, { invoices: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -37,23 +38,23 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['
       const fetchResident = await getResidentByUserId(userId);
 
       if (!fetchResident.data)
-        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân để xem được hóa đơn' });
+        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân để xem được hóa đơn');
 
       if (!fetchResident.data.house_id)
-        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu để xem được hóa đơn' });
+        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu để xem được hóa đơn');
 
       const invoiceWithHouseId = await getInvoiceById(params.invoice_id);
 
       if (invoiceWithHouseId.data.house_id != fetchResident.data.house_id)
-        return status(403, { message: "Bạn không có quyền truy cập vào hóa đơn này" });
+        throw new HttpError(403, "Bạn không có quyền truy cập vào hóa đơn này");
 
       const res = await getInvoiceDetails(params.invoice_id);
       if (!res.data)
-        return status(404, { message: 'Không tìm thấy hóa đơn' });
-
+        throw new HttpError(404, 'Không tìm thấy hóa đơn');
       return status(200, { invoiceDetails: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }

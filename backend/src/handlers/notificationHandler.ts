@@ -13,10 +13,10 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' });
+        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');
 
       if (!resident.data.house_id)
-        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' });
+        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');
 
       const householdId = resident.data.house_id!;
       const res = await getNotificationsForUser(userId, householdId);
@@ -27,6 +27,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       return status(200, { notifications: res.data });
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -41,6 +42,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
         return status(200, { message: "Đã đánh dấu đã đọc thông báo" })
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
@@ -55,10 +57,10 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        return status(403, { message: 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân' })
+        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');
 
       if (!resident.data.house_id)
-        return status(403, { message: 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu' })
+        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');
 
       const householdId = resident.data.house_id!;
 
@@ -66,6 +68,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       return status(200, { message: 'Đã đánh dấu tất cả đã đọc' })
     }
     catch (error) {
+      if (error instanceof HttpError) throw error;
       console.error(error);
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
