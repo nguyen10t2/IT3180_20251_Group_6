@@ -1,7 +1,9 @@
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'crypto';
+import { promisify } from 'util';
 
-export const generateRandomString =  (length: number = 64) => {
-    return randomBytes(length / 2).toString('hex').slice(0, length);
+export const generateRandomString = async (length: number = 64) => {
+    const buf = await promisify(randomBytes)(length);
+    return buf.toString('hex').slice(0, length);
 }
 
 export const generateRandomNumber = (length: number = 6) => {
@@ -14,15 +16,12 @@ export const generateRandomNumber = (length: number = 6) => {
     return result;
 }
 
-const key = generateRandomString(128);
-console.log(key);
-
-
-
-const password = '111111';
-const hashedPassword = await Bun.password.hash(password);
-console.log('Hashed Password:', hashedPassword);
+const key = await generateRandomString(128);
 
 export const verifyPassword = async (password: string, hashedPassword: string) => {
-    return await Bun.password.verify(hashedPassword, password);
+    return await Bun.password.verify(password, hashedPassword);
+}
+
+export const hashedPassword = async (password: string) => {
+    return await Bun.password.hash(password)
 }

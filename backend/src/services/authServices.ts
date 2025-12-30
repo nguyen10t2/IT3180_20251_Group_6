@@ -1,259 +1,94 @@
 import { db } from '../database/db';
-import { and, desc, eq, lt, count, gte, or } from 'drizzle-orm';
-import { Users } from '../models/users';
-import { RefreshToken, OTP, ResetPasswordToken } from '../models/auth';
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
-import { singleOrNotFound } from '../helpers/dataHelpers';
-import { UserRole } from '../models/user_role';
+import { and, desc, eq, lt, isNull } from 'drizzle-orm';
+import { userRoleSchema, userSchema } from '../models/userSchema';
+import { refreshTokenSchema } from '../models/authSchema';
+import client from '../helpers/redisHelpers';
+import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from '../constants/errorContant';
+import { generateOtp, MAX_ATTEMPTS, MAX_RESEND, OTP_TTL, OTPData, RESEND_WINDOW } from '../helpers/otpHelpers';
 
-// Lấy thông tin user để đăng nhập (ko bao gồm mật khẩu)
-export const loginService = async (email: string, password: string) => {
-  try {
-    const rows = await db.select({
-      id: Users.id,
-      email: Users.email,
-      password: Users.password,
-      role: UserRole.name,
-    })
-      .from(Users)
-      .leftJoin(UserRole, eq(Users.role, UserRole.id))
-      .where(eq(Users.email, email));
+// Redis client cho OTP
+const redis = client;
 
-    if (rows.length === 0) {
-      return { error: UNAUTHORIZED };
-    }
+// ============================================
+// LOGIN SERVICE
+// ============================================
 
-    const user = rows[0];
+export const loginService = async (email: string) => {
+  const rows = await db.select({
+    id: userSchema.id,
+    email: userSchema.email,
+    role: userRoleSchema.name,
+    hashed_password: userSchema.hashed_password
+  })
+    .from(userSchema)
+    .leftJoin(userRoleSchema, eq(userSchema.role, userRoleSchema.id))
+    .where(and(
+      eq(userSchema.email, email),
+      isNull(userSchema.deleted_at)
+    ));
 
-    const isMatch = await Bun.password.verify(password, user.password);
-
-    if (!isMatch) {
-      return { error: UNAUTHORIZED };
-    }
-
-    const { password: _, ...safeUser } = user;
-
-    return { data: safeUser };
-
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-// -- Refresh Token Services --
+// ============================================
+// REFRESH TOKEN SERVICES
+// ============================================
 
-// Lấy refresh token gần nhất của user
+// Lấy refresh token theo user_id
 export const getRefreshTokenByUserId = async (userId: string) => {
-  try {
-    const rows = await db.select()
-      .from(RefreshToken)
-      .where(eq(RefreshToken.user_id, userId))
-      .orderBy(desc(RefreshToken.expires_at))
-      .limit(1);
+  const rows = await db.select()
+    .from(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.user_id, userId))
+    .orderBy(desc(refreshTokenSchema.expires_at))
+    .limit(1);
 
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-// Lưu refresh token mới
-export const createRefreshToken = async (userId: string, token: string, expiresAt: Date) => {
-  try {
-    const result = await db.insert(RefreshToken)
-      .values({
-        user_id: userId,
-        token: token,
-        expires_at: expiresAt,
-      })
-      .returning();
+// Lấy refresh token theo token hash
+export const getRefreshTokenByHash = async (tokenHash: string) => {
+  const rows = await db.select()
+    .from(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.token_hash, tokenHash))
+    .limit(1);
 
-    return { data: result[0] };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: rows[0] ?? null };
 };
 
-// Xoá refresh token của user
-export const deleteRefreshTokenByUserId = async (userId: string) => {
-  try {
-    const result = await db.delete(RefreshToken)
-      .where(eq(RefreshToken.user_id, userId));
+// Tạo refresh token mới
+export const createRefreshToken = async (userId: string, tokenHash: string, expiresAt: Date) => {
+  const [result] = await db.insert(refreshTokenSchema)
+    .values({
+      user_id: userId,
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+    })
+    .returning();
 
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: result };
 };
 
-// Xoá các refresh token đã hết hạn
+// Xóa refresh token của user
+export const deleteRefreshTokensByUserId = async (userId: string) => {
+  await db.delete(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.user_id, userId));
+
+  return { data: 'Tokens deleted' };
+};
+
+// Xóa refresh token cụ thể
+export const deleteRefreshToken = async (tokenHash: string) => {
+  await db.delete(refreshTokenSchema)
+    .where(eq(refreshTokenSchema.token_hash, tokenHash));
+
+  return { data: 'Token deleted' };
+};
+
+// Cleanup expired tokens
 export const cleanupExpiredTokens = async () => {
-  try {
-    const now = new Date();
-    const result = await db.delete(RefreshToken)
-      .where(lt(RefreshToken.expires_at, now));
+  const now = new Date();
+  await db.delete(refreshTokenSchema)
+    .where(lt(refreshTokenSchema.expires_at, now));
 
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// -- Otp Services --
-
-// Tạo OTP mới
-export const createOtp = async (email: string, code: string, expires_at: Date) => {
-  try {
-    await db.insert(OTP)
-      .values({
-        email: email,
-        code,
-        expires_at: expires_at,
-      });
-    return { data: 'OTP created successfully' };
-  } catch (_) {
-    console.log(_);
-    
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Lấy Otp gần nhất bằng email
-export const getOtpByEmail = async (email: string) => {
-  try {
-    const rows = await db.select()
-      .from(OTP)
-      .where(
-        and(
-          eq(OTP.email, email),
-          eq(OTP.is_used, false)
-        )
-      )
-      .orderBy(desc(OTP.expires_at))
-      .limit(1);
-
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Xóa tất cả Otp bằng email
-export const deleteOtpByEmail = async (email: string) => {
-  try {
-    const result = await db.delete(OTP)
-      .where(eq(OTP.email, email));
-
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-export const updateOtpByEmail = async (email: string) => {
-  try {
-    await db.update(OTP)
-      .set({
-        is_used: true,
-      })
-      .where(
-        and(
-          eq(OTP.email, email),
-          eq(OTP.is_used, false)
-        )
-      );
-
-    return { data: 'OTP updated successfully' };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Xoá các Otp đã hết hạn
-export const cleanupExpiredOtps = async () => {
-  try {
-    const now = new Date();
-    await db.delete(OTP)
-      .where(
-        or(
-          lt(OTP.expires_at, now),
-          eq(OTP.is_used, true)
-        )
-      );
-
-    return { data: 'Expired OTPs cleaned up successfully' };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Đếm số lần gửi lại OTP trong 10 phút gần nhất của email
-export const resendCount = async (email: string) => {
-  try {
-    const now = new Date();
-    const pastTenMinutes = new Date(now.getTime() - 10 * 60000);
-
-    const [{ value }] = await db.select({ value: count() })
-      .from(OTP)
-      .where(and(
-        eq(OTP.email, email),
-        gte(OTP.created_at, pastTenMinutes)
-      ));
-
-    return { data: value };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// -- Reset Password Token Services --
-
-// Tạo reset password token mới
-export const createResetPassword = async (email: string, token: string, expiresAt: Date) => {
-  try {
-    const result = await db.insert(ResetPasswordToken)
-      .values({
-        email: email,
-        token: token,
-        expires_at: expiresAt,
-      })
-      .returning();
-    return { data: result[0] };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Lấy reset password token gần nhất bằng email
-export const getResetPasswordToken = async (email: string) => {
-  try {
-    const rows = await db.select()
-      .from(ResetPasswordToken)
-      .where(and(
-        eq(ResetPasswordToken.email, email),
-      ))
-      .orderBy(desc(ResetPasswordToken.expires_at))
-      .limit(1);
-
-    return singleOrNotFound(rows);
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
-};
-
-// Xoá reset password token bằng email
-export const deleteResetPasswordTokenByEmail = async (email: string) => {
-  try {
-    const pastTenMinutes = new Date(Date.now() - 10 * 60000);
-    const result = await db.delete(ResetPasswordToken)
-      .where(
-        or(
-          eq(ResetPasswordToken.email, email),
-          lt(ResetPasswordToken.expires_at, pastTenMinutes)
-        )
-      );
-    return { data: result };
-  } catch (_) {
-    return { error: INTERNAL_SERVER_ERROR };
-  }
+  return { data: 'Cleanup completed' };
 };
