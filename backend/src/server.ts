@@ -11,6 +11,7 @@ import { feedbackRoutes } from "./handlers/feedbackHandlers";
 import { invoiceRoutes } from "./handlers/invoiceHandlers";
 import cors from "@elysiajs/cors";
 import { householdRoutes } from "./handlers/householdHandlers";
+import { managerRoutes } from "./handlers/managerHandlers";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -33,6 +34,7 @@ new Elysia()
   })
   .get("/", ({ redirect }) => redirect("/openapi"), { detail: { tags: ['Root'] } })
   .use(authRoutes)
+  .use(managerRoutes)
   .use(authorizationPlugins("resident"))
   .use(userRoutes)
   .use(residentRoutes)
