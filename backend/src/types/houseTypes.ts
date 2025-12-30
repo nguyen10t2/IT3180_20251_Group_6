@@ -9,7 +9,8 @@ export const UpdateHouseBody = t.Object({
   member_count: t.Optional(t.Number()),
   house_resident_id: t.Optional(t.String({ format: 'uuid' })),
   has_vehicle: t.Optional(t.Boolean()),
-  vehicle_count: t.Optional(t.Number()),
+  motorbike_count: t.Optional(t.Number()),
+  car_count: t.Optional(t.Number()),
   notes: t.Optional(t.String()),
 });
 

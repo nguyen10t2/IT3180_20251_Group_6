@@ -34,7 +34,7 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
     try {
       const res = await getHouseById(params.household_id);
       if (!res.data)
-        status(404, { message: 'Không tìm thấy hộ dân' })
+        return status(404, { message: 'Không tìm thấy hộ dân' })
       if (res.data)
         return status(200, { household: res.data });
     }
@@ -43,11 +43,11 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
-  .post("/:household_id", async ({ params, body, user, status }) => {
+  .post("/:household_id", async ({ params, body, status }) => {
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
-        status(404, { message: 'Không tìm thấy hộ dân' })
+        return status(404, { message: 'Không tìm thấy hộ dân' })
 
       if (body == null || typeof body !== "object" || Object.keys(body).length === 0) {
         return status(400, { message: "Không có thông tin để cập nhật hộ dân" });
@@ -68,7 +68,7 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
-        status(404, { message: 'Không tìm thấy hộ dân' })
+        return status(404, { message: 'Không tìm thấy hộ dân' })
 
       const res = await deleteHouse(params.household_id);
   
