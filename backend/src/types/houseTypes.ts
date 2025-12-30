@@ -14,10 +14,10 @@ export const UpdateHouseBody = t.Object({
 });
 
 export const CreateHouseBody = t.Object({
-  room_number: t.String(),
-  room_type: enumToTypeBox(room_type.enumValues),
-  building: t.String(),
-  area: t.Optional(t.Numeric({ precision: 10, scale: 2 })),
+  room_number: t.String({error: 'Không được để trống số phòng'}),
+  room_type: enumToTypeBox(room_type.enumValues, 'Không được để trống loại phòng'),
+  building: t.String({error: 'Không được để trống số tòa nhà'}),
+  area: t.Numeric({ precision: 10, scale: 2, error: 'Diện tích phòng phải khác 0'}),
   head_resident_id: t.Optional(t.String({ format: 'uuid' })),
   notes: t.Optional(t.String()),
 });

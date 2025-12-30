@@ -9,6 +9,7 @@ import { notificationRoutes } from "./handlers/notificationHandler";
 import { residentRoutes } from "./handlers/residentHandlers";
 import { feedbackRoutes } from "./handlers/feedbackHandlers";
 import { invoiceRoutes } from "./handlers/invoiceHandlers";
+import { householdRoutes } from "./handlers/householdHandlers";
 
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
@@ -31,6 +32,7 @@ new Elysia()
   .use(userRoutes)
   .use(residentRoutes)
   .use(invoiceRoutes)
+  .use(householdRoutes)
   .use(feedbackRoutes)
   .use(notificationRoutes)
   .listen({ hostname, port });
