@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import type { SignInFormValues } from "@/lib/validations/auth";
 
 // Role IDs from backend: 1=admin, 2=manager, 3=resident, 4=accountant
-const ADMIN_ROLE = 1;
-const MANAGER_ROLE = 2;
+const MANAGER_ROLE = 'manager';
+const RESIDENT_ROLE = 'resident';
 
 export default function SignInPage() {
   const { signIn, loading } = useAuthStore();
@@ -18,14 +18,13 @@ export default function SignInPage() {
       await signIn(data.email, data.password);
       
       const user = useAuthStore.getState().user;
-      if (user?.role === ADMIN_ROLE || user?.role === MANAGER_ROLE) {
+      if (user?.role === MANAGER_ROLE || user?.role === RESIDENT_ROLE) {
         router.push("/manager/dashboard");
       } else {
         router.push("/resident/home");
       }
     } catch {
-      // Chỉ xóa mật khẩu, giữ lại email
-      reset({ email: data.email, password: "" });
+      reset();
     }
   };
 
