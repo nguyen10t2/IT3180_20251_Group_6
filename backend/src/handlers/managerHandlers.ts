@@ -4,12 +4,13 @@ import { PagingUserBody } from "../types/userTypes";
 import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { approveUser, getPendingUsers, getUserById, getUsersByLastCreatedAndLimit, getUserWithResident, rejectUser } from "../services/userServices";
 import { authorizationPlugins } from "../plugins/authorizationPlugins";
-import { createHouse, getAll } from "../services/houseServices";
-import { CreateHouseBody } from "../types/houseTypes";
+import { householdRoutes } from "./householdHandlers";
+import { userRoutes } from "./userHandlers";
 
 
 export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['Manager'] } })
   .use(authenticationPlugins)
+  .use(userRoutes)
   .group('/user', (app) =>
     app
       .post('/', async ({ body, status }) => {
@@ -56,7 +57,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           const fetchUser = await getUserWithResident(params.user_id);
           if (!fetchUser.data)
             return status(404, { message: 'Không tìm thấy người dùng' });
-          if (fetchUser.data.status != 'inactive')
+          if (fetchUser.data.status !== 'pending')
             return status(400, { message: 'Người dùng không có nhu cầu phê duyệt' });
 
           const approverId = user.id!;
@@ -75,7 +76,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           const fetchUser = await getUserById(params.user_id);
           if (!fetchUser.data)
             return status(404, { message: 'Không tìm thấy người dùng' });
-          if (fetchUser.data.status != 'inactive')
+          if (fetchUser.data.status !== 'pending')
             return status(400, { message: 'Người dùng không có nhu cầu phê duyệt' })
 
           const res = await rejectUser(params.user_id, body.reject_reason);
@@ -92,29 +93,4 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
         })
       })
   )
-  .group('/household', (app) =>
-    app
-      .get('/', async ({ status }) => {
-        try {
-          const res = await getAll();
-          return status(200, { houseHolds: res?.data ?? [] });
-        }
-        catch (error) {
-          console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
-        }
-      })
-      .post('/', async ({ body, status }) => {
-        try {
-          const res = await createHouse(body);
-          if (res.data)
-            return status(200, { message: 'Tạo hộ dân thành công' })
-        }
-        catch (error) {
-          console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
-        }
-      }, {
-        body: CreateHouseBody
-      })
-  )
+  .use(householdRoutes)
