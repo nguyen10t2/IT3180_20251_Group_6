@@ -29,6 +29,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     if (typeof window !== "undefined") {
       localStorage.removeItem("userRole");
       localStorage.removeItem("cached_user");
+      // Clear cookies
+      document.cookie = "userRole=; path=/; max-age=0";
+      document.cookie = "isAuthenticated=; path=/; max-age=0";
     }
     set({
       accessToken: null,
@@ -73,6 +76,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       
       if (user.role && typeof window !== "undefined") {
         localStorage.setItem("userRole", user.role);
+        // Set cookies for middleware
+        document.cookie = `userRole=${user.role}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `isAuthenticated=true; path=/; max-age=86400; SameSite=Lax`;
       }
       toast.success("Chào mừng bạn quay lại!");
     } catch (error) {

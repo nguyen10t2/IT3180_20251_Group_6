@@ -44,7 +44,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const { data } = await loginService(email);
       if (!data ||
         !(await verifyPassword(password, data.hashed_password))
-      ) throw new HttpError(ErrorStatus[NOT_FOUND], "Thông tin đăng nhập không chính xác");
+      ) 
+        throw new HttpError(ErrorStatus[NOT_FOUND], "Thông tin đăng nhập không chính xác");
 
       const { hashed_password, ...rest } = data;
       const accessToken = await getToken(rest, ACCESSTOKEN_TTL);

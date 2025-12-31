@@ -111,7 +111,7 @@ export function ManagerSidebar({ collapsed, setCollapsed }: ManagerSidebarProps)
           {!collapsed && (
             <div className="flex flex-col truncate">
               <span className="font-bold text-lg leading-none">
-                Kogu
+                IT3180-Group6
               </span>
               <span className="text-xs text-orange-500 font-medium">Manager</span>
             </div>
