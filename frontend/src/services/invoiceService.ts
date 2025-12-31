@@ -33,19 +33,19 @@ export interface InvoiceItem {
 export const invoiceService = {
   // Lấy danh sách hóa đơn
   async getInvoices(): Promise<{ invoices: Invoice[] }> {
-    const response = await axiosInstance.get("/api/invoices");
+    const response = await axiosInstance.get("/invoices");
     return response.data;
   },
 
   // Lấy chi tiết hóa đơn
   async getInvoiceDetails(invoice_id: string): Promise<{ invoice: Invoice; items: InvoiceItem[] }> {
-    const response = await axiosInstance.get(`/api/invoices/${invoice_id}`);
+    const response = await axiosInstance.get(`/invoices/${invoice_id}`);
     return response.data;
   },
 
   // Thanh toán hóa đơn
   async payInvoice(invoice_id: string, payment_method?: string): Promise<{ message: string; invoice: Invoice }> {
-    const response = await axiosInstance.post(`/api/invoices/${invoice_id}/pay`, {
+    const response = await axiosInstance.post(`/invoices/${invoice_id}/pay`, {
       payment_method: payment_method || "bank_transfer",
     });
     return response.data;

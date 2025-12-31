@@ -22,13 +22,13 @@ export const notificationService = {
 
   // Đánh dấu đã đọc
   async markAsRead(notification_id: string): Promise<{ message: string }> {
-    const response = await axiosInstance.put(`/api/notifications/${notification_id}/read`);
+    const response = await axiosInstance.put(`/notifications/${notification_id}/read`);
     return response.data;
   },
 
   // Đánh dấu tất cả đã đọc
   async markAllAsRead(): Promise<{ message: string }> {
-    const response = await axiosInstance.put("/api/notifications/read-all");
+    const response = await axiosInstance.put("/notifications/read-all");
     return response.data;
   },
 };

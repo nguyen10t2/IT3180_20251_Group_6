@@ -57,13 +57,13 @@ export interface GetMyResidentResponse {
 export const residentService = {
   // Lấy thông tin cư dân của user đang đăng nhập
   async getMyResident(): Promise<GetMyResidentResponse> {
-    const response = await axiosInstance.get("/api/residents/me");
+    const response = await axiosInstance.get("/residents/me");
     return response.data;
   },
 
   // Tạo mới thông tin cư dân (dành cho user pending lần đầu)
   async createMyResident(data: CreateResidentData): Promise<{ message: string; resident: Resident }> {
-    const response = await axiosInstance.post("/api/residents/me", data);
+    const response = await axiosInstance.post("/residents/me", data);
     return response.data;
   },
 
@@ -75,7 +75,7 @@ export const residentService = {
 
   // Lấy danh sách hộ gia đình
   async getHouseHolds(): Promise<{ houseHolds: HouseHold[] }> {
-    const response = await axiosInstance.get("/api/residents/households");
+    const response = await axiosInstance.get("/residents/households");
     return response.data;
   },
 };

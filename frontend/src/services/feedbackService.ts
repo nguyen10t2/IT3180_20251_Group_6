@@ -34,19 +34,19 @@ export interface CreateFeedbackData {
 export const feedbackService = {
   // Lấy danh sách feedback
   async getFeedbacks(): Promise<{ feedbacks: Feedback[] }> {
-    const response = await axiosInstance.get("/api/feedbacks");
+    const response = await axiosInstance.get("/feedbacks");
     return response.data;
   },
 
   // Tạo feedback mới
   async createFeedback(data: CreateFeedbackData): Promise<{ message: string; feedback: Feedback }> {
-    const response = await axiosInstance.post("/api/feedbacks", data);
+    const response = await axiosInstance.post("/feedbacks", data);
     return response.data;
   },
 
   // Lấy chi tiết feedback
   async getFeedbackDetails(feedback_id: string): Promise<{ feedback: Feedback & { comments: FeedbackComment[] } }> {
-    const response = await axiosInstance.get(`/api/feedbacks/${feedback_id}`);
+    const response = await axiosInstance.get(`/feedbacks/${feedback_id}`);
     return response.data;
   },
 };
