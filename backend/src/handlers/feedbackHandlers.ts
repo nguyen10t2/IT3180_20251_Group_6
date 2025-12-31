@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments } from "../services/feetbackServices";
 import { CreateFeedbackBody } from "../types/feedbackTypes";
 import { getResidentByUserId } from "../services/residentServices";
@@ -21,9 +21,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
       return status(200, { feedbacks: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
-      console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .post("/", async ({ body, status, user }) => {
@@ -50,9 +48,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
         return status(200, { message: 'Gửi phản hồi thành công' })
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
-      console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: CreateFeedbackBody
@@ -67,8 +63,6 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: 
       return status(200, { feedback: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
-      console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   });

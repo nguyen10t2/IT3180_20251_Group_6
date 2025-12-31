@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { getResidentByUserId } from "../services/residentServices";
 import { getInvoiceById, getInvoiceDetails, getInvoicesByHouseId } from "../services/invoiceServices";
 
@@ -27,9 +27,8 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['
       return status(200, { invoices: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .get("/:invoice_id", async ({ params, user, status }) => {
@@ -54,8 +53,7 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['
       return status(200, { invoiceDetails: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })

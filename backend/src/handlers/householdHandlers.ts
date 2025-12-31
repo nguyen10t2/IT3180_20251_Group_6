@@ -1,9 +1,10 @@
 // @ts-nocheck
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { createHouse, deleteHouse, getAll, getHouseById, getMemberCount, updateHouse } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
+import openapi from "@elysiajs/openapi";
 
 export const householdRoutes = new Elysia({ prefix: "/household" })
   .get("/", async ({ status }) => {
@@ -13,7 +14,7 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .post("/", async ({ body, user, status }) => {
@@ -26,7 +27,7 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: CreateHouseBody
@@ -35,23 +36,23 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     try {
       const res = await getHouseById(params.household_id);
       if (!res.data)
-        return status(404, { message: 'Không tìm thấy hộ dân' })
+        throw new HttpError(404, 'Không tìm thấy hộ dân');
       if (res.data)
         return status(200, { household: res.data });
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .patch("/:household_id", async ({ params, body, status }) => {
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
-        return status(404, { message: 'Không tìm thấy hộ dân' })
+        throw new HttpError(404, 'Không tìm thấy hộ dân');
 
       if (body == null || typeof body !== "object" || Object.keys(body).length === 0) {
-        return status(400, { message: "Không có thông tin để cập nhật hộ dân" });
+        throw new HttpError(400, "Không có thông tin để cập nhật hộ dân");
       }
 
       const res = await updateHouse(params.household_id, body);
@@ -60,7 +61,7 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: UpdateHouseBody
@@ -69,7 +70,7 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
-        return status(404, { message: 'Không tìm thấy hộ dân' })
+        throw new HttpError(404, 'Không tìm thấy hộ dân');
 
       const res = await deleteHouse(params.household_id);
   
@@ -78,7 +79,7 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .get("/:household_id/members", async ({ params, status }) => {
@@ -89,6 +90,6 @@ export const householdRoutes = new Elysia({ prefix: "/household" })
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     } 
   });

@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { getNotificationsForUser, markAllAsRead, markAsRead } from "../services/notificationServices";
 import { getResidentByUserId } from "../services/residentServices";
 
@@ -27,9 +27,8 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       return status(200, { notifications: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .put("/:notification_id/read", async ({ params, user, status }) => {
@@ -42,9 +41,8 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
         return status(200, { message: "Đã đánh dấu đã đọc thông báo" })
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     params: t.Object({
@@ -68,8 +66,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notification", detail: 
       return status(200, { message: 'Đã đánh dấu tất cả đã đọc' })
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })

@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { createResident, getResidentByIdCard, getResidentByPhone, getResidentByUserId, updateResident } from "../services/residentServices";
 import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
 import { getUserById, updateResidentId } from "../services/userServices";
@@ -28,9 +28,8 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       return status(200, { resident: res.data, isNewResident: false } );
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .post("/", async ({ body, status, user }) => {
@@ -58,9 +57,8 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
 
       return status(201, { message: 'Đã tạo cư dân thành công', resident: newResident.data });
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: CreateResidentBody
@@ -72,9 +70,7 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
       return status(200, res);
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
-      console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .put("/", async ({ body, user, status }) => {
@@ -91,9 +87,8 @@ export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident
         return status(200, { message: "Cập nhật cư dân thành công", resident: res.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
 
   }, {

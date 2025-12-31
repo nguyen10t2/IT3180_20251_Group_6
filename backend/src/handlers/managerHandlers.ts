@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { PagingUserBody } from "../types/userTypes";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { approveUser, getPendingUsers, getUserById, getUsersByLastCreatedAndLimit, getUserWithResident, rejectUser } from "../services/userServices";
 import { authorizationPlugins } from "../plugins/authorizationPlugins";
 import { householdRoutes } from "./householdHandlers";
@@ -26,7 +26,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       }, {
         body: PagingUserBody
@@ -40,7 +40,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .get('/:user_id', async ({ params, status }) => {
@@ -48,22 +48,22 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
           const res = await getUserWithResident(params.user_id);
 
           if (!res.data)
-            return status(404, { message: 'Không tìm thấy người dùng' })
+            throw new HttpError(404, 'Không tìm thấy người dùng');
 
           return status(200, { userDetails: res.data });
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .patch('/:user_id/approve', async ({ params, user, status }) => {
         try {
           const fetchUser = await getUserWithResident(params.user_id);
           if (!fetchUser.data)
-            return status(404, { message: 'Không tìm thấy người dùng' });
+            throw new HttpError(404, 'Không tìm thấy người dùng');
           if (fetchUser.data.status !== 'pending')
-            return status(400, { message: 'Người dùng không có nhu cầu phê duyệt' });
+            throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt');
 
           const approverId = user.id!;
           const res = await approveUser(params.user_id, approverId);
@@ -73,16 +73,16 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .patch('/:user_id/reject', async ({ params, body, status }) => {
         try {
           const fetchUser = await getUserById(params.user_id);
           if (!fetchUser.data)
-            return status(404, { message: 'Không tìm thấy người dùng' });
+            throw new HttpError(404, 'Không tìm thấy người dùng');
           if (fetchUser.data.status !== 'pending')
-            return status(400, { message: 'Người dùng không có nhu cầu phê duyệt' })
+            throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt');
 
           const res = await rejectUser(params.user_id, body.reject_reason);
           if (res.data)
@@ -90,7 +90,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       }, {
         body: t.Object({
@@ -107,29 +107,29 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .get('/:resident_id', async ({ params, status }) => {
         try {
           const res = await getResidentById(params.resident_id);
           if (!res.data)
-            return status(404, { message: 'Không tìm thấy cư dân' });
+            throw new HttpError(404, 'Không tìm thấy cư dân');
           return status(200, { resident: res.data });
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .patch('/:resident_id', async ({ body, params, status }) => {
         if (body == null || typeof body !== "object" || Object.keys(body).length === 0) {
-          return status(400, { message: "Không có thông tin để cập nhật cư dân" });
+          throw new HttpError(400, "Không có thông tin để cập nhật cư dân");
         }
         try {
           const fetchResident = await getResidentById(params.resident_id);
           if (!fetchResident.data)
-            return status(404, { message: 'Không tìm thấy cư dân' });
+            throw new HttpError(404, 'Không tìm thấy cư dân');
 
           const res = await updateResident(params.resident_id, body);
           if (res.data)
@@ -137,7 +137,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       }, {
         body: UpdateResidentBody
@@ -146,13 +146,13 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         try {
           const fetchResident = await getResidentById(params.resident_id);
           if (!fetchResident.data)
-            return status(404, { message: 'Không tìm thấy cư dân' });
-          const res = deleteResident(params.resident_id);
+            throw new HttpError(404, 'Không tìm thấy cư dân');
+          await deleteResident(params.resident_id);
           return status(200, { message: 'Xóa cư dân thành công' });
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
   )
@@ -165,19 +165,19 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .get('/:invoice_id', async ({ params, status }) => {
         try {
           const res = await getInvoiceById(params.invoice_id);
           if (!res.data)
-            return status(404, { message: 'Không tìm thấy hóa đơn' });
+            throw new HttpError(404, 'Không tìm thấy hóa đơn');
           return status(200, { invoice: res.data });
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .post('/', async ({ body, user, status }) => {
@@ -193,7 +193,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       }, {
         body: CreateInvoiceBody
@@ -202,7 +202,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)
-            return status(404, { message: 'Không tìm thấy hóa đơn' });
+            throw new HttpError(404, 'Không tìm thấy hóa đơn');
 
           const res = await updateInvoice(params.invoice_id, body);
           if (res.data)
@@ -210,7 +210,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       }, {
         body: UpdateInvoiceBody
@@ -219,7 +219,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)
-            return status(404, { message: 'Không tìm thấy hóa đơn' });
+            throw new HttpError(404, 'Không tìm thấy hóa đơn');
 
           const res = await deleteInvoice(params.invoice_id);
           if (res.data)
@@ -227,31 +227,31 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
       })
       .patch('/:invoice_id/confirm', async ({ params, body, user, status }) => {
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)
-            return status(404, { message: 'Không tìm thấy hóa đơn' });
+            throw new HttpError(404, 'Không tìm thấy hóa đơn');
 
           const confirmerId = user.id!;
           const paidAmount = body?.paidAmount ?? "";
           const paymentNote = body?.paymentNote ?? "";
           const res = await confirmInvoice(params.invoice_id, confirmerId, paidAmount, paymentNote);
 
-          if(res.data)
-            return status(200, {message: 'Xác nhận thanh toán hóa đơn thành công'});
+          if (res.data)
+            return status(200, { message: 'Xác nhận thanh toán hóa đơn thành công' });
         }
         catch (error) {
           console.error(error);
-          throw new HttpError(500, INTERNAL_SERVER_ERROR);
+          httpErrorStatus(error);
         }
-      },{
+      }, {
         body: t.Object({
-           paidAmount: t.Optional(t.String()),
-           paymentNote: t.Optional(t.String())
+          paidAmount: t.Optional(t.String()),
+          paymentNote: t.Optional(t.String())
         })
       })
   )

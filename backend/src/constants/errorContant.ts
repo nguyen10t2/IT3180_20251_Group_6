@@ -1,3 +1,5 @@
+import { error } from "node:console";
+
 // HTTP Status Codes
 export enum HttpStatusCode {
   BAD_REQUEST = 400,
@@ -38,3 +40,8 @@ export class HttpError extends Error {
     Object.setPrototypeOf(this, HttpError.prototype);
   }
 }
+
+export const httpErrorStatus = (error: unknown): never => {
+  if (error instanceof HttpError) throw error;
+  throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
+};

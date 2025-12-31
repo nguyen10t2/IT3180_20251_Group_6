@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { getUserById, getUserWithPasswordByEmail, updateUserPassword } from "../services/userServices";
 import { error } from "node:console";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { ChangePasswordBody } from "../types/authTypes";
 import { hashedPassword, verifyPassword } from "../helpers/password";
 
@@ -18,9 +18,8 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       return status(200, { data: userInf.data });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
   .post("/changePass", async ({ body, user, status }) => {
@@ -41,9 +40,8 @@ export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User']
       return status(200, {message: "Đổi mật khẩu thành công"});
 
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: ChangePasswordBody

@@ -1,6 +1,6 @@
 import { Elysia, status, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, INTERNAL_SERVER_ERROR, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorContant";
+import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorContant";
 import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
@@ -31,9 +31,8 @@ const refreshTokenRoute = new Elysia()
 
       return status(200, { accessToken });
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(ErrorStatus[INTERNAL_SERVER_ERROR], INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
 
@@ -68,9 +67,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
 
       return { accessToken };
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(ErrorStatus[INTERNAL_SERVER_ERROR], INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: LoginBody,
@@ -104,9 +102,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       return status(201, { message: 'Gửi đăng kí thành công, vui lòng check email' });
     }
     catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: RegisterBody,
@@ -136,9 +133,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
 
       return status(201, { message: 'Xác thực thành công, bạn có thể đăng nhập ngay bây giờ !' });
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: OtpBody,
@@ -163,9 +159,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
 
       return status(200, { message: 'OTP đã được gửi lại thành công' });
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: t.Object({
@@ -189,9 +184,8 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
 
       return status(200, { message: 'OTP đặt lại mật khẩu đã được gửi đến email của bạn' });
     } catch (error) {
-      if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: t.Object({
@@ -226,8 +220,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       return status(200, { message: 'Xác thực OTP thành công, bạn có thể đặt lại mật khẩu ngay bây giờ !' });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpError) throw error;
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: OtpBody,
@@ -257,8 +250,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       return status(200, { message: 'Đặt lại mật khẩu thành công' });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpError) throw error;
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   }, {
     body: ResetPasswordBody,
@@ -282,6 +274,6 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
     }
     catch (error) {
       console.error(error);
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   })
