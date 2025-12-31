@@ -1,6 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const user_status = pgEnum("user_status", ["active", "inactive", "suspended"]);
+export const user_status = pgEnum("status", ["active", "inactive", "suspended", "pending"]);
 export const gender = pgEnum("gender", ["male", "female", "other"]);
 export const resident_status = pgEnum("resident_status", ["thuongtru", "tamtru", "tamvang", "dachuyendi"]);
 export const room_type = pgEnum("room_type", ["penhouse", "studio", "normal"]);

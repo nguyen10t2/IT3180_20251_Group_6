@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { residentSchema } from "./residentSchema";
+import { user_status } from "./pgEnum";
 
 export const userRoleSchema = pgTable("user_role", {
   id: serial("id").primaryKey(),
@@ -29,7 +30,7 @@ export const userSchema = pgTable("users", {
   avatar_url: text(),
   resident_id: uuid("resident_id").references(() => residentSchema.id),
   role: integer("role").references(() => userRoleSchema.id).notNull().default(3),
-  status: varchar("status", { length: 20 }).notNull().default("inactive"),
+  status: user_status("status").notNull().default("inactive"),
   email_verified: boolean("email_verified").notNull().default(false),
   approved_by: uuid("approved_by"),
   approved_at: timestamp("approved_at", { withTimezone: true }),

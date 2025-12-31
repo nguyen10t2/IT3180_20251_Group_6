@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
-import { createHouse, deleteHouse, getAll, getHouseById, updateHouse } from "../services/houseServices";
+import { createHouse, deleteHouse, getAll, getHouseById, getMemberCount, updateHouse } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 
 
@@ -64,7 +64,7 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
   }, {
     body: UpdateHouseBody
   })
-  .post('/deleteHousehold/:household_id', async ({ params, status }) => {
+  .delete('/deleteHousehold/:household_id', async ({ params, status }) => {
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
@@ -80,3 +80,14 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
+  .get("/:household_id/members", async ({ params, status }) => {
+    try {
+      const res = await getMemberCount(params.household_id);
+      if (res.data)
+        return status(200, { memberCount: res.data });
+    }
+    catch (error) {
+      console.error(error);
+      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+    } 
+  });
