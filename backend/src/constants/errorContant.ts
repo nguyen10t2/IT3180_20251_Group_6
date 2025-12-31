@@ -5,6 +5,7 @@ export enum HttpStatusCode {
   FORBIDDEN = 403,
   NOT_FOUND = 404,
   CONFLICT = 409,
+  TOO_MANY_REQUESTS = 429,
   INTERNAL_SERVER_ERROR = 500,
 }
 
@@ -14,6 +15,7 @@ export const UNAUTHORIZED = "Unauthorized";
 export const BAD_REQUEST = "Bad request";
 export const FORBIDDEN = "Forbidden";
 export const CONFLICT = "Conflict";
+export const TOO_MANY_REQUESTS = "Too many requests";
 
 export const ErrorStatus: Record<string, HttpStatusCode> = {
   [INTERNAL_SERVER_ERROR]: HttpStatusCode.INTERNAL_SERVER_ERROR,
@@ -22,6 +24,7 @@ export const ErrorStatus: Record<string, HttpStatusCode> = {
   [BAD_REQUEST]: HttpStatusCode.BAD_REQUEST,
   [FORBIDDEN]: HttpStatusCode.FORBIDDEN,
   [CONFLICT]: HttpStatusCode.CONFLICT,
+  [TOO_MANY_REQUESTS]: HttpStatusCode.TOO_MANY_REQUESTS,
 };
 
 export class HttpError extends Error {

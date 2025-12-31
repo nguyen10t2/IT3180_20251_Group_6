@@ -1,6 +1,6 @@
 import { Elysia, status, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { CONFLICT, ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, INTERNAL_SERVER_ERROR, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorContant";
 import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
@@ -22,7 +22,7 @@ const refreshTokenRoute = new Elysia()
     try {
       const user = await getUserById(userId);
       if (!user) {
-        throw new HttpError(ErrorStatus.NOT_FOUND, "Người dùng không tồn tại");
+        throw new HttpError(ErrorStatus[NOT_FOUND], "Người dùng không tồn tại");
       }
 
       const rest = { id: user.data.id, email: user.data.email, role: user.data.role };
@@ -33,7 +33,7 @@ const refreshTokenRoute = new Elysia()
     } catch (error) {
       if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(ErrorStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
+      throw new HttpError(ErrorStatus[INTERNAL_SERVER_ERROR], INTERNAL_SERVER_ERROR);
     }
   })
 
@@ -45,7 +45,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const { data } = await loginService(email);
       if (!data ||
         !(await verifyPassword(password, data.hashed_password))
-      ) throw new HttpError(ErrorStatus.NOT_FOUND, "Thông tin đăng nhập không chính xác");
+      ) throw new HttpError(ErrorStatus[NOT_FOUND], "Thông tin đăng nhập không chính xác");
 
       const { hashed_password, ...rest } = data;
       const accessToken = await getToken(rest, ACCESSTOKEN_TTL);
@@ -70,7 +70,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
     } catch (error) {
       if (error instanceof HttpError) throw error;
       console.error(error);
-      throw new HttpError(ErrorStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
+      throw new HttpError(ErrorStatus[INTERNAL_SERVER_ERROR], INTERNAL_SERVER_ERROR);
     }
   }, {
     body: LoginBody,
@@ -116,16 +116,16 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const { email, code } = body;
       const otpData: OTPData | null = await getOtpFromRedis(email);
       if (!otpData) {
-        throw new HttpError(ErrorStatus.BAD_REQUEST, 'OTP không hợp lệ hoặc đã hết hạn');
+        throw new HttpError(ErrorStatus[BAD_REQUEST], 'OTP không hợp lệ hoặc đã hết hạn');
       }
 
       if (otpData.code !== code) {
-        throw new HttpError(ErrorStatus.BAD_REQUEST, 'OTP không đúng, vui lòng thử lại');
+        throw new HttpError(ErrorStatus[BAD_REQUEST], 'OTP không đúng, vui lòng thử lại');
       }
       
       const pendingUserData = await getPendingUser(email);
       if (!pendingUserData) {
-        throw new HttpError(ErrorStatus.BAD_REQUEST, 'Dữ liệu người dùng tạm thời không tồn tại hoặc đã hết hạn');
+        throw new HttpError(ErrorStatus[BAD_REQUEST], 'Dữ liệu người dùng tạm thời không tồn tại hoặc đã hết hạn');
       }
 
       await createUser(pendingUserData.email, pendingUserData.password, pendingUserData.name);
@@ -148,7 +148,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const { email } = body;
       const canResend = await canResendOtp(email);
       if (!canResend) {
-        throw new HttpError(ErrorStatus.TOO_MANY_REQUESTS, 'Bạn đã vượt quá số lần gửi lại OTP. Vui lòng thử lại sau.');
+        throw new HttpError(ErrorStatus[TOO_MANY_REQUESTS], 'Bạn đã vượt quá số lần gửi lại OTP. Vui lòng thử lại sau.');
       }
       
       const otpData = generateOtp();
@@ -203,11 +203,11 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const { email, code } = body;
       const otpData: OTPData | null = await getOtpFromRedis(email);
       if (!otpData) {
-        throw new HttpError(ErrorStatus.BAD_REQUEST, 'OTP không hợp lệ hoặc đã hết hạn');
+        throw new HttpError(ErrorStatus[BAD_REQUEST], 'OTP không hợp lệ hoặc đã hết hạn');
       }
 
       if (otpData.code !== code) {
-        throw new HttpError(ErrorStatus.BAD_REQUEST, 'OTP không đúng, vui lòng thử lại');
+        throw new HttpError(ErrorStatus[BAD_REQUEST], 'OTP không đúng, vui lòng thử lại');
       }
 
       await deleteOtpFromRedis(email);
@@ -239,7 +239,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       const key = `resetPasswordVerified:${email}`;
       const token = await client.get(key);
       if (!token) {
-        throw new HttpError(ErrorStatus.FORBIDDEN, 'Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại quy trình quên mật khẩu.');
+        throw new HttpError(ErrorStatus[FORBIDDEN], 'Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại quy trình quên mật khẩu.');
       }
 
       const { payload } = await jose.jwtVerify(
@@ -248,7 +248,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       );
 
       if (payload.email !== email) {
-        throw new HttpError(ErrorStatus.FORBIDDEN, 'Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại quy trình quên mật khẩu.');
+        throw new HttpError(ErrorStatus[FORBIDDEN], 'Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại quy trình quên mật khẩu.');
       }
       
       await updateUserPasswordByEmail(email, hashPass);
