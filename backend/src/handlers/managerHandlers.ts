@@ -10,6 +10,9 @@ import { deleteResident, getAll as getAllResident, getResidentById, updateReside
 import { UpdateResidentBody } from "../types/residentTypes";
 import { confirmInvoice, createInvoice, deleteInvoice, getAll as getAllInvoice, getInvoiceById, updateInvoice } from "../services/invoiceServices";
 import { CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
+import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
+import { CreateNotificationBody } from "../types/notificationTypes";
+import { getAll as getAllFeedback, getFeedbackById, respondToFeedback } from "../services/feedbackServices";
 
 
 export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] })
@@ -252,6 +255,85 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         body: t.Object({
           paidAmount: t.Optional(t.String()),
           paymentNote: t.Optional(t.String())
+        })
+      })
+  )
+  .group('/notification', (app) =>
+    app
+      .get('/', async ({ status }) => {
+        try {
+          const res = await getAllNotification();
+          return status(200, { notifications: res?.data ?? [] });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      })
+      .post('/', async ({ body, user, status }) => {
+        try {
+          const userId = user.id!;
+          const formattedBody = {
+            ...body,
+            created_by: userId
+          }
+          await createNotification(formattedBody);
+          return status(200, { message: 'Tạo thông báo thành công' });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      }, {
+        body: CreateNotificationBody
+      })
+      .delete('/:notification_id', async ({ params, status }) => {
+        try {
+          const fetchNotification = await getNotificationById(params.notification_id);
+          if (!fetchNotification.data)
+            throw new HttpError(404, 'Không tìm thấy thông báo');
+
+          const res = await deleteNotification(params.notification_id);
+          if (res.data)
+            return status(200, { message: 'Xóa thông báo thành công' });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      })
+  )
+  .group('/feedback', (app) =>
+    app
+      .get('/', async ({ status }) => {
+        try {
+          const res = await getAllFeedback();
+          return status(200, { feedbacks: res?.data ?? [] });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      })
+      .post('/:feedback_id/response', async ({ params, body, user, status }) => {
+        try {
+          const fetchFeedback = await getFeedbackById(params.feedback_id);
+          if (!fetchFeedback.data)
+            throw new HttpError(404, 'Không tìm thấy phản hồi');
+
+          const responserId = user.id!;
+          const res = await respondToFeedback(params.feedback_id, body.response, responserId);
+
+          if(res.data)
+            return status(200, {message: 'Trả lời phản hồi thành công'});
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      }, {
+        body: t.Object({
+          response: t.String({ error: 'Vui lòng không để trống nội dung trả lời phản hồi' })
         })
       })
   )

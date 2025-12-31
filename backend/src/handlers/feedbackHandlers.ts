@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
-import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments } from "../services/feetbackServices";
+import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments } from "../services/feedbackServices";
 import { CreateFeedbackBody } from "../types/feedbackTypes";
 import { getResidentByUserId } from "../services/residentServices";
 import { getUserById } from "../services/userServices";

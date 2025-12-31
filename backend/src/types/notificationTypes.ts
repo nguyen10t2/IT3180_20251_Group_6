@@ -3,8 +3,8 @@ import { enumToTypeBox } from "../helpers/enumHelper";
 import { notification_target, notification_type } from "../models/pgEnum";
 
 export const CreateNotificationBody = t.Object({
-    title: t.String(),
-    context: t.String(),
+    title: t.String({error: 'Không được để trống tiêu đề thông báo'}),
+    content: t.String({error: 'Không được để trống nội dung thông báo'}),
     type: t.Optional(enumToTypeBox(notification_type.enumValues)),
     target: t.Optional(enumToTypeBox(notification_target.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
@@ -13,7 +13,7 @@ export const CreateNotificationBody = t.Object({
 
 export const CreateScheduledNotificationBody = t.Object({
     title: t.String(),
-    context: t.String(),
+    content: t.String(),
     type: t.Optional(enumToTypeBox(notification_type.enumValues)),
     target: t.Optional(enumToTypeBox(notification_target.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
