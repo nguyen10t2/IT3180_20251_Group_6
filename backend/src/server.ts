@@ -16,7 +16,10 @@ import { managerRoutes } from "./handlers/managerHandlers";
 const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
 const port: number = Number(Bun.env.PORT || '3000');
 
-new Elysia()
+new Elysia({
+  precompile: true,
+  aot: true,
+})
   .use(pluginDB)
   .use(cors({
     origin: "http://localhost:3001",

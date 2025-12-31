@@ -12,7 +12,7 @@ import type { SignInFormValues } from "@/lib/validations/auth";
 import Link from "next/link";
 
 type SignInFormProps = {
-  onSubmit: (data: SignInFormValues) => Promise<void>;
+  onSubmit: (data: SignInFormValues, reset: () => void) => Promise<void>;
   isLoading?: boolean;
   className?: string;
 };
@@ -21,10 +21,15 @@ export function SignInForm({ className, onSubmit, isLoading = false }: SignInFor
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
   });
+
+  const handleFormSubmit = async (data: SignInFormValues) => {
+    await onSubmit(data, reset);
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -39,7 +44,7 @@ export function SignInForm({ className, onSubmit, isLoading = false }: SignInFor
           <CardDescription>Đăng nhập tài khoản của bạn</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>

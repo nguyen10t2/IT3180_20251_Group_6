@@ -13,7 +13,7 @@ export default function SignInPage() {
   const { signIn, loading } = useAuthStore();
   const router = useRouter();
 
-  const handleSubmit = async (data: SignInFormValues) => {
+  const handleSubmit = async (data: SignInFormValues, reset: () => void) => {
     try {
       await signIn(data.email, data.password);
       
@@ -24,7 +24,8 @@ export default function SignInPage() {
         router.push("/resident/home");
       }
     } catch {
-      // Error handled in store with toast
+      // Chỉ xóa mật khẩu, giữ lại email
+      reset({ email: data.email, password: "" });
     }
   };
 

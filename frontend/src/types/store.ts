@@ -4,7 +4,7 @@ export interface User {
   full_name: string;
   avatar_url?: string | null;
   resident_id?: string | null;
-  role: number;
+  role: string;
   status: string;
   email_verified: boolean;
   created_at?: string;

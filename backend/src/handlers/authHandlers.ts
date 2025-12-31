@@ -1,6 +1,6 @@
 import { Elysia, status, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { CONFLICT, ErrorStatus, HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
 import { getToken } from "../helpers/tokenHelpers";
@@ -81,7 +81,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
 
       const exist = await isExistingUserByEmail(email);
       if (exist.data) {
-       throw new HttpError(ErrorStatus.CONFLICT, 'Email đã tồn tại, vui lòng nhập lại !');
+       throw new HttpError(ErrorStatus[CONFLICT], 'Email đã tồn tại, vui lòng nhập lại !');
       }
 
       const hashPass = await hashedPassword(password);

@@ -4,6 +4,13 @@ import { create } from "zustand";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
 import type { AuthState, User } from "@/types/store";
+import { error } from "console";
+
+const errorHelpers = (error: unknown, message: string) => {
+  const axiosError = error as { response?: { data?: { message?: string } } };
+  const errorMessage = axiosError.response?.data?.message || message;
+  toast.error(errorMessage);
+}
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   accessToken: null,
@@ -40,7 +47,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       toast.success("Gửi mã OTP thành công! Vui lòng kiểm tra email.");
     } catch (error) {
       console.error(error);
-      toast.error("Đăng ký không thành công!");
+      // Lấy message lỗi từ backend nếu có
+      errorHelpers(error, "Đăng ký không thành công!");
       throw error;
     } finally {
       set({ loading: false });
@@ -51,19 +59,27 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       set({ loading: true });
       const { accessToken } = await authService.signIn(email, password);
+      
+      if (!accessToken) {
+        throw new Error("Không nhận được access token");
+      }
+      
       get().setAccessToken(accessToken);
 
       const user = await get().fetchMe();
-      if (user?.role && typeof window !== "undefined") {
-        localStorage.setItem("userRole", String(user.role));
+      if (!user) {
+        throw new Error("Không thể lấy thông tin người dùng");
       }
-
+      
+      if (user.role && typeof window !== "undefined") {
+        localStorage.setItem("userRole", user.role);
+      }
       toast.success("Chào mừng bạn quay lại!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Đăng nhập không thành công");
+    } catch (error) {
+      console.error(error);
+      errorHelpers(error, "Đăng nhập không thành công!");
       get().clearState();
-      throw err;
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -80,7 +96,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (err: unknown) {
       console.error(err);
       get().clearState();
-      // Only show error if it's not a 401 (token expired = already logged out)
       const error = err as { response?: { status?: number } };
       if (error.response?.status !== 401) {
         toast.error("Lỗi khi logout");
@@ -98,8 +113,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const user = await authService.fetchMe();
       set({ user });
       return user;
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      errorHelpers(error, "Lấy thông tin người dùng không thành công!");
+      get().clearState();
       return null;
     } finally {
       set({ loading: false });
