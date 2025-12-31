@@ -101,7 +101,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           />
           {!collapsed && (
             <span className="font-bold text-lg truncate">
-              Kogu
+              IT3180-Group6
             </span>
           )}
         </Link>
