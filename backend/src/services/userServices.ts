@@ -1,11 +1,14 @@
-import { and, eq, isNotNull, isNull, lt, desc } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, lt, desc, or } from 'drizzle-orm';
 import { db } from '../database/db';
 import { userRoleSchema, userSchema } from '../models/userSchema';
 import { houseSchema } from '../models/houseSchema';
 import { residentSchema } from '../models/residentSchema';
 
 // Lấy danh sách người dùng với phân trang
-export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: number) => {
+export const getUsersByLastCreatedAndLimit = async (lastCreated: Date | undefined, limit: number) => {
+  const condition = lastCreated
+    ? lt(userSchema.created_at, lastCreated)
+    : undefined;
   const rows = await db.select({
     user_id: userSchema.id,
     full_name: userSchema.full_name,
@@ -32,7 +35,7 @@ export const getUsersByLastCreatedAndLimit = async (lastCreated: Date, limit: nu
     .leftJoin(houseSchema, eq(residentSchema.house_id, houseSchema.id))
     .where(
       and(
-        lt(userSchema.created_at, lastCreated),
+        condition,
         eq(userSchema.role, 3),
         isNotNull(userSchema.resident_id),
         isNull(userSchema.deleted_at)
@@ -203,7 +206,7 @@ export const getPendingUsers = async () => {
     .leftJoin(houseSchema, eq(residentSchema.house_id, houseSchema.id))
     .where(
       and(
-        eq(userSchema.status, 'inactive'),
+        eq(userSchema.status, 'pending'),
         eq(userSchema.role, 3),
         isNotNull(userSchema.resident_id),
         isNull(userSchema.deleted_at)

@@ -12,9 +12,10 @@ import { confirmInvoice, createInvoice, deleteInvoice, getAll as getAllInvoice, 
 import { CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
 
 
-export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['Manager'] } })
-  .use(authenticationPlugins)
+export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] })
   .use(userRoutes)
+  .use(authorizationPlugins('manager'))
+  .use(householdRoutes)
   .group('/user', (app) =>
     app
       .post('/', async ({ body, status }) => {
@@ -56,7 +57,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           throw new HttpError(500, INTERNAL_SERVER_ERROR);
         }
       })
-      .post('/:user_id/approve', async ({ params, user, status }) => {
+      .patch('/:user_id/approve', async ({ params, user, status }) => {
         try {
           const fetchUser = await getUserWithResident(params.user_id);
           if (!fetchUser.data)
@@ -75,7 +76,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           throw new HttpError(500, INTERNAL_SERVER_ERROR);
         }
       })
-      .post('/:user_id/reject', async ({ params, body, status }) => {
+      .patch('/:user_id/reject', async ({ params, body, status }) => {
         try {
           const fetchUser = await getUserById(params.user_id);
           if (!fetchUser.data)
@@ -97,7 +98,6 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
         })
       })
   )
-  .use(householdRoutes)
   .group('/resident', (app) =>
     app
       .get('/', async ({ status }) => {
@@ -122,7 +122,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           throw new HttpError(500, INTERNAL_SERVER_ERROR);
         }
       })
-      .put('/:resident_id/update', async ({ body, params, status }) => {
+      .patch('/:resident_id', async ({ body, params, status }) => {
         if (body == null || typeof body !== "object" || Object.keys(body).length === 0) {
           return status(400, { message: "Không có thông tin để cập nhật cư dân" });
         }
@@ -142,7 +142,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
       }, {
         body: UpdateResidentBody
       })
-      .delete('/:resident_id/delete', async ({ params, status }) => {
+      .delete('/:resident_id', async ({ params, status }) => {
         try {
           const fetchResident = await getResidentById(params.resident_id);
           if (!fetchResident.data)
@@ -198,7 +198,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
       }, {
         body: CreateInvoiceBody
       })
-      .put('/:invoice_id/update', async ({ params, body, status }) => {
+      .patch('/:invoice_id', async ({ params, body, status }) => {
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)
@@ -215,7 +215,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
       }, {
         body: UpdateInvoiceBody
       })
-      .delete('/:invoice_id/delete', async ({ params, status }) => {
+      .delete('/:invoice_id', async ({ params, status }) => {
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)
@@ -230,7 +230,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', detail: { tags: ['
           throw new HttpError(500, INTERNAL_SERVER_ERROR);
         }
       })
-      .post('/:invoice_id/confirm', async ({ params, body, user, status }) => {
+      .patch('/:invoice_id/confirm', async ({ params, body, user, status }) => {
         try {
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data)

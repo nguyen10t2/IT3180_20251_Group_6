@@ -75,7 +75,7 @@ export const createHouse = async (data: CreateHouseBodyType) => {
         isNull(residentSchema.deleted_at)
       ))
       .limit(1);
-
+    
     if (resident.length > 0) {
       headResidentId = data.head_resident_id;
     }
@@ -114,7 +114,7 @@ export const updateHouse = async (id: string, data: UpdateHouseBodyType) => {
 // Soft delete căn hộ
 export const deleteHouse = async (id: string) => {
   await db.update(houseSchema)
-    .set({ deleted_at: new Date() })
+    .set({ deleted_at: new Date(), status: 'inactive' })
     .where(eq(houseSchema.id, id));
 
   return { data: 'House deleted successfully' };

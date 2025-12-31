@@ -23,6 +23,7 @@ export const authenticationPlugins = (app: Elysia) => app
       return { user: payload as PayloadJWT };
 
     } catch (error) {
+      if (error instanceof HttpError) throw error;
       throw new HttpError(401, "Token is invalid or has expired");
     }
   });

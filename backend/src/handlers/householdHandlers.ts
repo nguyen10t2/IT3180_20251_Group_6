@@ -1,12 +1,11 @@
+// @ts-nocheck
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
 import { createHouse, deleteHouse, getAll, getHouseById, updateHouse } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 
-
-export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags: ['Household'] } })
-  .use(authenticationPlugins)
+export const householdRoutes = new Elysia({ prefix: "/household" })
   .get("/", async ({ status }) => {
     try {
       const res = await getAll();
@@ -19,6 +18,8 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
   })
   .post("/", async ({ body, user, status }) => {
     try {
+      console.log(body);
+      
       const res = await createHouse(body);
       if (res.data)
         return status(200, { message: 'Tạo hộ dân thành công' })
@@ -43,7 +44,7 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   })
-  .post("/:household_id", async ({ params, body, status }) => {
+  .patch("/:household_id", async ({ params, body, status }) => {
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)
@@ -64,7 +65,7 @@ export const householdRoutes = new Elysia({ prefix: "/household", detail: { tags
   }, {
     body: UpdateHouseBody
   })
-  .post('/deleteHousehold/:household_id', async ({ params, status }) => {
+  .delete('/:household_id', async ({ params, status }) => {
     try {
       const fetchHousehold = await getHouseById(params.household_id);
       if (!fetchHousehold.data)

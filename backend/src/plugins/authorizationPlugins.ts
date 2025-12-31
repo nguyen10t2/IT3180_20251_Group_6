@@ -20,6 +20,7 @@ export const authorizationPlugins = (role: string) => (app: Elysia) => app
       }
     } catch (error) {
       console.error(error);
+      if (error instanceof HttpError) throw error;
       throw new HttpError(500, INTERNAL_SERVER_ERROR);
     }
   });
