@@ -24,18 +24,34 @@ import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
 interface Resident {
-  resident_id: string;
-  fullname: string;
-  date_of_birth?: string;
-  gender?: string;
+  id: string;
+  house_id?: string;
+  full_name: string;
   id_card?: string;
-  phone_number?: string;
+  date_of_birth?: string;
+  phone?: string;
   email?: string;
-  house_hold_id?: string;
+  gender?: string;
+  occupation?: string;
+  house_role?: string;
+  residence_status?: string;
+  move_in_date?: string;
+  move_out_date?: string;
+  move_out_reason?: string;
   room_number?: string;
-  relationship?: string;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string;
 }
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ManagerResidentsPage() {
   const [loading, setLoading] = useState(true);
@@ -79,28 +95,39 @@ export default function ManagerResidentsPage() {
     );
   };
 
-  const getRelationshipBadge = (relationship?: string) => {
-    if (!relationship) return null;
-    const relationships: Record<string, { label: string; className: string }> = {
+  const getHouseRoleBadge = (house_role?: string) => {
+    if (!house_role) return null;
+    const roles: Record<string, { label: string; className: string }> = {
       owner: { label: "Chủ hộ", className: "bg-cyan-500/10 text-cyan-600" },
-      spouse: { label: "Vợ/Chồng", className: "bg-pink-500/10 text-pink-600" },
-      child: { label: "Con", className: "bg-green-500/10 text-green-600" },
-      parent: { label: "Cha/Mẹ", className: "bg-blue-500/10 text-blue-600" },
-      relative: { label: "Người thân", className: "bg-orange-500/10 text-orange-600" },
-      tenant: { label: "Người thuê", className: "bg-yellow-500/10 text-yellow-600" },
-      other: { label: "Khác", className: "bg-gray-500/10 text-gray-600" },
+      member: { label: "Thành viên", className: "bg-blue-500/10 text-blue-600" },
+      tenant: { label: "Người thuê", className: "bg-purple-500/10 text-purple-600" },
     };
-    const relInfo = relationships[relationship] || relationships.other;
+    const roleInfo = roles[house_role] || roles.member;
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${relInfo.className}`}>
-        {relInfo.label}
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleInfo.className}`}>
+        {roleInfo.label}
+      </span>
+    );
+  };
+
+  const getResidenceStatusBadge = (residence_status?: string) => {
+    if (!residence_status) return null;
+    const statuses: Record<string, { label: string; className: string }> = {
+      thuongtru: { label: "Thường trú", className: "bg-green-500/10 text-green-600" },
+      tamtru: { label: "Tạm trú", className: "bg-yellow-500/10 text-yellow-600" },
+      tamvang: { label: "Tạm vắng", className: "bg-orange-500/10 text-orange-600" },
+    };
+    const statusInfo = statuses[residence_status] || statuses.thuongtru;
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}>
+        {statusInfo.label}
       </span>
     );
   };
 
   const filteredResidents = residents.filter(r =>
-    r.fullname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.phone_number?.includes(searchQuery) ||
+    r.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.phone?.includes(searchQuery) ||
     r.id_card?.includes(searchQuery) ||
     r.room_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -189,53 +216,72 @@ export default function ManagerResidentsPage() {
                 <p>Không có cư dân nào</p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredResidents.map((resident) => (
-                  <div
-                    key={resident.resident_id}
-                    className="p-4 rounded-lg border hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold">{resident.fullname}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {resident.date_of_birth && `Sinh: ${formatDate(resident.date_of_birth)}`}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {getGenderBadge(resident.gender)}
-                        {getRelationshipBadge(resident.relationship)}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm">
-                      {resident.room_number && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Building2 className="h-4 w-4" />
-                          <span>Phòng {resident.room_number}</span>
-                        </div>
-                      )}
-                      {resident.phone_number && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="h-4 w-4" />
-                          <span>{resident.phone_number}</span>
-                        </div>
-                      )}
-                      {resident.email && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="h-4 w-4" />
-                          <span className="truncate">{resident.email}</span>
-                        </div>
-                      )}
-                      {resident.id_card && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <IdCard className="h-4 w-4" />
-                          <span>{resident.id_card}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Họ và tên</TableHead>
+                      <TableHead>Phòng</TableHead>
+                      <TableHead>Ngày sinh</TableHead>
+                      <TableHead>Giới tính</TableHead>
+                      <TableHead>Vai trò</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Nghề nghiệp</TableHead>
+                      <TableHead>Ngày vào ở</TableHead>
+                      <TableHead>Liên hệ</TableHead>
+                      <TableHead>CCCD</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredResidents.map((resident) => (
+                      <TableRow key={resident.id}>
+                        <TableCell className="font-medium">{resident.full_name}</TableCell>
+                        <TableCell>
+                          {resident.room_number ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <span>{resident.room_number}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic">Chưa có</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{formatDate(resident.date_of_birth)}</TableCell>
+                        <TableCell>{getGenderBadge(resident.gender)}</TableCell>
+                        <TableCell>{getHouseRoleBadge(resident.house_role)}</TableCell>
+                        <TableCell>{getResidenceStatusBadge(resident.residence_status)}</TableCell>
+                        <TableCell>{resident.occupation || "-"}</TableCell>
+                        <TableCell>{formatDate(resident.move_in_date)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1 text-sm">
+                            {resident.phone && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-3 w-3 text-muted-foreground" />
+                                <span>{resident.phone}</span>
+                              </div>
+                            )}
+                            {resident.email && (
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                <span className="truncate max-w-[150px]" title={resident.email}>{resident.email}</span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {resident.id_card ? (
+                            <div className="flex items-center gap-2">
+                              <IdCard className="h-4 w-4 text-muted-foreground" />
+                              <span>{resident.id_card}</span>
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>

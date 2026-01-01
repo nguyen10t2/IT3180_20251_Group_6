@@ -24,6 +24,12 @@ export const getAll = async () => {
 
     head_fullname: residentSchema.full_name,
     head_phone: residentSchema.phone,
+    members_count: sql<number>`(
+      SELECT COUNT(*)::int 
+      FROM ${residentSchema} 
+      WHERE ${residentSchema.house_id} = ${houseSchema.id} 
+      AND ${residentSchema.deleted_at} IS NULL
+    )`.as('members_count'),
   })
     .from(houseSchema)
     .leftJoin(residentSchema, eq(houseSchema.head_resident_id, residentSchema.id))

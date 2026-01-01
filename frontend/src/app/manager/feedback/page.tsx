@@ -11,6 +11,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   MessageSquare, 
   Loader2,
@@ -19,23 +28,210 @@ import {
   Clock,
   AlertCircle,
   Building2,
-  User
+  User,
+  Eye,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
 interface Feedback {
-  feedback_id: string;
+  id: string;
   user_id: string;
+  house_id: string;
   fullname?: string;
   room_number?: string;
   title: string;
   content: string;
-  category: string;
+  type: string;
+  priority: string;
+  attachments?: string[];
   status: string;
-  response?: string;
+  assigned_to?: string;
+  resolved_at?: string;
+  resolution_notes?: string;
   created_at: string;
-  responded_at?: string;
+  updated_at?: string;
+  deleted_at?: string;
+}
+
+// Helper functions moved outside component
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "resolved":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600">
+          <CheckCircle className="h-3 w-3" />
+          Đã xử lý
+        </span>
+      );
+    case "in_progress":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+          <Clock className="h-3 w-3" />
+          Đang xử lý
+        </span>
+      );
+    case "pending":
+    default:
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-600">
+          <AlertCircle className="h-3 w-3" />
+          Chờ xử lý
+        </span>
+      );
+  }
+};
+
+const getTypeBadge = (type: string) => {
+  const types: Record<string, { label: string; className: string }> = {
+    complaint: { label: "Khiếu nại", className: "bg-red-500/10 text-red-600" },
+    suggestion: { label: "Đề xuất", className: "bg-blue-500/10 text-blue-600" },
+    maintenance: { label: "Bảo trì", className: "bg-orange-500/10 text-orange-600" },
+    other: { label: "Khác", className: "bg-gray-500/10 text-gray-600" },
+  };
+  const typeInfo = types[type] || types.other;
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.className}`}>
+      {typeInfo.label}
+    </span>
+  );
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+function FeedbackDetailModal({ 
+  feedback, 
+  onClose, 
+  onRespondSuccess 
+}: { 
+  feedback: Feedback; 
+  onClose: () => void; 
+  onRespondSuccess: () => void; 
+}) {
+  const [responseText, setResponseText] = useState("");
+  const [responding, setResponding] = useState(false);
+
+  const handleRespond = async () => {
+    const trimmedResponse = responseText.trim();
+    
+    if (!trimmedResponse) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+
+    if (!feedback?.id) {
+      toast.error("Không tìm thấy ID phản hồi");
+      console.error("Missing feedback_id:", feedback);
+      return;
+    }
+
+    try {
+      setResponding(true);
+      const payload = {
+        id: feedback.id,
+        response: trimmedResponse,
+      };
+      console.log("Sending payload:", payload);
+      
+      await axiosInstance.post(`/managers/feedbacks/response`, payload);
+      toast.success("Đã gửi phản hồi thành công");
+      onRespondSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error("Error responding to feedback:", error);
+      console.error("Error data:", error.response?.data);
+      const errorMsg = error.response?.data?.message || "Không thể gửi phản hồi";
+      toast.error(errorMsg);
+    } finally {
+      setResponding(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-background rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Chi tiết phản hồi</h3>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {getTypeBadge(feedback.type)}
+              {getStatusBadge(feedback.status)}
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {formatDate(feedback.created_at)}
+            </span>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-lg">{feedback.title}</h4>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              <div className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                {feedback.fullname || "Cư dân"}
+              </div>
+              {feedback.room_number && (
+                <div className="flex items-center gap-1">
+                  <Building2 className="h-4 w-4" />
+                  Phòng {feedback.room_number}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 bg-muted/30 rounded-lg">
+            <p className="text-sm whitespace-pre-wrap">{feedback.content}</p>
+          </div>
+
+          {/* Response section */}
+          {feedback.response ? (
+            <div className="mt-4 p-4 rounded-lg bg-green-500/5 border-l-4 border-green-500">
+              <p className="text-sm font-medium text-green-700">Phản hồi từ quản lý:</p>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{feedback.response}</p>
+              {feedback.responded_at && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {formatDate(feedback.responded_at)}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-2">
+              <Label>Gửi phản hồi</Label>
+              <textarea
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                placeholder="Nhập nội dung phản hồi..."
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <Button 
+                  onClick={handleRespond}
+                  disabled={responding}
+                >
+                  {responding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Gửi phản hồi
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ManagerFeedbacksPage() {
@@ -43,8 +239,7 @@ export default function ManagerFeedbacksPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "in_progress" | "resolved">("all");
-  const [respondingId, setRespondingId] = useState<string | null>(null);
-  const [responseText, setResponseText] = useState("");
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
 
   useEffect(() => {
     fetchFeedbacks();
@@ -63,79 +258,6 @@ export default function ManagerFeedbacksPage() {
     }
   };
 
-  const handleRespond = async (feedbackId: string) => {
-    if (!responseText.trim()) {
-      toast.error("Vui lòng nhập nội dung phản hồi");
-      return;
-    }
-
-    try {
-      await axiosInstance.post(`/managers/feedbacks/${feedbackId}/response`, {
-        response: responseText,
-      });
-      toast.success("Đã gửi phản hồi thành công");
-      setRespondingId(null);
-      setResponseText("");
-      fetchFeedbacks();
-    } catch (error) {
-      console.error("Error responding to feedback:", error);
-      toast.error("Không thể gửi phản hồi");
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "resolved":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600">
-            <CheckCircle className="h-3 w-3" />
-            Đã xử lý
-          </span>
-        );
-      case "in_progress":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-            <Clock className="h-3 w-3" />
-            Đang xử lý
-          </span>
-        );
-      case "pending":
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-600">
-            <AlertCircle className="h-3 w-3" />
-            Chờ xử lý
-          </span>
-        );
-    }
-  };
-
-  const getCategoryBadge = (category: string) => {
-    const categories: Record<string, { label: string; className: string }> = {
-      complaint: { label: "Khiếu nại", className: "bg-red-500/10 text-red-600" },
-      suggestion: { label: "Góp ý", className: "bg-blue-500/10 text-blue-600" },
-      maintenance: { label: "Bảo trì", className: "bg-orange-500/10 text-orange-600" },
-      inquiry: { label: "Hỏi đáp", className: "bg-cyan-500/10 text-cyan-600" },
-      other: { label: "Khác", className: "bg-gray-500/10 text-gray-600" },
-    };
-    const catInfo = categories[category] || categories.other;
-    return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${catInfo.className}`}>
-        {catInfo.label}
-      </span>
-    );
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const filteredFeedbacks = feedbacks.filter(fb => {
     const matchesSearch = 
       fb.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -147,7 +269,7 @@ export default function ManagerFeedbacksPage() {
   });
 
   return (
-
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -254,98 +376,56 @@ export default function ManagerFeedbacksPage() {
                 <p>Không có phản hồi nào</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredFeedbacks.map((feedback) => (
-                  <div
-                    key={feedback.feedback_id}
-                    className="p-4 rounded-lg border"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold">{feedback.title}</h4>
-                          {getCategoryBadge(feedback.category)}
-                          {getStatusBadge(feedback.status)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {feedback.content}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Sender info */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        {feedback.fullname || "Cư dân"}
-                      </div>
-                      {feedback.room_number && (
-                        <div className="flex items-center gap-1">
-                          <Building2 className="h-4 w-4" />
-                          Phòng {feedback.room_number}
-                        </div>
-                      )}
-                      <span>•</span>
-                      <span>{formatDate(feedback.created_at)}</span>
-                    </div>
-
-                    {/* Response section */}
-                    {feedback.response && (
-                      <div className="mt-3 p-3 rounded-lg bg-green-500/5 border-l-4 border-green-500">
-                        <p className="text-sm font-medium text-green-700">Phản hồi từ quản lý:</p>
-                        <p className="text-sm mt-1">{feedback.response}</p>
-                        {feedback.responded_at && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {formatDate(feedback.responded_at)}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Response form */}
-                    {respondingId === feedback.feedback_id ? (
-                      <div className="mt-3 space-y-2">
-                        <textarea
-                          value={responseText}
-                          onChange={(e) => setResponseText(e.target.value)}
-                          placeholder="Nhập nội dung phản hồi..."
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleRespond(feedback.feedback_id)}>
-                            Gửi phản hồi
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setRespondingId(null);
-                              setResponseText("");
-                            }}
-                          >
-                            Hủy
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-                        {feedback.status !== "resolved" && (
-                          <Button 
-                            size="sm"
-                            onClick={() => setRespondingId(feedback.feedback_id)}
-                          >
-                            Phản hồi
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tiêu đề</TableHead>
+                    <TableHead>Người gửi</TableHead>
+                    <TableHead>Phòng</TableHead>
+                    <TableHead>Danh mục</TableHead>
+                    <TableHead>Ngày gửi</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredFeedbacks.map((feedback) => (
+                    <TableRow key={feedback.id}>
+                      <TableCell className="font-medium max-w-[200px] truncate" title={feedback.title}>
+                        {feedback.title}
+                      </TableCell>
+                      <TableCell>{feedback.fullname || "Cư dân"}</TableCell>
+                      <TableCell>{feedback.room_number || "N/A"}</TableCell>
+                      <TableCell>{getTypeBadge(feedback.type)}</TableCell>
+                      <TableCell>{formatDate(feedback.created_at)}</TableCell>
+                      <TableCell>{getStatusBadge(feedback.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedFeedback(feedback)}
+                          className="h-8 w-8 p-0"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
       </div>
 
+      {selectedFeedback && (
+        <FeedbackDetailModal 
+          feedback={selectedFeedback} 
+          onClose={() => setSelectedFeedback(null)}
+          onRespondSuccess={fetchFeedbacks}
+        />
+      )}
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { createHouse, deleteHouse, getAll, getHouseById, getMemberCount, updateHouse } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 import openapi from "@elysiajs/openapi";
+import { getResidentsByHouseId } from "../services/residentServices";
 
 export const householdRoutes = new Elysia({ prefix: "/households" })
   .get("/", async ({ status }) => {
@@ -84,9 +85,8 @@ export const householdRoutes = new Elysia({ prefix: "/households" })
   })
   .get("/:household_id/members", async ({ params, status }) => {
     try {
-      const res = await getMemberCount(params.household_id);
-      if (res.data)
-        return status(200, { memberCount: res.data });
+      const res = await getResidentsByHouseId(params.household_id);
+      return status(200, { members: res.data });
     }
     catch (error) {
       console.error(error);

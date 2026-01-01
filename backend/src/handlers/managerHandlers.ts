@@ -12,12 +12,24 @@ import { CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
 import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
 import { CreateNotificationBody } from "../types/notificationTypes";
 import { getAll as getAllFeedback, getFeedbackById, respondToFeedback } from "../services/feedbackServices";
+import { FeedBackResponse } from "../types/feedbackTypes";
+import { getDashboardStats } from "../services/dashboardServices";
 
 
 export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager'] })
   .use(userRoutes)
   .use(authorizationPlugins('manager'))
   .use(householdRoutes)
+  .get('/stats', async ({ status }) => {
+    try {
+      const res = await getDashboardStats();
+      return status(200, { stats: res.data });
+    }
+    catch (error) {
+      console.error(error);
+      httpErrorStatus(error);
+    }
+  })
   .group('/users', (app) =>
     app
       .post('/', async ({ body, status }) => {
@@ -314,14 +326,14 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
           httpErrorStatus(error);
         }
       })
-      .post('/:feedback_id/response', async ({ params, body, user, status }) => {
+      .post('/response', async ({ body, user, status }) => {
         try {
-          const fetchFeedback = await getFeedbackById(params.feedback_id);
+          const fetchFeedback = await getFeedbackById(body.id);
           if (!fetchFeedback.data)
             throw new HttpError(404, 'Không tìm thấy phản hồi');
 
           const responserId = user.id!;
-          const res = await respondToFeedback(params.feedback_id, body.response, responserId);
+          const res = await respondToFeedback(body.id, body.response, responserId);
 
           if(res.data)
             return status(200, {message: 'Trả lời phản hồi thành công'});
@@ -331,8 +343,6 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
           httpErrorStatus(error);
         }
       }, {
-        body: t.Object({
-          response: t.String({ error: 'Vui lòng không để trống nội dung trả lời phản hồi' })
-        })
+        body: FeedBackResponse
       })
   )

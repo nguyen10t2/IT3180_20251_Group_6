@@ -12,6 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   FileText, 
   Plus,
@@ -32,18 +40,23 @@ import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
 interface Invoice {
-  invoice_id: string;
+  id: string;
   invoice_number: string;
-  house_hold_id: string;
+  house_id: string;
   room_number?: string;
   period_month: number;
   period_year: number;
   total_amount: number;
   due_date: string;
+  paid_at?: string;
+  paid_amount?: number;
+  payment_note?: string;
   status: string;
-  invoice_type?: string;
+  invoice_types?: number;
   notes?: string;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string;
 }
 
 // Các loại hóa đơn
@@ -122,7 +135,7 @@ export default function ManagerInvoicesPage() {
   const fetchHouseholds = async () => {
     try {
       const res = await axiosInstance.get("/managers/households");
-      setHouseholds(res.data.houseHolds || []);
+      setHouseholds(res.data.households || []);
     } catch (error) {
       console.error("Error fetching households:", error);
     }
@@ -367,7 +380,7 @@ export default function ManagerInvoicesPage() {
             >
               <option value="all">Tất cả hộ</option>
               {households.map((hh) => (
-                <option key={hh.house_hold_id} value={hh.house_hold_id}>
+                <option key={hh.id} value={hh.id}>
                   {hh.room_number} - {hh.head_fullname || "Chưa có chủ hộ"}
                 </option>
               ))}
@@ -424,76 +437,69 @@ export default function ManagerInvoicesPage() {
                 <p>Không có hóa đơn nào</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredInvoices.map((invoice) => {
-                  const invoiceType = getInvoiceType(invoice);
-                  
-                  return (
-                  <div
-                    key={invoice.invoice_id}
-                    className="flex items-center justify-between p-4 rounded-lg border"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-full bg-primary/10">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">
-                            Phòng {invoice.room_number || "N/A"}
-                          </h4>
-                          {getInvoiceTypeBadge(invoiceType)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Kỳ: {invoice.period_month}/{invoice.period_year} • Hạn: {formatDate(invoice.due_date)}
-                        </p>
-                        {invoice.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {invoice.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold">{formatCurrency(invoice.total_amount)}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {getStatusBadge(invoice.status)}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedInvoice(invoice)}
-                          className="text-primary border-primary hover:bg-primary/10"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Xem
-                        </Button>
-                        {invoice.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleMarkPaid(invoice.invoice_id)}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Đã TT
-                          </Button>
-                        )}
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDelete(invoice.invoice_id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mã hóa đơn</TableHead>
+                    <TableHead>Phòng</TableHead>
+                    <TableHead>Loại</TableHead>
+                    <TableHead>Kỳ</TableHead>
+                    <TableHead>Hạn thanh toán</TableHead>
+                    <TableHead>Tổng tiền</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredInvoices.map((invoice) => {
+                    const invoiceType = getInvoiceType(invoice);
+                    return (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                        <TableCell>{invoice.room_number || "N/A"}</TableCell>
+                        <TableCell>{getInvoiceTypeBadge(invoiceType)}</TableCell>
+                        <TableCell>{invoice.period_month}/{invoice.period_year}</TableCell>
+                        <TableCell>{formatDate(invoice.due_date)}</TableCell>
+                        <TableCell className="font-bold">{formatCurrency(invoice.total_amount)}</TableCell>
+                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedInvoice(invoice)}
+                              className="h-8 w-8 p-0"
+                              title="Xem chi tiết"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {invoice.status === "pending" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleMarkPaid(invoice.id)}
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                title="Xác nhận thanh toán"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDelete(invoice.id)}
+                              className="h-8 w-8 p-0"
+                              title="Xóa"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
@@ -581,7 +587,7 @@ export default function ManagerInvoicesPage() {
               {selectedInvoice.status === "pending" && (
                 <Button
                   onClick={() => {
-                    handleMarkPaid(selectedInvoice.invoice_id);
+                    handleMarkPaid(selectedInvoice.id);
                     setSelectedInvoice(null);
                   }}
                 >
@@ -618,7 +624,7 @@ export default function ManagerInvoicesPage() {
                 >
                   <option value="">Chọn hộ gia đình</option>
                   {households.map((hh) => (
-                    <option key={hh.house_hold_id} value={hh.house_hold_id}>
+                    <option key={hh.id} value={hh.id}>
                       {hh.room_number} - {hh.head_fullname || "Chưa có chủ hộ"}
                     </option>
                   ))}
@@ -632,12 +638,12 @@ export default function ManagerInvoicesPage() {
                   onChange={(e) => setFormData({ ...formData, invoice_type: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="rent">Tiền thuê</option>
-                  <option value="electricity">Điện</option>
-                  <option value="water">Nước</option>
-                  <option value="maintenance">Bảo trì</option>
-                  <option value="parking">Đỗ xe</option>
-                  <option value="other">Khác</option>
+                  <option key="rent" value="rent">Tiền thuê</option>
+                  <option key="electricity" value="electricity">Điện</option>
+                  <option key="water" value="water">Nước</option>
+                  <option key="maintenance" value="maintenance">Bảo trì</option>
+                  <option key="parking" value="parking">Đỗ xe</option>
+                  <option key="other" value="other">Khác</option>
                 </select>
               </div>
 

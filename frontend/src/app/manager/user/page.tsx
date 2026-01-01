@@ -12,6 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   Users, 
   UserCheck, 
@@ -54,7 +62,7 @@ interface UserWithResident {
   // Household info
   house_hold_id?: string;
   room_number?: string;
-  floor?: number;
+  building?: number;
 }
 
 export default function ManagerUsersPage() {
@@ -350,70 +358,71 @@ export default function ManagerUsersPage() {
                 <p>Không có người dùng nào</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredUsers().map((user) => (
-                  <div
-                    key={user.user_id}
-                    className="flex items-center justify-between p-4 rounded-lg border"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-full bg-primary/10">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{user.fullname}</h4>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Đăng ký: {formatDateTime(user.create_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {getRoleBadge(user.role)}
-                      {getStatusBadge(user.status)}
-                      
-                      {/* Nút xem thông tin */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewDetail(user)}
-                        disabled={loadingDetail}
-                        className="text-primary border-primary hover:bg-primary/10"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Xem
-                      </Button>
-                      
-                      {user.status === "pending" && (
-                        <div className="flex items-center gap-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Họ và tên</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Ngày đăng ký</TableHead>
+                    <TableHead>Vai trò</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers().map((user) => (
+                    <TableRow key={user.user_id}>
+                      <TableCell className="font-medium">{user.fullname}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{formatDateTime(user.create_at)}</TableCell>
+                      <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>{getStatusBadge(user.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            onClick={() => handleApprove(user.user_id)}
-                            disabled={processingId === user.user_id}
-                            className="bg-primary hover:bg-primary/90"
+                            variant="outline"
+                            onClick={() => handleViewDetail(user)}
+                            disabled={loadingDetail}
+                            className="h-8 w-8 p-0"
+                            title="Xem chi tiết"
                           >
-                            {processingId === user.user_id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <UserCheck className="h-4 w-4 mr-1" />
-                            )}
-                            Duyệt
+                            <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleReject(user.user_id)}
-                            disabled={processingId === user.user_id}
-                          >
-                            <UserX className="h-4 w-4 mr-1" />
-                            Từ chối
-                          </Button>
+                          
+                          {user.status === "pending" && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(user.user_id)}
+                                disabled={processingId === user.user_id}
+                                className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
+                                title="Duyệt"
+                              >
+                                {processingId === user.user_id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <UserCheck className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(user.user_id)}
+                                disabled={processingId === user.user_id}
+                                className="h-8 w-8 p-0"
+                                title="Từ chối"
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
@@ -508,7 +517,7 @@ export default function ManagerUsersPage() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">
                           Phòng {selectedUser.room_number}
-                          {selectedUser.floor && ` - Tầng ${selectedUser.floor}`}
+                          {selectedUser.building && ` - Tòa ${selectedUser.building}`}
                         </span>
                       </div>
                     </div>

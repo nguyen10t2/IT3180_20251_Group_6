@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouteGuard } from "@/lib/hooks/useRouteGuard";
-import { Sidebar } from "@/components/layout/resident-sidebar";
+import { ResidentNavbar } from "@/components/layout/resident-navbar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function ResidentLayout({
@@ -10,7 +9,6 @@ export default function ResidentLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const { isLoading } = useRouteGuard({
     allowedRoles: ["resident"],
     redirectTo: "/manager/dashboard",
@@ -21,14 +19,10 @@ export default function ResidentLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <main
-        className={`transition-all duration-300 ${
-          collapsed ? "ml-20" : "ml-64"
-        }`}
-      >
-        <div className="p-6">{children}</div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <ResidentNavbar />
+      <main className="flex-1">
+        <div className="container mx-auto p-6 max-w-7xl">{children}</div>
       </main>
     </div>
   );

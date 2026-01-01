@@ -41,28 +41,20 @@ export default function ManagerDashboardPage() {
     try {
       setLoading(true);
 
-      const [pendingUsersRes, householdsRes, residentsRes, invoicesRes] =
-        await Promise.all([
-          axiosInstance.get("/managers/users/pending"),
-          axiosInstance.get("/managers/households"),
-          axiosInstance.get("/managers/residents"),
-          axiosInstance.get("/managers/invoices"),
-        ]);
+      const [statsRes, pendingUsersRes] = await Promise.all([
+        axiosInstance.get("/managers/stats"),
+        axiosInstance.get("/managers/users/pending"),
+      ]);
 
-      const pendingUsersData = pendingUsersRes.data.users || [];
-      const householdsData = householdsRes.data.houseHolds || [];
-      const residentsData = residentsRes.data.residents || [];
-      const invoicesData = invoicesRes.data.invoices || [];
-      const pendingInvoicesCount = invoicesData.filter(
-        (inv: any) => inv.status === "pending"
-      ).length;
+      const statsData = statsRes.data.stats;
+      const pendingUsersData = pendingUsersRes.data.pendingUsers || [];
 
       setPendingUsers(pendingUsersData.slice(0, 5));
       setStats({
-        pendingUsers: pendingUsersData.length,
-        totalHouseholds: householdsData.length,
-        pendingInvoices: pendingInvoicesCount,
-        totalResidents: residentsData.length,
+        pendingUsers: statsData.pendingUsers,
+        totalHouseholds: statsData.totalHouseholds,
+        pendingInvoices: statsData.pendingInvoices,
+        totalResidents: statsData.totalResidents,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);

@@ -12,6 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   Bell, 
   Plus,
@@ -27,13 +35,20 @@ import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
 interface Notification {
-  notification_id: string;
+  id: string;
   title: string;
   content: string;
   type: string;
-  target_type: string;
+  target: string;
+  target_id?: string;
+  is_pinned?: boolean;
+  scheduled_at?: string;
+  published_at?: string;
+  expires_at?: string;
+  created_by?: string;
   created_at: string;
-  read?: boolean;
+  updated_at?: string;
+  deleted_at?: string;
 }
 
 export default function ManagerNotificationsPage() {
@@ -229,40 +244,42 @@ export default function ManagerNotificationsPage() {
                 <p>Chưa có thông báo nào</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredNotifications.map((notification) => (
-                  <div
-                    key={notification.notification_id}
-                    className="p-4 rounded-lg border hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold">{notification.title}</h4>
-                          {getTypeBadge(notification.type)}
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {notification.content}
-                        </p>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDelete(notification.notification_id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                      {getTargetBadge(notification.target_type)}
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(notification.created_at)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tiêu đề</TableHead>
+                    <TableHead>Nội dung</TableHead>
+                    <TableHead>Loại</TableHead>
+                    <TableHead>Đối tượng</TableHead>
+                    <TableHead>Ngày gửi</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredNotifications.map((notification) => (
+                    <TableRow key={notification.id}>
+                      <TableCell className="font-medium">{notification.title}</TableCell>
+                      <TableCell className="max-w-[300px] truncate" title={notification.content}>
+                        {notification.content}
+                      </TableCell>
+                      <TableCell>{getTypeBadge(notification.type)}</TableCell>
+                      <TableCell>{getTargetBadge(notification.target_type)}</TableCell>
+                      <TableCell>{formatDate(notification.created_at)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDelete(notification.notification_id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          title="Xóa"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRouteGuard } from "@/lib/hooks/useRouteGuard";
-import { ManagerSidebar } from "@/components/layout/manager-sidebar";
+import { ManagerNavbar } from "@/components/layout/manager-navbar";
 
 export default function ManagerLayout({
   children,
@@ -11,7 +10,6 @@ export default function ManagerLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
   const { isLoading, isAuthorized } = useRouteGuard({
     allowedRoles: ["manager", "admin"],
     redirectTo: "/resident/home",
@@ -19,10 +17,10 @@ export default function ManagerLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-neutral-950">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-6 w-6 animate-spin border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-          <p className="text-sm text-neutral-500">Đang tải...</p>
+          <div className="h-6 w-6 animate-spin border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Đang tải...</p>
         </div>
       </div>
     );
@@ -30,12 +28,12 @@ export default function ManagerLayout({
 
   if (!isAuthorized) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-neutral-950">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 text-center max-w-md p-8">
-          <div className="p-4 border border-neutral-200 dark:border-neutral-800">
+          <div className="p-4 border rounded-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-neutral-900 dark:text-white"
+              className="h-10 w-10 text-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -48,15 +46,15 @@ export default function ManagerLayout({
               />
             </svg>
           </div>
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-white">
+          <h1 className="text-xl font-semibold text-foreground">
             Không có quyền truy cập
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             Bạn không có quyền truy cập vào khu vực quản lý.
           </p>
           <button
             onClick={() => router.push("/resident/home")}
-            className="mt-4 px-6 py-2 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 transition-colors"
+            className="mt-4 px-6 py-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md"
           >
             Quay về trang chủ
           </button>
@@ -66,14 +64,10 @@ export default function ManagerLayout({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <ManagerSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <main
-        className={`transition-all duration-200 ${
-          collapsed ? "ml-20" : "ml-64"
-        }`}
-      >
-        <div className="p-6">{children}</div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <ManagerNavbar />
+      <main className="flex-1">
+        <div className="container mx-auto p-6 max-w-7xl">{children}</div>
       </main>
     </div>
   );

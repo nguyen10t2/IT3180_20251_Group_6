@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import {
   Card,
@@ -20,29 +21,39 @@ import {
   Pencil,
   Trash2,
   X,
-  AlertCircle
+  AlertCircle,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
 interface Resident {
-  resident_id: string;
-  fullname: string;
-  phone_number: string;
+  id: string;
+  full_name: string;
+  phone: string;
   house_id?: string;
 }
 
 interface HouseHold {
-  house_hold_id: string;
+  id: string;
   room_number: string;
   room_type: string;
-  floor: number;
+  building: number;
   area: number;
   head_resident_id: string | null;
   head_fullname?: string;
   notes?: string;
   members_count?: number;
 }
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ManagerHouseholdsPage() {
   const [loading, setLoading] = useState(true);
@@ -51,11 +62,14 @@ export default function ManagerHouseholdsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingHousehold, setEditingHousehold] = useState<HouseHold | null>(null);
+  const [viewingHousehold, setViewingHousehold] = useState<HouseHold | null>(null);
+  const [householdMembers, setHouseholdMembers] = useState<Resident[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     room_number: "",
     room_type: "single",
-    floor: "",
+    building: "",
     area: "",
     head_resident_id: "",
     notes: "",
@@ -72,7 +86,7 @@ export default function ManagerHouseholdsPage() {
         axiosInstance.get("/managers/households"),
         axiosInstance.get("/managers/residents")
       ]);
-      setHouseholds(householdsRes.data.houseHolds || []);
+      setHouseholds(householdsRes.data.households || []);
       setResidents(residentsRes.data.residents || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -82,9 +96,22 @@ export default function ManagerHouseholdsPage() {
     }
   };
 
+  const fetchHouseholdMembers = async (householdId: string) => {
+    try {
+      setLoadingMembers(true);
+      const res = await axiosInstance.get(`/managers/households/${householdId}/members`);
+      setHouseholdMembers(res.data.members || []);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      toast.error("Không thể tải danh sách thành viên");
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
   // Lọc residents chưa thuộc hộ nào (available) hoặc đang là chủ hộ hiện tại khi edit
   const availableResidents = residents.filter(r => 
-    !r.house_id || (editingHousehold && r.resident_id === editingHousehold.head_resident_id)
+    !r.house_id || (editingHousehold && r.id === editingHousehold.head_resident_id)
   );
 
   const handleCreate = async () => {
@@ -98,7 +125,7 @@ export default function ManagerHouseholdsPage() {
       await axiosInstance.post("/managers/households", {
         room_number: formData.room_number,
         room_type: formData.room_type,
-        floor: formData.floor ? parseInt(formData.floor) : null,
+        building: formData.building ? parseInt(formData.building) : null,
         area: formData.area ? parseFloat(formData.area) : null,
         head_resident_id: formData.head_resident_id || null,
         notes: formData.notes || null,
@@ -120,10 +147,10 @@ export default function ManagerHouseholdsPage() {
 
     try {
       setSaving(true);
-      await axiosInstance.patch(`/managers/households/${editingHousehold.house_hold_id}`, {
+      await axiosInstance.patch(`/managers/households/${editingHousehold.id}`, {
         room_number: formData.room_number,
         room_type: formData.room_type,
-        floor: formData.floor ? parseInt(formData.floor) : null,
+        building: formData.building ? parseInt(formData.building) : null,
         area: formData.area ? parseFloat(formData.area) : null,
         head_resident_id: formData.head_resident_id || null,
         notes: formData.notes || null,
@@ -157,7 +184,7 @@ export default function ManagerHouseholdsPage() {
     setFormData({
       room_number: "",
       room_type: "single",
-      floor: "",
+      building: "",
       area: "",
       head_resident_id: "",
       notes: "",
@@ -169,7 +196,7 @@ export default function ManagerHouseholdsPage() {
     setFormData({
       room_number: household.room_number,
       room_type: household.room_type,
-      floor: household.floor?.toString() || "",
+      building: household.building?.toString() || "",
       area: household.area?.toString() || "",
       head_resident_id: household.head_resident_id || "",
       notes: household.notes || "",
@@ -180,6 +207,16 @@ export default function ManagerHouseholdsPage() {
     setShowCreateModal(false);
     setEditingHousehold(null);
     resetForm();
+  };
+
+  const openViewModal = (household: HouseHold) => {
+    setViewingHousehold(household);
+    fetchHouseholdMembers(household.id);
+  };
+
+  const closeViewModal = () => {
+    setViewingHousehold(null);
+    setHouseholdMembers([]);
   };
 
   const getRoomTypeBadge = (type: string) => {
@@ -293,58 +330,65 @@ export default function ManagerHouseholdsPage() {
                 <p>Không có hộ gia đình nào</p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredHouseholds.map((household) => (
-                  <div
-                    key={household.house_hold_id}
-                    className="p-4 rounded-lg border hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold text-lg">{household.room_number}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Tầng {household.floor || "N/A"} • {household.area || "N/A"}m²
-                        </p>
-                      </div>
-                      {getRoomTypeBadge(household.room_type)}
-                    </div>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Chủ hộ:</span>
-                        <span className="font-medium">{household.head_fullname || "Chưa có"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Thành viên:</span>
-                        <span className="font-medium">{household.members_count || 0} người</span>
-                      </div>
-                      {household.notes && (
-                        <p className="text-xs text-muted-foreground italic">
-                          {household.notes}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => openEditModal(household)}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Sửa
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDelete(household.house_hold_id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Số phòng</TableHead>
+                      <TableHead>Loại phòng</TableHead>
+                      <TableHead>Tòa</TableHead>
+                      <TableHead>Diện tích</TableHead>
+                      <TableHead>Chủ hộ</TableHead>
+                      <TableHead>Thành viên</TableHead>
+                      <TableHead>Ghi chú</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHouseholds.map((household, index) => (
+                      <TableRow key={household.id || `household-${index}`}>
+                        <TableCell className="font-medium">{household.room_number}</TableCell>
+                        <TableCell>{getRoomTypeBadge(household.room_type)}</TableCell>
+                        <TableCell>{household.building || "N/A"}</TableCell>
+                        <TableCell>{household.area || "N/A"}m²</TableCell>
+                        <TableCell>{household.head_fullname || "Chưa có"}</TableCell>
+                        <TableCell>{household.members_count || 0} người</TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={household.notes || ""}>
+                          {household.notes || "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openViewModal(household)}
+                              title="Xem thành viên"
+                            >
+                              <Users className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openEditModal(household)}
+                              title="Chỉnh sửa"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(household.id)}
+                              title="Xóa"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
@@ -388,10 +432,10 @@ export default function ManagerHouseholdsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tầng</Label>
+                  <Label>Tòa</Label>
                   <Input
-                    value={formData.floor}
-                    onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                    value={formData.building}
+                    onChange={(e) => setFormData({ ...formData, building: e.target.value })}
                     placeholder="VD: 10"
                   />
                 </div>
@@ -423,8 +467,8 @@ export default function ManagerHouseholdsPage() {
                   >
                     <option value="">-- Chọn chủ hộ --</option>
                     {availableResidents.map((resident) => (
-                      <option key={resident.resident_id} value={resident.resident_id}>
-                        {resident.fullname} - {resident.phone_number}
+                      <option key={resident.id} value={resident.id}>
+                        {resident.full_name} - {resident.phone}
                       </option>
                     ))}
                   </select>
@@ -452,6 +496,53 @@ export default function ManagerHouseholdsPage() {
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {isEditMode ? "Cập nhật" : "Tạo mới"}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Members Modal */}
+      {viewingHousehold && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">
+                Danh sách thành viên - {viewingHousehold.room_number}
+              </h3>
+              <Button variant="ghost" size="icon" onClick={closeViewModal}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+               {loadingMembers ? (
+                 <div className="flex items-center justify-center py-8">
+                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                 </div>
+               ) : householdMembers.length === 0 ? (
+                 <p className="text-muted-foreground text-center py-4">Chưa có thành viên nào</p>
+               ) : (
+                 <div className="space-y-2">
+                   {householdMembers.map((member, index) => (
+                     <div key={member.id || `member-${index}`} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                       <div className="flex-1">
+                         <Link 
+                           href={`/manager/resident?id=${member.id}`}
+                           className="font-medium hover:text-primary hover:underline transition-colors"
+                         >
+                           {member.full_name}
+                         </Link>
+                         <p className="text-sm text-muted-foreground">{member.phone}</p>
+                       </div>
+                       {member.id === viewingHousehold.head_resident_id && (
+                         <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+                           Chủ hộ
+                         </span>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               )}
             </div>
           </div>
         </div>
