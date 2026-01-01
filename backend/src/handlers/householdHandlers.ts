@@ -1,7 +1,7 @@
 // @ts-nocheck
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { createHouse, deleteHouse, getAll, getHouseById, getMemberCount, updateHouse } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 import openapi from "@elysiajs/openapi";

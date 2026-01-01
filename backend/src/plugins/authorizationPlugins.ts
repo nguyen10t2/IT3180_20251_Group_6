@@ -1,7 +1,7 @@
 import Elysia, { Context } from "elysia";
 import { authenticationPlugins } from "./authenticationPlugins";
 import { getRoleByName } from "../services/roleServices";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorConstant";
 
 export const authorizationPlugins = (role: string) => (app: Elysia) => app
   .use(authenticationPlugins)

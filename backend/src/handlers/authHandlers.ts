@@ -1,11 +1,11 @@
 import { Elysia, status, t } from "elysia"
 import { createRefreshToken, loginService } from "../services/authServices";
-import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorContant";
+import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, httpErrorStatus, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorConstant";
 import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
-import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeContants";
+import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeConstants";
 import { getToken } from "../helpers/tokenHelpers";
 import { generateRandomString, hashedPassword, verifyPassword } from "../helpers/password";
-import { createUser, getUserById, isExistingUserByEmail, updateUserPassword, updateUserPasswordByEmail } from "../services/userServices";
+import { createUser, getUserById, isExistingUserByEmail, updateUserPasswordByEmail } from "../services/userServices";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { deleteRefreshTokensByUserId } from "../services/authServices";
 import { RegisterBody } from "../types/authTypes";

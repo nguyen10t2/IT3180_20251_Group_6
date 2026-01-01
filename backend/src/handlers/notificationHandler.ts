@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { getNotificationsForUser, markAllAsRead, markAsRead } from "../services/notificationServices";
 import { getResidentByUserId } from "../services/residentServices";
 

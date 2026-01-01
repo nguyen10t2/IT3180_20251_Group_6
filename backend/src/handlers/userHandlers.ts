@@ -1,8 +1,7 @@
 import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { getUserById, getUserWithPasswordByEmail, updateUserPassword } from "../services/userServices";
-import { error } from "node:console";
-import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { ChangePasswordBody } from "../types/authTypes";
 import { hashedPassword, verifyPassword } from "../helpers/password";
 

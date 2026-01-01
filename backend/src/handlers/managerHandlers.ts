@@ -1,7 +1,6 @@
 import Elysia, { t } from "elysia";
-import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { PagingUserBody } from "../types/userTypes";
-import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { approveUser, getPendingUsers, getUserById, getUsersByLastCreatedAndLimit, getUserWithResident, rejectUser } from "../services/userServices";
 import { authorizationPlugins } from "../plugins/authorizationPlugins";
 import { householdRoutes } from "./householdHandlers";

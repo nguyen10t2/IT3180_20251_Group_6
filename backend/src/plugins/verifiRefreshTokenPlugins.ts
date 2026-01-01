@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { HttpError } from "../constants/errorContant";
+import { HttpError } from "../constants/errorConstant";
 import { getRefreshTokenByHash } from "../services/authServices";
 
 export const verifiRefreshTokenPlugins = (app: Elysia) => app

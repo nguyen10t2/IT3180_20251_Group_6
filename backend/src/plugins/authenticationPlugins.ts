@@ -1,7 +1,7 @@
 import { Elysia, NotFoundError, InternalServerError, status, Context } from "elysia";
 import * as jose from "jose";
 import { PayloadJWT } from "../types/contextTypes";
-import { HttpError } from "../constants/errorContant";
+import { HttpError } from "../constants/errorConstant";
 
 
 export const authenticationPlugins = (app: Elysia) => app

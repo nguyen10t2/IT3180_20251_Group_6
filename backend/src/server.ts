@@ -1,7 +1,7 @@
 import { Elysia} from "elysia";
 import { pluginDB } from "./database";
 import { authRoutes } from "./handlers/authHandlers";
-import { HttpError} from "./constants/errorContant";
+import { HttpError} from "./constants/errorConstant";
 import openapi from "@elysiajs/openapi";
 import { authorizationPlugins } from "./plugins/authorizationPlugins";
 import { userRoutes } from "./handlers/userHandlers";

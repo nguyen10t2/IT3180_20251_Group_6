@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
-import { HttpError, httpErrorStatus, INTERNAL_SERVER_ERROR } from "../constants/errorContant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { createResident, getResidentByIdCard, getResidentByPhone, getResidentByUserId, updateResident } from "../services/residentServices";
 import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
 import { getUserById, updateResidentId } from "../services/userServices";
