@@ -5,7 +5,9 @@
   "scripts": {
     "test": "bun ../test/run.ts",
     "test:server": "bun ../test/testServer.ts",
-    "dev": "bun run --watch src/server.ts"
+    "dev": "bun run --watch src/server.ts",
+    "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile server index.ts",
+    "start": "./server"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",

@@ -1,0 +1,6 @@
+{
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "bun --filter '*' start"
+  }
+}
