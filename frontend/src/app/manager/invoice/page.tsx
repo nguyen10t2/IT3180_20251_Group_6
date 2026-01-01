@@ -107,7 +107,7 @@ export default function ManagerInvoicesPage() {
   const [saving, setSaving] = useState(false);
   const [households, setHouseholds] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    house_hold_id: "",
+    house_id: "",
     invoice_type: "rent",
     amount: "",
     due_date: "",
@@ -142,7 +142,7 @@ export default function ManagerInvoicesPage() {
   };
 
   const handleCreate = async () => {
-    if (!formData.house_hold_id || !formData.invoice_type || !formData.amount || !formData.due_date) {
+    if (!formData.house_id || !formData.invoice_type || !formData.amount || !formData.due_date) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
@@ -150,7 +150,7 @@ export default function ManagerInvoicesPage() {
     try {
       setSaving(true);
       await axiosInstance.post("/managers/invoices", {
-        house_hold_id: formData.house_hold_id,
+        house_id: formData.house_id,
         period_month: new Date(formData.due_date).getMonth() + 1,
         period_year: new Date(formData.due_date).getFullYear(),
         total_amount: parseFloat(formData.amount),
@@ -196,7 +196,7 @@ export default function ManagerInvoicesPage() {
 
   const resetForm = () => {
     setFormData({
-      house_hold_id: "",
+      house_id: "",
       invoice_type: "rent",
       amount: "",
       due_date: "",
@@ -251,9 +251,10 @@ export default function ManagerInvoicesPage() {
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  // Lấy invoice type từ invoice (dùng cột invoice_type)
+  // Lấy invoice type từ invoice (invoice_types là ID, cần mapping với invoiceTypeSchema)
   const getInvoiceType = (invoice: Invoice): string => {
-    return invoice.invoice_type || "other";
+    // TODO: Map invoice_types ID to string khi có invoiceType table
+    return "other";
   };
 
   const filteredInvoices = invoices.filter(inv => {
@@ -273,7 +274,7 @@ export default function ManagerInvoicesPage() {
     const matchesType = typeFilter === "all" || invoiceType === typeFilter;
     
     // Household filter
-    const matchesHousehold = householdFilter === "all" || inv.house_hold_id === householdFilter;
+    const matchesHousehold = householdFilter === "all" || inv.house_id === householdFilter;
     
     return matchesSearch && matchesStatus && matchesType && matchesHousehold;
   });
@@ -618,8 +619,8 @@ export default function ManagerInvoicesPage() {
               <div className="space-y-2">
                 <Label>Hộ gia đình <span className="text-red-500">*</span></Label>
                 <select
-                  value={formData.house_hold_id}
-                  onChange={(e) => setFormData({ ...formData, house_hold_id: e.target.value })}
+                  value={formData.house_id}
+                  onChange={(e) => setFormData({ ...formData, house_id: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="">Chọn hộ gia đình</option>

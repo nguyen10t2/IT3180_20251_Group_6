@@ -198,13 +198,13 @@ function FeedbackDetailModal({
           </div>
 
           {/* Response section */}
-          {feedback.response ? (
+          {feedback.resolution_notes ? (
             <div className="mt-4 p-4 rounded-lg bg-green-500/5 border-l-4 border-green-500">
               <p className="text-sm font-medium text-green-700">Phản hồi từ quản lý:</p>
-              <p className="text-sm mt-2 whitespace-pre-wrap">{feedback.response}</p>
-              {feedback.responded_at && (
+              <p className="text-sm mt-2 whitespace-pre-wrap">{feedback.resolution_notes}</p>
+              {feedback.resolved_at && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {formatDate(feedback.responded_at)}
+                  {formatDate(feedback.resolved_at)}
                 </p>
               )}
             </div>

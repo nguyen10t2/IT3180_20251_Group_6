@@ -263,13 +263,13 @@ export default function ManagerNotificationsPage() {
                         {notification.content}
                       </TableCell>
                       <TableCell>{getTypeBadge(notification.type)}</TableCell>
-                      <TableCell>{getTargetBadge(notification.target_type)}</TableCell>
+                      <TableCell>{getTargetBadge(notification.target)}</TableCell>
                       <TableCell>{formatDate(notification.created_at)}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => handleDelete(notification.notification_id)}
+                          onClick={() => handleDelete(notification.id)}
                           className="text-muted-foreground hover:text-destructive"
                           title="Xóa"
                         >
