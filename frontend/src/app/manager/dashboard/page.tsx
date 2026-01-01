@@ -43,10 +43,10 @@ export default function ManagerDashboardPage() {
 
       const [pendingUsersRes, householdsRes, residentsRes, invoicesRes] =
         await Promise.all([
-          axiosInstance.get("/api/manager/users/pending"),
-          axiosInstance.get("/api/manager/households"),
-          axiosInstance.get("/api/manager/residents"),
-          axiosInstance.get("/api/manager/invoices"),
+          axiosInstance.get("/managers/users/pending"),
+          axiosInstance.get("/managers/households"),
+          axiosInstance.get("/managers/residents"),
+          axiosInstance.get("/managers/invoices"),
         ]);
 
       const pendingUsersData = pendingUsersRes.data.users || [];
@@ -78,14 +78,14 @@ export default function ManagerDashboardPage() {
       value: stats.pendingUsers,
       description: "Người dùng mới",
       icon: UserCheck,
-      href: "/manager/users?filter=pending",
+      href: "/manager/user?filter=pending",
     },
     {
       title: "Hộ gia đình",
       value: stats.totalHouseholds,
       description: "Tổng số",
       icon: Building2,
-      href: "/manager/households",
+      href: "/manager/household",
     },
     {
       title: "Hóa đơn chưa TT",
@@ -99,7 +99,7 @@ export default function ManagerDashboardPage() {
       value: stats.totalResidents,
       description: "Đã đăng ký",
       icon: Users,
-      href: "/manager/residents",
+      href: "/manager/resident",
     },
   ];
 
@@ -155,7 +155,7 @@ export default function ManagerDashboardPage() {
             </h2>
           </div>
           <button
-            onClick={() => router.push("/manager/users?filter=pending")}
+            onClick={() => router.push("/manager/user?filter=pending")}
             className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1"
           >
             Xem tất cả
@@ -191,7 +191,7 @@ export default function ManagerDashboardPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => router.push("/manager/users")}
+                    onClick={() => router.push("/manager/user")}
                     className="text-xs px-3 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                   >
                     Duyệt
@@ -216,13 +216,13 @@ export default function ManagerDashboardPage() {
               {
                 label: "Duyệt người dùng mới",
                 desc: "Xem và phê duyệt các tài khoản đang chờ",
-                href: "/manager/users?filter=pending",
+                href: "/manager/user?filter=pending",
                 icon: UserCheck,
               },
               {
                 label: "Quản lý hộ gia đình",
                 desc: "Thêm, sửa, xóa thông tin căn hộ",
-                href: "/manager/households",
+                href: "/manager/household",
                 icon: Building2,
               },
               {

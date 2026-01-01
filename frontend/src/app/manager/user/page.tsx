@@ -76,7 +76,7 @@ export default function ManagerUsersPage() {
       setLoading(true);
       
       // Fetch all users (đã có resident info) - dùng làm nguồn chính
-      const allRes = await axiosInstance.post("/api/manager/users", {
+      const allRes = await axiosInstance.post("/managers/users", {
         lastCreated: "1970-01-01",
         limit: 100
       });
@@ -104,7 +104,7 @@ export default function ManagerUsersPage() {
     // Nếu chưa có, fetch từ API
     try {
       setLoadingDetail(true);
-      const res = await axiosInstance.get(`/api/manager/users/${user.user_id}`);
+      const res = await axiosInstance.get(`/managers/users/${user.user_id}`);
       setSelectedUser(res.data.user);
     } catch (error) {
       console.error("Error fetching user detail:", error);
@@ -117,7 +117,7 @@ export default function ManagerUsersPage() {
   const handleApprove = async (userId: string) => {
     try {
       setProcessingId(userId);
-      await axiosInstance.patch(`/api/manager/users/${userId}/approve`);
+      await axiosInstance.patch(`/managers/users/${userId}/approve`);
       toast.success("Đã duyệt người dùng thành công");
       setSelectedUser(null);
       fetchUsers();
@@ -135,7 +135,7 @@ export default function ManagerUsersPage() {
 
     try {
       setProcessingId(userId);
-      await axiosInstance.patch(`/api/manager/users/${userId}/reject`, {
+      await axiosInstance.patch(`/managers/users/${userId}/reject`, {
         rejected_reason: reason
       });
       toast.success("Đã từ chối người dùng");

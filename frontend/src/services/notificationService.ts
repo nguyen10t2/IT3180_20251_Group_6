@@ -16,7 +16,7 @@ export interface Notification {
 export const notificationService = {
   // Lấy danh sách thông báo
   async getNotifications(): Promise<{ notifications: Notification[] }> {
-    const response = await axiosInstance.get("/api/notifications");
+    const response = await axiosInstance.get("/notifications");
     return response.data;
   },
 

@@ -46,7 +46,7 @@ export const authService = {
   },
 
   fetchMe: async () => {
-    const res = await api.get("/user/authMe", { withCredentials: true });
+    const res = await api.get("/users/authMe", { withCredentials: true });
     return res.data.data;
   },
 
@@ -79,7 +79,7 @@ export const authService = {
 
   changePassword: async (old_password: string, new_password: string) => {
     const res = await api.post(
-      "/user/changePass",
+      "/users/changePass",
       { old_password, new_password },
       { withCredentials: true }
     );

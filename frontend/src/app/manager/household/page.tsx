@@ -69,8 +69,8 @@ export default function ManagerHouseholdsPage() {
     try {
       setLoading(true);
       const [householdsRes, residentsRes] = await Promise.all([
-        axiosInstance.get("/api/manager/households"),
-        axiosInstance.get("/api/manager/residents")
+        axiosInstance.get("/managers/households"),
+        axiosInstance.get("/managers/residents")
       ]);
       setHouseholds(householdsRes.data.houseHolds || []);
       setResidents(residentsRes.data.residents || []);
@@ -95,7 +95,7 @@ export default function ManagerHouseholdsPage() {
 
     try {
       setSaving(true);
-      await axiosInstance.post("/api/manager/households", {
+      await axiosInstance.post("/managers/households", {
         room_number: formData.room_number,
         room_type: formData.room_type,
         floor: formData.floor ? parseInt(formData.floor) : null,
@@ -120,7 +120,7 @@ export default function ManagerHouseholdsPage() {
 
     try {
       setSaving(true);
-      await axiosInstance.patch(`/api/manager/households/${editingHousehold.house_hold_id}`, {
+      await axiosInstance.patch(`/managers/households/${editingHousehold.house_hold_id}`, {
         room_number: formData.room_number,
         room_type: formData.room_type,
         floor: formData.floor ? parseInt(formData.floor) : null,
@@ -144,7 +144,7 @@ export default function ManagerHouseholdsPage() {
     if (!confirm("Bạn có chắc chắn muốn xóa hộ gia đình này?")) return;
 
     try {
-      await axiosInstance.delete(`/api/manager/households/${householdId}`);
+      await axiosInstance.delete(`/managers/households/${householdId}`);
       toast.success("Xóa hộ gia đình thành công");
       fetchData();
     } catch (error) {

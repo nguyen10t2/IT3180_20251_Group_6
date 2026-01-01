@@ -53,7 +53,7 @@ export default function ManagerFeedbacksPage() {
   const fetchFeedbacks = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/api/manager/feedbacks");
+      const res = await axiosInstance.get("/managers/feedbacks");
       setFeedbacks(res.data.feedbacks || []);
     } catch (error) {
       console.error("Error fetching feedbacks:", error);
@@ -70,7 +70,7 @@ export default function ManagerFeedbacksPage() {
     }
 
     try {
-      await axiosInstance.patch(`/api/manager/feedbacks/${feedbackId}/respond`, {
+      await axiosInstance.post(`/managers/feedbacks/${feedbackId}/response`, {
         response: responseText,
       });
       toast.success("Đã gửi phản hồi thành công");

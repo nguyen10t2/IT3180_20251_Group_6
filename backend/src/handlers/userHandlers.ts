@@ -6,7 +6,7 @@ import { ChangePasswordBody } from "../types/authTypes";
 import { hashedPassword, verifyPassword } from "../helpers/password";
 
 
-export const userRoutes = new Elysia({ prefix: "/user", detail: { tags: ['User'] } })
+export const userRoutes = new Elysia({ prefix: "/users", detail: { tags: ['User'] } })
   .use(authenticationPlugins)
   .get("/authMe", async ({ user, status }) => {
 

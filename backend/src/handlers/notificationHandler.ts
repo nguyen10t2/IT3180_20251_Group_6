@@ -5,7 +5,7 @@ import { getNotificationsForUser, markAllAsRead, markAsRead } from "../services/
 import { getResidentByUserId } from "../services/residentServices";
 
 
-export const notificationRoutes = new Elysia({ prefix: "/notification", detail: { tags: ['Notification'] } })
+export const notificationRoutes = new Elysia({ prefix: "/notifications", detail: { tags: ['Notification'] } })
   .use(authenticationPlugins)
   .get("/", async ({ user, status }) => {
     try {

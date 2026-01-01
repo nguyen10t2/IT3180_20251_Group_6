@@ -109,7 +109,7 @@ export default function ManagerInvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/api/manager/invoices");
+      const res = await axiosInstance.get("/managers/invoices");
       setInvoices(res.data.invoices || []);
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -121,7 +121,7 @@ export default function ManagerInvoicesPage() {
 
   const fetchHouseholds = async () => {
     try {
-      const res = await axiosInstance.get("/api/manager/households");
+      const res = await axiosInstance.get("/managers/households");
       setHouseholds(res.data.houseHolds || []);
     } catch (error) {
       console.error("Error fetching households:", error);
@@ -136,7 +136,7 @@ export default function ManagerInvoicesPage() {
 
     try {
       setSaving(true);
-      await axiosInstance.post("/api/manager/invoices", {
+      await axiosInstance.post("/managers/invoices", {
         house_hold_id: formData.house_hold_id,
         period_month: new Date(formData.due_date).getMonth() + 1,
         period_year: new Date(formData.due_date).getFullYear(),
@@ -159,7 +159,7 @@ export default function ManagerInvoicesPage() {
 
   const handleMarkPaid = async (invoiceId: string) => {
     try {
-      await axiosInstance.patch(`/api/manager/invoices/${invoiceId}/confirm`);
+      await axiosInstance.patch(`/managers/invoices/${invoiceId}/confirm`);
       toast.success("Đã xác nhận thanh toán");
       fetchInvoices();
     } catch (error) {
@@ -172,7 +172,7 @@ export default function ManagerInvoicesPage() {
     if (!confirm("Bạn có chắc chắn muốn xóa hóa đơn này?")) return;
 
     try {
-      await axiosInstance.delete(`/api/manager/invoices/${invoiceId}`);
+      await axiosInstance.delete(`/managers/invoices/${invoiceId}`);
       toast.success("Xóa hóa đơn thành công");
       fetchInvoices();
     } catch (error) {

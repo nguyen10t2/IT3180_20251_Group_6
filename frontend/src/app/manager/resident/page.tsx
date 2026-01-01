@@ -49,7 +49,7 @@ export default function ManagerResidentsPage() {
   const fetchResidents = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/api/manager/residents");
+      const res = await axiosInstance.get("/managers/residents");
       setResidents(res.data.residents || []);
     } catch (error) {
       console.error("Error fetching residents:", error);

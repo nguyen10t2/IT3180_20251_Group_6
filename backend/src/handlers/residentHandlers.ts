@@ -6,7 +6,7 @@ import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
 import { getUserById, updateResidentId } from "../services/userServices";
 import { getAll } from "../services/houseServices";
 
-export const residentRoutes = new Elysia({ prefix: "/resident", tags: ['Resident'] })
+export const residentRoutes = new Elysia({ prefix: "/residents", tags: ['Resident'] })
   .use(authenticationPlugins)
   .get("/", async ({ user, status }) => {
     try {

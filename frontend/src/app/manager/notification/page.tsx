@@ -59,7 +59,7 @@ export default function ManagerNotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/api/manager/notifications");
+      const res = await axiosInstance.get("/managers/notifications");
       setNotifications(res.data.notifications || []);
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -71,7 +71,7 @@ export default function ManagerNotificationsPage() {
 
   const fetchHouseholds = async () => {
     try {
-      const res = await axiosInstance.get("/api/manager/households");
+      const res = await axiosInstance.get("/managers/households");
       setHouseholds(res.data.houseHolds || []);
     } catch (error) {
       console.error("Error fetching households:", error);
@@ -86,7 +86,7 @@ export default function ManagerNotificationsPage() {
 
     try {
       setSaving(true);
-      await axiosInstance.post("/api/manager/notifications", {
+      await axiosInstance.post("/managers/notifications", {
         title: formData.title,
         content: formData.content,
         type: formData.type,
@@ -107,7 +107,7 @@ export default function ManagerNotificationsPage() {
     if (!confirm("Bạn có chắc chắn muốn xóa thông báo này?")) return;
 
     try {
-      await axiosInstance.delete(`/api/manager/notifications/${notificationId}`);
+      await axiosInstance.delete(`/managers/notifications/${notificationId}`);
       toast.success("Xóa thông báo thành công");
       fetchNotifications();
     } catch (error) {

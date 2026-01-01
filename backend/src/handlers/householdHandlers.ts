@@ -6,7 +6,7 @@ import { createHouse, deleteHouse, getAll, getHouseById, getMemberCount, updateH
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 import openapi from "@elysiajs/openapi";
 
-export const householdRoutes = new Elysia({ prefix: "/household" })
+export const householdRoutes = new Elysia({ prefix: "/households" })
   .get("/", async ({ status }) => {
     try {
       const res = await getAll();

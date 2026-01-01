@@ -5,7 +5,7 @@ import { getResidentByUserId } from "../services/residentServices";
 import { getInvoiceById, getInvoiceDetails, getInvoicesByHouseId } from "../services/invoiceServices";
 
 
-export const invoiceRoutes = new Elysia({ prefix: "/invoice", detail: { tags: ['Invoice'] } })
+export const invoiceRoutes = new Elysia({ prefix: "/invoices", detail: { tags: ['Invoice'] } })
   .use(authenticationPlugins)
   .get("/", async ({ user, status }) => {
     try {

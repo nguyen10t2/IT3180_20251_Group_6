@@ -14,11 +14,11 @@ import { CreateNotificationBody } from "../types/notificationTypes";
 import { getAll as getAllFeedback, getFeedbackById, respondToFeedback } from "../services/feedbackServices";
 
 
-export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] })
+export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager'] })
   .use(userRoutes)
   .use(authorizationPlugins('manager'))
   .use(householdRoutes)
-  .group('/user', (app) =>
+  .group('/users', (app) =>
     app
       .post('/', async ({ body, status }) => {
         try {
@@ -100,7 +100,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         })
       })
   )
-  .group('/resident', (app) =>
+  .group('/residents', (app) =>
     app
       .get('/', async ({ status }) => {
         try {
@@ -158,7 +158,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
       })
   )
-  .group('/invoice', (app) =>
+  .group('/invoices', (app) =>
     app
       .get('/', async ({ status }) => {
         try {
@@ -257,7 +257,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         })
       })
   )
-  .group('/notification', (app) =>
+  .group('/notifications', (app) =>
     app
       .get('/', async ({ status }) => {
         try {
@@ -302,7 +302,7 @@ export const managerRoutes = new Elysia({ prefix: '/manager', tags: ['Manager'] 
         }
       })
   )
-  .group('/feedback', (app) =>
+  .group('/feedbacks', (app) =>
     app
       .get('/', async ({ status }) => {
         try {

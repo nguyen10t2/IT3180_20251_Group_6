@@ -66,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAccessToken(data.accessToken);
 
           // Cập nhật user mới nhất từ server (background)
-          const userRes = await refreshApi.get("/user/authMe", {
+          const userRes = await refreshApi.get("/users/authMe", {
             headers: { Authorization: `Bearer ${data.accessToken}` },
           });
 

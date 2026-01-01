@@ -7,7 +7,7 @@ import { getResidentByUserId } from "../services/residentServices";
 import { getUserById } from "../services/userServices";
 
 
-export const feedbackRoutes = new Elysia({ prefix: "/feedback", detail: { tags: ['Feedback'] } })
+export const feedbackRoutes = new Elysia({ prefix: "/feedbacks", detail: { tags: ['Feedback'] } })
   .use(authenticationPlugins)
   .get("/", async ({ user, status }) => {
     try {

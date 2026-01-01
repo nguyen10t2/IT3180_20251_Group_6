@@ -37,32 +37,32 @@ const navigationItems = [
   },
   {
     name: "Quản lý người dùng",
-    href: "/manager/users",
+    href: "/manager/user",
     icon: Users,
   },
   {
     name: "Quản lý hộ gia đình",
-    href: "/manager/households",
+    href: "/manager/household",
     icon: Building2,
   },
   {
     name: "Quản lý cư dân",
-    href: "/manager/residents",
+    href: "/manager/resident",
     icon: UserCheck,
   },
   {
     name: "Quản lý hóa đơn",
-    href: "/manager/invoices",
+    href: "/manager/invoice",
     icon: FileText,
   },
   {
     name: "Thông báo",
-    href: "/manager/notifications",
+    href: "/manager/notification",
     icon: Bell,
   },
   {
     name: "Phản hồi",
-    href: "/manager/feedbacks",
+    href: "/manager/feedback",
     icon: MessageSquare,
   },
 ];
