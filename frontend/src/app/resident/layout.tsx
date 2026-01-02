@@ -1,29 +1,56 @@
-"use client";
+'use client';
 
-import { useRouteGuard } from "@/lib/hooks/useRouteGuard";
-import { ResidentNavbar } from "@/components/layout/resident-navbar";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useRequireAuth } from '@/hooks';
+import { DashboardLayout } from '@/components/layout';
+import { 
+  LayoutDashboard, 
+  User, 
+  FileText, 
+  MessageSquare, 
+  Bell,
+  Home,
+} from 'lucide-react';
+import { ROUTES } from '@/config/constants';
+
+const sidebarItems = [
+  {
+    label: 'Tổng quan',
+    href: ROUTES.RESIDENT.DASHBOARD,
+    icon: LayoutDashboard,
+  },
+  {
+    label: 'Hồ sơ',
+    href: ROUTES.RESIDENT.PROFILE,
+    icon: User,
+  },
+  {
+    label: 'Hộ khẩu',
+    href: ROUTES.RESIDENT.HOUSEHOLD,
+    icon: Home,
+  },
+  {
+    label: 'Hóa đơn',
+    href: ROUTES.RESIDENT.INVOICES,
+    icon: FileText,
+  },
+  {
+    label: 'Phản ánh',
+    href: ROUTES.RESIDENT.FEEDBACKS,
+    icon: MessageSquare,
+  },
+  {
+    label: 'Thông báo',
+    href: ROUTES.RESIDENT.NOTIFICATIONS,
+    icon: Bell,
+  },
+];
 
 export default function ResidentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading } = useRouteGuard({
-    allowedRoles: ["resident"],
-    redirectTo: "/manager/dashboard",
-  });
+  useRequireAuth('resident');
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <ResidentNavbar />
-      <main className="flex-1">
-        <div className="container mx-auto p-6 max-w-7xl">{children}</div>
-      </main>
-    </div>
-  );
+  return <DashboardLayout sidebarItems={sidebarItems}>{children}</DashboardLayout>;
 }

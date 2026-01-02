@@ -1,31 +1,24 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "sonner";
-import { Providers } from "@/components/providers";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Providers } from './providers';
 
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-inter",
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Bluemon",
-  description: "Hệ thống quản lý chung cư thông minh",
+  title: 'BlueMoon - Quản lý chung cư',
+  description: 'Hệ thống quản lý chung cư BlueMoon',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <Providers>
-          {children}
-          <Toaster richColors position="top-right" />
-        </Providers>
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -25,3 +25,10 @@ export const UpdateInvoiceBody = t.Object({
     paid_at: t.Optional(t.Date()),
     confirmed_by: t.Optional(t.String({ format: "uuid" })),
 });
+
+export const ConfirmInvoiceBody = t.Optional(
+    t.Object({
+        paidAmount: t.Optional(t.String({ error: 'Số tiền đã thanh toán không hợp lệ' })),
+          paymentNote: t.Optional(t.String({ error: 'Ghi chú thanh toán không hợp lệ' }))
+    })
+);

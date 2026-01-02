@@ -44,13 +44,21 @@ export const invoiceRoutes = new Elysia({ prefix: "/invoices", detail: { tags: [
 
       const invoiceWithHouseId = await getInvoiceById(params.invoice_id);
 
+      if (!invoiceWithHouseId.data) {
+        throw new HttpError(404, 'Không tìm thấy hóa đơn');
+      }
+
       if (invoiceWithHouseId.data.house_id !== fetchResident.data.house_id)
         {throw new HttpError(403, "Bạn không có quyền truy cập vào hóa đơn này");}
 
       const res = await getInvoiceDetails(params.invoice_id);
-      if (!res.data)
-        {throw new HttpError(404, 'Không tìm thấy hóa đơn');}
-      return status(200, { invoiceDetails: res.data });
+      
+      return status(200, { 
+        invoiceDetails: {
+          ...invoiceWithHouseId.data,
+          details: res.data || []
+        }
+      });
     }
     catch (error) {
       console.error(error);

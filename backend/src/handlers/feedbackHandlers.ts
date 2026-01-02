@@ -1,7 +1,7 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
-import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments } from "../services/feedbackServices";
+import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments, addComment } from "../services/feedbackServices";
 import { CreateFeedbackBody } from "../types/feedbackTypes";
 import { getResidentByUserId } from "../services/residentServices";
 import { getUserById } from "../services/userServices";
@@ -65,4 +65,37 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedbacks", detail: { tags:
     catch (error) {
       httpErrorStatus(error);
     }
+  })
+  .post("/:feedback_id/comments", async ({ params, body, user, status }) => {
+    try {
+      const userId = user.id!;
+      
+      // Verify feedback exists
+      const feedback = await getFeedbackWithComments(params.feedback_id);
+      if (!feedback.data) {
+        throw new HttpError(404, 'Không tìm thấy phản hồi');
+      }
+      
+      // Only feedback owner can comment
+      if (feedback.data.feedback.user_id !== userId) {
+        throw new HttpError(403, 'Bạn không có quyền bình luận vào phản hồi này');
+      }
+
+      const commentData = {
+        feedback_id: params.feedback_id,
+        user_id: userId,
+        content: body.content,
+        is_internal: false,
+      };
+      
+      const res = await addComment(commentData);
+      if (res.data) {
+        return status(201, { message: 'Thêm bình luận thành công', comment: res.data });
+      }
+    }
+    catch (error) {
+      httpErrorStatus(error);
+    }
+  }, {
+    body: t.Object({ content: t.String() })
   });

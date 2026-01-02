@@ -1,4 +1,4 @@
-import { count, eq, isNull, and } from 'drizzle-orm';
+import { count, eq, isNull, and, isNotNull } from 'drizzle-orm';
 import { db } from '../database/db';
 import { userSchema } from '../models/userSchema';
 import { houseSchema } from '../models/houseSchema';
@@ -11,6 +11,7 @@ export const getDashboardStats = async () => {
     .from(userSchema)
     .where(and(
       eq(userSchema.status, 'pending'),
+      isNotNull(userSchema.resident_id),
       eq(userSchema.role, 3),
       isNull(userSchema.deleted_at)
     ));

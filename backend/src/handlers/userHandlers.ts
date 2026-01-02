@@ -8,13 +8,13 @@ import { hashedPassword, verifyPassword } from "../helpers/password";
 
 export const userRoutes = new Elysia({ prefix: "/users", detail: { tags: ['User'] } })
   .use(authenticationPlugins)
-  .get("/authMe", async ({ user, status }) => {
+  .get("/me", async ({ user, status }) => {
 
     try {
       const userId = user.id!;
       const userInf = await getUserById(userId);
 
-      return status(200, { data: userInf.data });
+      return status(200, { user: userInf.data });
     }
     catch (error) {
       console.error(error);

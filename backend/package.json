@@ -6,7 +6,7 @@
     "test": "bun ../test/run.ts",
     "test:server": "bun ../test/testServer.ts",
     "dev": "bun run --watch src/server.ts",
-    "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile server index.ts",
+    "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile server src/server.ts",
     "start": "./server",
     "lint": "bun eslint .",
     "lint:fix": "bun eslint . --fix"

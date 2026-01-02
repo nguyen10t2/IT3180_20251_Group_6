@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
-import { createResident, getResidentByIdCard, getResidentByPhone, getResidentByUserId, updateResident } from "../services/residentServices";
+import { getResidentsByHouseId, getResidentByUserId, updateResident } from "../services/residentServices";
 import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
 import { getUserById, updateResidentId } from "../services/userServices";
 import { getAll } from "../services/houseServices";
@@ -63,13 +63,28 @@ export const residentRoutes = new Elysia({ prefix: "/residents", tags: ['Residen
   }, {
     body: CreateResidentBody
   })
-  .get("/households", async ({ status }) => {
+  .get("/household", async ({ user, status }) => {
     try {
-      const res = await getAll();
+      const userId = user.id!;
+      const residentRes = await getResidentByUserId(userId);
+      
+      if (!residentRes.data || !residentRes.data.house_id) {
+        throw new HttpError(404, 'Không tìm thấy thông tin hộ khẩu');
+      }
 
-      return status(200, res);
+      const houseId = residentRes.data.house_id;
+      const residents = await getResidentsByHouseId(houseId);
+      
+      return status(200, { 
+        household: {
+          house_id: houseId,
+          room_number: residentRes.data.room_number,
+          members: residents.data || []
+        }
+      });
     }
     catch (error) {
+      console.error(error);
       httpErrorStatus(error);
     }
   })

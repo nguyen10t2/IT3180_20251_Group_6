@@ -7,11 +7,9 @@ import { householdRoutes } from "./householdHandlers";
 import { userRoutes } from "./userHandlers";
 import { deleteResident, getAll as getAllResident, getResidentById, updateResident } from "../services/residentServices";
 import { UpdateResidentBody } from "../types/residentTypes";
-import { confirmInvoice, createInvoice, deleteInvoice, getAll as getAllInvoice, getInvoiceById, updateInvoice } from "../services/invoiceServices";
-import { CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
 import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
 import { CreateNotificationBody } from "../types/notificationTypes";
-import { getAll as getAllFeedback, getFeedbackById, respondToFeedback } from "../services/feedbackServices";
+import { getAll as getAllFeedback, getFeedbackById, respondToFeedback, addComment as addFeedbackComment, updateFeedbackStatus } from "../services/feedbackServices";
 import { FeedBackResponse } from "../types/feedbackTypes";
 import { getDashboardStats } from "../services/dashboardServices";
 
@@ -35,8 +33,7 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .post('/', async ({ body, status }) => {
         try {
           const res = await getUsersByLastCreatedAndLimit(body.lastCreatedAt, body.limit);
-          if (res.data)
-            {return status(200, { users: res.data });}
+          if (res.data) { return status(200, { users: res.data }); }
         }
         catch (error) {
           console.error(error);
@@ -48,8 +45,7 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .get('/pending', async ({ status }) => {
         try {
           const res = await getPendingUsers();
-          if (res.data)
-            {return status(200, { pendingUsers: res.data });}
+          if (res.data) { return status(200, { pendingUsers: res.data }); }
           return status(200, { pendingUsers: [] });
         }
         catch (error) {
@@ -61,8 +57,7 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
         try {
           const res = await getUserWithResident(params.user_id);
 
-          if (!res.data)
-            {throw new HttpError(404, 'Không tìm thấy người dùng');}
+          if (!res.data) { throw new HttpError(404, 'Không tìm thấy người dùng'); }
 
           return status(200, { userDetails: res.data });
         }
@@ -74,15 +69,12 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .patch('/:user_id/approve', async ({ params, user, status }) => {
         try {
           const fetchUser = await getUserWithResident(params.user_id);
-          if (!fetchUser.data)
-            {throw new HttpError(404, 'Không tìm thấy người dùng');}
-          if (fetchUser.data.status !== 'pending')
-            {throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt');}
+          if (!fetchUser.data) { throw new HttpError(404, 'Không tìm thấy người dùng'); }
+          if (fetchUser.data.status !== 'pending') { throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt'); }
 
           const approverId = user.id!;
           const res = await approveUser(params.user_id, approverId);
-          if (res.data)
-            {return status(200, { message: 'Phê duyệt người dùng thành công' });}
+          if (res.data) { return status(200, { message: 'Phê duyệt người dùng thành công' }); }
 
         }
         catch (error) {
@@ -93,14 +85,11 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .patch('/:user_id/reject', async ({ params, body, status }) => {
         try {
           const fetchUser = await getUserById(params.user_id);
-          if (!fetchUser.data)
-            {throw new HttpError(404, 'Không tìm thấy người dùng');}
-          if (fetchUser.data.status !== 'pending')
-            {throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt');}
+          if (!fetchUser.data) { throw new HttpError(404, 'Không tìm thấy người dùng'); }
+          if (fetchUser.data.status !== 'pending') { throw new HttpError(400, 'Người dùng không có nhu cầu phê duyệt'); }
 
           const res = await rejectUser(params.user_id, body.reject_reason);
-          if (res.data)
-            {return status(200, { message: 'Đã từ chối phê duyệt người dùng' });}
+          if (res.data) { return status(200, { message: 'Đã từ chối phê duyệt người dùng' }); }
         }
         catch (error) {
           console.error(error);
@@ -127,8 +116,7 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .get('/:resident_id', async ({ params, status }) => {
         try {
           const res = await getResidentById(params.resident_id);
-          if (!res.data)
-            {throw new HttpError(404, 'Không tìm thấy cư dân');}
+          if (!res.data) { throw new HttpError(404, 'Không tìm thấy cư dân'); }
           return status(200, { resident: res.data });
         }
         catch (error) {
@@ -142,12 +130,10 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
         }
         try {
           const fetchResident = await getResidentById(params.resident_id);
-          if (!fetchResident.data)
-            {throw new HttpError(404, 'Không tìm thấy cư dân');}
+          if (!fetchResident.data) { throw new HttpError(404, 'Không tìm thấy cư dân'); }
 
           const res = await updateResident(params.resident_id, body);
-          if (res.data)
-            {return status(200, { message: 'Cập nhật thông tin cư dân thành công' });}
+          if (res.data) { return status(200, { message: 'Cập nhật thông tin cư dân thành công' }); }
         }
         catch (error) {
           console.error(error);
@@ -159,8 +145,7 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .delete('/:resident_id', async ({ params, status }) => {
         try {
           const fetchResident = await getResidentById(params.resident_id);
-          if (!fetchResident.data)
-            {throw new HttpError(404, 'Không tìm thấy cư dân');}
+          if (!fetchResident.data) { throw new HttpError(404, 'Không tìm thấy cư dân'); }
           await deleteResident(params.resident_id);
           return status(200, { message: 'Xóa cư dân thành công' });
         }
@@ -168,105 +153,6 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
           console.error(error);
           httpErrorStatus(error);
         }
-      })
-  )
-  .group('/invoices', (app) =>
-    app
-      .get('/', async ({ status }) => {
-        try {
-          const res = await getAllInvoice();
-          return status(200, { invoices: res?.data ?? [] });
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      })
-      .get('/:invoice_id', async ({ params, status }) => {
-        try {
-          const res = await getInvoiceById(params.invoice_id);
-          if (!res.data)
-            {throw new HttpError(404, 'Không tìm thấy hóa đơn');}
-          return status(200, { invoice: res.data });
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      })
-      .post('/', async ({ body, user, status }) => {
-        try {
-          const userId = user.id!;
-          const formattedBody = {
-            ...body,
-            created_by: userId
-          }
-          await createInvoice(formattedBody);
-          return status(200, { message: 'Tạo hóa đơn thành công' });
-
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      }, {
-        body: CreateInvoiceBody
-      })
-      .patch('/:invoice_id', async ({ params, body, status }) => {
-        try {
-          const fetchInvoice = await getInvoiceById(params.invoice_id);
-          if (!fetchInvoice.data)
-            {throw new HttpError(404, 'Không tìm thấy hóa đơn');}
-
-          const res = await updateInvoice(params.invoice_id, body);
-          if (res.data)
-            {return status(200, { message: 'Cập nhật hóa đơn thành công' });}
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      }, {
-        body: UpdateInvoiceBody
-      })
-      .delete('/:invoice_id', async ({ params, status }) => {
-        try {
-          const fetchInvoice = await getInvoiceById(params.invoice_id);
-          if (!fetchInvoice.data)
-            {throw new HttpError(404, 'Không tìm thấy hóa đơn');}
-
-          const res = await deleteInvoice(params.invoice_id);
-          if (res.data)
-            {return status(200, { message: 'Xóa hóa đơn thành công' });}
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      })
-      .patch('/:invoice_id/confirm', async ({ params, body, user, status }) => {
-        try {
-          const fetchInvoice = await getInvoiceById(params.invoice_id);
-          if (!fetchInvoice.data)
-            {throw new HttpError(404, 'Không tìm thấy hóa đơn');}
-
-          const confirmerId = user.id!;
-          const paidAmount = body?.paidAmount ?? "";
-          const paymentNote = body?.paymentNote ?? "";
-          const res = await confirmInvoice(params.invoice_id, confirmerId, paidAmount, paymentNote);
-
-          if (res.data)
-            {return status(200, { message: 'Xác nhận thanh toán hóa đơn thành công' });}
-        }
-        catch (error) {
-          console.error(error);
-          httpErrorStatus(error);
-        }
-      }, {
-        body: t.Object({
-          paidAmount: t.Optional(t.String()),
-          paymentNote: t.Optional(t.String())
-        })
       })
   )
   .group('/notifications', (app) =>
@@ -301,12 +187,10 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
       .delete('/:notification_id', async ({ params, status }) => {
         try {
           const fetchNotification = await getNotificationById(params.notification_id);
-          if (!fetchNotification.data)
-            {throw new HttpError(404, 'Không tìm thấy thông báo');}
+          if (!fetchNotification.data) { throw new HttpError(404, 'Không tìm thấy thông báo'); }
 
           const res = await deleteNotification(params.notification_id);
-          if (res.data)
-            {return status(200, { message: 'Xóa thông báo thành công' });}
+          if (res.data) { return status(200, { message: 'Xóa thông báo thành công' }); }
         }
         catch (error) {
           console.error(error);
@@ -326,17 +210,77 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
           httpErrorStatus(error);
         }
       })
+      .get('/:id', async ({ params, status }) => {
+        try {
+          const res = await getFeedbackById(params.id);
+          if (!res.data) {
+            throw new HttpError(404, 'Không tìm thấy phản hồi');
+          }
+          return status(200, { feedback: res.data });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      })
+      .post('/:id/comments', async ({ params, body, user, status }) => {
+        try {
+          const userId = user.id!;
+          
+          const feedback = await getFeedbackById(params.id);
+          if (!feedback.data) {
+            throw new HttpError(404, 'Không tìm thấy phản hồi');
+          }
+
+          const commentData = {
+            feedback_id: params.id,
+            user_id: userId,
+            content: body.content,
+            is_internal: false,
+          };
+          
+          const res = await addFeedbackComment(commentData);
+          if (res.data) {
+            return status(201, { message: 'Thêm bình luận thành công', comment: res.data });
+          }
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      }, {
+        body: t.Object({ content: t.String() })
+      })
+      .patch('/:id/status', async ({ params, body, user, status }) => {
+        try {
+          const feedback = await getFeedbackById(params.id);
+          if (!feedback.data) {
+            throw new HttpError(404, 'Không tìm thấy phản hồi');
+          }
+
+          const updaterId = user.id!;
+          const res = await updateFeedbackStatus(params.id, body.status, updaterId);
+
+          if (res.data) {
+            return status(200, { message: 'Cập nhật trạng thái thành công', feedback: res.data });
+          }
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      }, {
+        body: t.Object({ status: t.Union([t.Literal('pending'), t.Literal('in_progress'), t.Literal('resolved'), t.Literal('rejected')]) })
+      })
       .post('/response', async ({ body, user, status }) => {
         try {
           const fetchFeedback = await getFeedbackById(body.id);
-          if (!fetchFeedback.data)
-            {throw new HttpError(404, 'Không tìm thấy phản hồi');}
+          if (!fetchFeedback.data) { throw new HttpError(404, 'Không tìm thấy phản hồi'); }
 
           const responserId = user.id!;
           const res = await respondToFeedback(body.id, body.response, responserId);
 
-          if(res.data)
-            {return status(200, {message: 'Trả lời phản hồi thành công'});}
+          if (res.data) { return status(200, { message: 'Trả lời phản hồi thành công' }); }
         }
         catch (error) {
           console.error(error);

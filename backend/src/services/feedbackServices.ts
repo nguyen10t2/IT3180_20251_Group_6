@@ -175,16 +175,26 @@ export const getFeedbacksByStatus = async (status: FeedbackStatusEnum) => {
   return { data: rows };
 };
 
-// Gán người xử lý
-export const assignFeedback = async (id: string, assignedTo: string) => {
+// Cập nhật status của feedback
+export const updateFeedbackStatus = async (
+  feedbackId: string,
+  status: FeedbackStatusEnum,
+  updatedBy: string,
+) => {
+  const updateData: any = {
+    status,
+    updated_at: new Date(),
+  };
+
+  if (status === 'resolved' || status === 'rejected') {
+    updateData.resolved_at = new Date();
+    updateData.assigned_to = updatedBy;
+  }
+
   const [result] = await db.update(feedbackSchema)
-    .set({
-      assigned_to: assignedTo,
-      status: 'in_progress' as FeedbackStatusEnum,
-      updated_at: new Date(),
-    })
+    .set(updateData)
     .where(and(
-      eq(feedbackSchema.id, id),
+      eq(feedbackSchema.id, feedbackId),
       isNull(feedbackSchema.deleted_at)
     ))
     .returning();

@@ -9,6 +9,7 @@ import { notificationRoutes } from "./handlers/notificationHandler";
 import { residentRoutes } from "./handlers/residentHandlers";
 import { feedbackRoutes } from "./handlers/feedbackHandlers";
 import { invoiceRoutes } from "./handlers/invoiceHandlers";
+import { accountantHandlers } from "./handlers/accountantHandlers";
 import cors from "@elysiajs/cors";
 import { householdRoutes } from "./handlers/householdHandlers";
 import { managerRoutes } from "./handlers/managerHandlers";
@@ -22,11 +23,13 @@ new Elysia({
 })
   .use(pluginDB)
   .use(cors({
-    origin: "http://localhost:3001",
+    origin: "http://localhost:3000",
     credentials: true,
   }))
   .use(openapi())
   .onError(({ error, status, code }) => {
+    console.error(code, error);
+    
     if (error instanceof HttpError) {
       return status(error.status, { message: error.body });
     }
@@ -38,6 +41,7 @@ new Elysia({
   .get("/", ({ redirect }) => redirect("/openapi"), { detail: { tags: ['Root'] } })
   .use(authRoutes)
   .use(managerRoutes)
+  .use(accountantHandlers)
   .use(authorizationPlugins("resident"))
   .use(userRoutes)
   .use(residentRoutes)
