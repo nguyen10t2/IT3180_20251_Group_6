@@ -1,10 +1,12 @@
 import { and, desc, eq, getTableColumns, isNull } from "drizzle-orm";
 import { db } from "../database/db";
-import { invoiceSchema, type NewInvoices } from "../models/invoiceSchema";
+import { invoiceSchema } from "../models/invoiceSchema";
 import { invoiceDetailSchema } from "../models/invoiceDetailSchema";
 import { houseSchema } from "../models/houseSchema";
 import { feeTypeSchema } from "../models/feeTypeSchema";
 import type { FeeStatusEnum } from "../models/pgEnum";
+import { Static } from "elysia";
+import { UpdateInvoiceBody } from "../types/invoiceTypes";
 
 // Lấy tất cả hóa đơn (chưa bị xóa)
 export const getAll = async () => {
@@ -65,19 +67,12 @@ export const createInvoice = async (data: {
 };
 
 // Cập nhật hóa đơn
-export const updateInvoice = async (id: string, data: Partial<NewInvoices>) => {
-  const updateData: Partial<NewInvoices> = {};
+export const updateInvoice = async (id: string, data: Static<typeof UpdateInvoiceBody>) => {
 
-  for (const key in data) {
-    const value = data[key as keyof typeof data];
-    if (value !== undefined) {
-      (updateData as any)[key] = value;
-    }
-  }
 
   const [result] = await db.update(invoiceSchema)
     .set({
-      ...updateData,
+      ...data,
       updated_at: new Date()
     })
     .where(and(

@@ -16,8 +16,6 @@ export const generateRandomNumber = (length: number = 6) => {
     return result;
 }
 
-const key = await generateRandomString(128);
-
 export const verifyPassword = async (password: string, hashedPassword: string) => {
     return await Bun.password.verify(password, hashedPassword);
 }

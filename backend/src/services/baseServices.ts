@@ -14,7 +14,7 @@ export abstract class BaseService<TTable> {
   }
 
   protected activeCondition() {
-    if (!this.softDelete) return undefined;
+    if (!this.softDelete) {return undefined;}
     return isNull((this.table as any).deleted_at);
   }
 

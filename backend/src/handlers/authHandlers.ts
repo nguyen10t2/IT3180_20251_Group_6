@@ -45,9 +45,9 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       if (!data ||
         !(await verifyPassword(password, data.hashed_password))
       ) 
-        throw new HttpError(ErrorStatus[NOT_FOUND], "Thông tin đăng nhập không chính xác");
+        {throw new HttpError(ErrorStatus[NOT_FOUND], "Thông tin đăng nhập không chính xác");}
 
-      const { hashed_password, ...rest } = data;
+      const { hashed_password: _, ...rest } = data;
       const accessToken = await getToken(rest, ACCESSTOKEN_TTL);
       const refreshToken = await generateRandomString(64);
 
@@ -96,7 +96,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
             client.set(key, JSON.stringify(value), 'EX', OTP_TTL + 30)
           ]);
         } catch (error) {
-          if (error instanceof HttpError) throw error;
+          if (error instanceof HttpError) {throw error;}
           console.error("Lỗi khi gửi OTP", error);
         }
       })();
@@ -178,7 +178,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
         try {
           await new EmailHelper().sendOtpEmail(email, optRes.code);
         } catch (error) {
-          if (error instanceof HttpError) throw error;
+          if (error instanceof HttpError) {throw error;}
           console.error("Lỗi khi gửi OTP", error);
         }
       })();
@@ -213,7 +213,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
           const token = await getToken({ email }, "3m");
           await client.set(key, token, 'EX', 3 * 60);
         } catch (error) {
-          if (error instanceof HttpError) throw error;
+          if (error instanceof HttpError) {throw error;}
           console.error("Lỗi khi đặt cờ xác thực đặt lại mật khẩu", error);
         }
       })();
@@ -270,7 +270,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
       })
 
       const userId = user.id!;
-      const res = await deleteRefreshTokensByUserId(userId);
+      await deleteRefreshTokensByUserId(userId);
       return status(200, { message: 'Logout thành công' })
     }
     catch (error) {

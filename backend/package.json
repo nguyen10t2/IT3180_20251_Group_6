@@ -7,7 +7,9 @@
     "test:server": "bun ../test/testServer.ts",
     "dev": "bun run --watch src/server.ts",
     "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile server index.ts",
-    "start": "./server"
+    "start": "./server",
+    "lint": "bun eslint .",
+    "lint:fix": "bun eslint . --fix"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
@@ -23,7 +25,11 @@
   "devDependencies": {
     "@types/node": "^25.0.2",
     "@types/nodemailer": "^7.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "bun-types": "latest",
+    "eslint": "^9.39.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "install": "^0.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

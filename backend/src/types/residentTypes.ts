@@ -1,7 +1,6 @@
 import { Static, t } from "elysia";
 import { enumToTypeBox } from "../helpers/enumHelper";
 import { gender, resident_status } from "../models/pgEnum";
-import { error } from "node:console";
 
 export const CreateResidentBody = t.Object({
     full_name: t.String({error: "Không được để trống tên cư dân"}),

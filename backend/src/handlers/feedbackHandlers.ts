@@ -1,4 +1,4 @@
-import Elysia, { t } from "elysia";
+import Elysia from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { createFeedback, getFeedbacksByUserId, getFeedbackWithComments } from "../services/feedbackServices";
@@ -16,7 +16,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedbacks", detail: { tags:
       const res = await getFeedbacksByUserId(userID);
 
       if (!res.data)
-        return status(200, { feedbacks: [] });
+        {return status(200, { feedbacks: [] });}
 
       return status(200, { feedbacks: res.data });
     }
@@ -45,7 +45,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedbacks", detail: { tags:
       };
       const res = await createFeedback(bodyWithUserAndHouse);
       if (res.data)
-        return status(200, { message: 'Gửi phản hồi thành công' })
+        {return status(200, { message: 'Gửi phản hồi thành công' })}
     }
     catch (error) {
       httpErrorStatus(error);
@@ -58,7 +58,7 @@ export const feedbackRoutes = new Elysia({ prefix: "/feedbacks", detail: { tags:
       const res = await getFeedbackWithComments(params.feedback_id);
 
       if (!res.data)
-        throw new HttpError(404, 'Không tìm thấy phản hồi');
+        {throw new HttpError(404, 'Không tìm thấy phản hồi');}
 
       return status(200, { feedback: res.data });
     }

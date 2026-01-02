@@ -32,7 +32,7 @@ export const userRoutes = new Elysia({ prefix: "/users", detail: { tags: ['User'
       const isOldPass = await verifyPassword(body.old_password, oldHashedPass);
 
       if (!isOldPass)
-        throw new HttpError(401, 'Mật khẩu cũ không đúng');
+        {throw new HttpError(401, 'Mật khẩu cũ không đúng');}
       
       const newHashedPass = await hashedPassword(body.new_password);
       await updateUserPassword(userId, newHashedPass);

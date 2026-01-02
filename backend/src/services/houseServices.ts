@@ -1,6 +1,6 @@
 import { eq, and, isNull, asc, sql } from "drizzle-orm";
 import { db } from "../database/db";
-import { houseSchema, type NewHouse } from "../models/houseSchema";
+import { houseSchema } from "../models/houseSchema";
 import { residentSchema } from "../models/residentSchema";
 import { houseHoldHeadHistorySchema } from "../models/houseHoldHeadHistorySchema";
 import { CreateHouseBodyType, UpdateHouseBodyType } from "../types/houseTypes";

@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, lt, desc, or } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, lt, desc } from 'drizzle-orm';
 import { db } from '../database/db';
 import { userRoleSchema, userSchema } from '../models/userSchema';
 import { houseSchema } from '../models/houseSchema';

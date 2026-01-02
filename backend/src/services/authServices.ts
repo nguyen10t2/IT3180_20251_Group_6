@@ -2,12 +2,6 @@ import { db } from '../database/db';
 import { and, desc, eq, lt, isNull } from 'drizzle-orm';
 import { userRoleSchema, userSchema } from '../models/userSchema';
 import { refreshTokenSchema } from '../models/authSchema';
-import client from '../helpers/redisHelpers';
-import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from '../constants/errorConstant';
-import { generateOtp, MAX_ATTEMPTS, MAX_RESEND, OTP_TTL, OTPData, RESEND_WINDOW } from '../helpers/otpHelpers';
-
-// Redis client cho OTP
-const redis = client;
 
 // ============================================
 // LOGIN SERVICE

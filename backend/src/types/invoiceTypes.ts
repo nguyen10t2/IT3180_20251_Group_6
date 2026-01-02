@@ -24,4 +24,4 @@ export const UpdateInvoiceBody = t.Object({
     status: t.Optional(enumToTypeBox(fee_status.enumValues)),
     paid_at: t.Optional(t.Date()),
     confirmed_by: t.Optional(t.String({ format: "uuid" })),
-})
+});

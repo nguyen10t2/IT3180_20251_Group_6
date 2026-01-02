@@ -31,7 +31,7 @@ new Elysia({
       return status(error.status, { message: error.body });
     }
 
-    if (code === 'VALIDATION') return status(400, { message: error.message });
+    if (code === 'VALIDATION') {return status(400, { message: error.message });}
 
     return status(500, { message: "Internal Server Error" });
   })

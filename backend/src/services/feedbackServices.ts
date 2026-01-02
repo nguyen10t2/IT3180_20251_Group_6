@@ -1,10 +1,10 @@
 import { eq, getTableColumns, sql, asc, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../database/db';
-import { feedbackSchema, type NewFeedback } from '../models/feedbackSchema';
+import { feedbackSchema } from '../models/feedbackSchema';
 import { feedbackCommentSchema } from '../models/feedbackCommentSchema';
 import { houseSchema } from '../models/houseSchema';
 import { userSchema } from '../models/userSchema';
-import type { FeedbackStatusEnum, FeedbackTypeEnum, FeedbackPriorityEnum } from '../models/pgEnum';
+import type { FeedbackStatusEnum } from '../models/pgEnum';
 import { CommentFeedbackType, CreateFeedbackType } from '../types/feedbackTypes';
 
 // Lấy tất cả phản hồi (chưa bị xóa)
@@ -145,32 +145,6 @@ export const addComment = async (data: CommentFeedbackType) => {
     .returning();
 
   return { data: result };
-};
-
-// Cập nhật trạng thái feedback
-export const updateFeedbackStatus = async (id: string, status: FeedbackStatusEnum, assignedTo?: string) => {
-  const updateData: any = {
-    status,
-    updated_at: new Date(),
-  };
-
-  if (assignedTo) {
-    updateData.assigned_to = assignedTo;
-  }
-
-  if (status === 'resolved') {
-    updateData.resolved_at = new Date();
-  }
-
-  const [result] = await db.update(feedbackSchema)
-    .set(updateData)
-    .where(and(
-      eq(feedbackSchema.id, id),
-      isNull(feedbackSchema.deleted_at)
-    ))
-    .returning();
-
-  return { data: result ?? null };
 };
 
 // Soft delete feedback

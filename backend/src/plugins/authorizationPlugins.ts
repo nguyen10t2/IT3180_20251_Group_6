@@ -1,11 +1,11 @@
-import Elysia, { Context } from "elysia";
+import Elysia from "elysia";
 import { authenticationPlugins } from "./authenticationPlugins";
 import { getRoleByName } from "../services/roleServices";
-import { HttpError, INTERNAL_SERVER_ERROR } from "../constants/errorConstant";
+import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 
 export const authorizationPlugins = (role: string) => (app: Elysia) => app
   .use(authenticationPlugins)
-  .onBeforeHandle(async ({ user, status }) => {
+  .onBeforeHandle(async ({ user }) => {
     try {
       const [requiredRole, userRole] = await Promise.all([
         getRoleByName(role),
@@ -20,7 +20,6 @@ export const authorizationPlugins = (role: string) => (app: Elysia) => app
       }
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpError) throw error;
-      throw new HttpError(500, INTERNAL_SERVER_ERROR);
+      httpErrorStatus(error);
     }
   });

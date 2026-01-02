@@ -13,14 +13,14 @@ export const notificationRoutes = new Elysia({ prefix: "/notifications", detail:
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');
+        {throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');}
 
       if (!resident.data.house_id)
-        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');
+        {throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');}
 
       const householdId = resident.data.house_id!;
       const res = await getNotificationsForUser(userId, householdId);
-      if (res.data == null) {
+      if (res.data === null) {
         return status(200, { notifications: [] });
       }
 
@@ -38,7 +38,7 @@ export const notificationRoutes = new Elysia({ prefix: "/notifications", detail:
 
       const data = await markAsRead(notifiId, userId);
       if (data)
-        return status(200, { message: "Đã đánh dấu đã đọc thông báo" })
+        {return status(200, { message: "Đã đánh dấu đã đọc thông báo" })}
     }
     catch (error) {
       console.error(error);
@@ -55,10 +55,10 @@ export const notificationRoutes = new Elysia({ prefix: "/notifications", detail:
       const resident = await getResidentByUserId(userId);
 
       if (!resident.data)
-        throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');
+        {throw new HttpError(403, 'Bạn chưa phải là cư dân, vui lòng gửi đăng ký cư dân');}
 
       if (!resident.data.house_id)
-        throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');
+        {throw new HttpError(403, 'Bạn chưa có hộ khẩu, vui lòng cập nhật hộ khẩu');}
 
       const householdId = resident.data.house_id!;
 

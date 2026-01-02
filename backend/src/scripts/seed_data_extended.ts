@@ -17,7 +17,6 @@ const PASSWORD_HASH = "$argon2id$v=19$m=65536,t=2,p=1$CSzocgyatIDc3ZgYp/zilb0XIA
 
 const firstNames = ["Nguyen", "Tran", "Le", "Pham", "Hoang", "Huynh", "Phan", "Vu", "Vo", "Dang"];
 const lastNames = ["Van A", "Thi B", "Van C", "Thi D", "Van E", "Thi F", "Gia Bao", "Minh Khoi", "Ngoc Han", "Bao Chau"];
-const streets = ["Nguyen Hue", "Le Loi", "Ham Nghi", "Pasteur", "Hai Ba Trung", "Ly Tu Trong", "Dong Khoi", "Nam Ky Khoi Nghia"];
 const occupations = ["Engineer", "Doctor", "Teacher", "Student", "Business Owner", "Freelancer", "Accountant", "Nurse"];
 const feedbackTitles = ["Broken Elevator", "Noisy Neighbors", "Water Leak", "Cleanliness Issue", "Parking Problem", "Security Concern"];
 const feedbackContents = [
@@ -79,7 +78,7 @@ async function cleanDb() {
     for (const table of tables) {
         try {
             await db.execute(sql.raw(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`));
-        } catch (e) {
+        } catch (_) {
             // console.log(`Note: Could not truncate table ${table} (maybe doesn't exist).`);
         }
     }
@@ -98,7 +97,7 @@ async function prepareDb() {
                 for (const stmt of statements) {
                     try {
                         await db.execute(sql.raw(stmt));
-                    } catch (e: any) {
+                    } catch (_) {
                         // Ignore "relation already exists" (42P07) or "type already exists" (42710)
                         // console.log(`Warning executing SQL: ${e.message}`);
                     }
@@ -125,23 +124,23 @@ async function prepareDb() {
         // invoice_details matches schema now, so no rename needed
         try {
             await db.execute(sql`ALTER TABLE notifications RENAME TO notification`);
-        } catch (e) {}
+        } catch (_) {}
 
         // Fix column name mismatches
         try {
             await db.execute(sql`ALTER TABLE invoice_details RENAME COLUMN fee_type_id TO fee_id`);
-        } catch (e) {}
+        } catch (_) {}
 
         try {
             await db.execute(sql`ALTER TABLE household_head_history RENAME TO house_hold_head_history`);
-        } catch (e) {}
+        } catch (_) {}
         // Check if invoices.invoice_types is integer or varchar
         // We will just try to alter it to be compatible with Drizzle Schema
         // Note: This might fail if there is existing data that cannot be cast, but for a seed script it's acceptable to try.
         // We'll drop the default first if it exists.
         try {
             await db.execute(sql`ALTER TABLE invoices ALTER COLUMN invoice_types DROP DEFAULT`);
-        } catch (e) {}
+        } catch (_) {}
         
         // We need to change the type to integer using USING clause
         // If it was 'monthly', it will fail to cast to int. So we might need to handle that.
@@ -159,7 +158,7 @@ async function prepareDb() {
                 ALTER TABLE invoices
                 ADD CONSTRAINT fk_invoice_types FOREIGN KEY (invoice_types) REFERENCES invoice_types(id);
              `);
-        } catch (e) {
+        } catch (_) {
             console.log("Note: Could not alter invoices.invoice_types to integer (maybe already done or data conflict). Ignoring.");
         }
 
@@ -264,7 +263,7 @@ async function seed() {
                 // If it already exists, try to fetch it (simplified: just assume it exists and we might skip or query it)
                 // For simplicity in this seed script, we'll just query it back if insert failed (likely due to unique constraint)
                 const existing = await db.select().from(invoiceTypeSchema).where(sql`${invoiceTypeSchema.name} = ${name}`);
-                if (existing.length > 0) invoiceTypes.push(existing[0]);
+                if (existing.length > 0) {invoiceTypes.push(existing[0]);}
             }
         }
         console.log("Seeded Invoice Types:", invoiceTypes);
@@ -332,7 +331,7 @@ async function seed() {
                     user_id: user.id,
                     read_at: new Date(),
                 });
-            } catch (e) {
+            } catch (_) {
                 // Ignore duplicates
             }
         }
@@ -346,7 +345,7 @@ async function seed() {
             const resident = residents.find(r => r.id === user.resident_id);
             const houseId = resident ? resident.house_id : null;
 
-            if (!houseId) continue;
+            if (!houseId) {continue;}
 
             const feedback = await db.insert(feedbackSchema).values({
                 user_id: user.id,

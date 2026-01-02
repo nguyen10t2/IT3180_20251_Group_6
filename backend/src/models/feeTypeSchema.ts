@@ -6,7 +6,6 @@ import {
   timestamp,
   unique,
   index,
-  foreignKey,
   decimal,
   date
 } from "drizzle-orm/pg-core";
