@@ -1,15 +1,16 @@
 # 🏘️ IT3180 - Apartment Management System
 
-Hệ thống quản lý chung cư được xây dựng với Bun runtime, ElysiaJS và PostgreSQL.
+Hệ thống quản lý chung cư được xây dựng với Bun runtime, ElysiaJS, Next.js và PostgreSQL.
 
 ## 📋 Mục lục
 
 - [Tech Stack](#-tech-stack)
 - [Cấu trúc Project](#-cấu-trúc-project)
-- [Cài đặt Backend](#-cài-đặt-backend)
-- [Test Suite](#-test-suite)
+- [Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
+- [Cài đặt môi trường](#-cài-đặt-môi-trường)
+- [Cấu hình Environment Variables](#-cấu-hình-environment-variables)
+- [Khởi chạy ứng dụng](#-khởi-chạy-ứng-dụng)
 - [Scripts](#-scripts-có-sẵn)
-- [Environment Variables](#-environment-variables)
 - [Troubleshooting](#-troubleshooting)
 
 ---
@@ -19,269 +20,366 @@ Hệ thống quản lý chung cư được xây dựng với Bun runtime, Elysia
 ### Backend
 - **Runtime:** Bun (latest)
 - **Framework:** ElysiaJS
-- **Database:** PostgreSQL
+- **Database:** PostgreSQL (Neon DB)
+- **Cache/Session:** Upstash Redis
 - **ORM:** Drizzle ORM
 - **Language:** TypeScript
 
-### Testing
-- **Test Runner:** Custom Bun Test Runner
-- **Test Framework:** ElysiaJS Endpoints
-- **Coverage:** 91.84% (45/49 tests passing)
+### Frontend
+- **Framework:** Next.js 14
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
 
 ---
 
 ## 📁 Cấu trúc Project
 
 ```
-IT3180_20251_Group_6/
+BlueMoon/
 ├── backend/                    # Backend API
 │   ├── src/
 │   │   ├── server.ts          # Entry point
-│   │   ├── constants/         # Constants
 │   │   ├── database/          # Database config
 │   │   ├── handlers/          # Request handlers
 │   │   ├── helpers/           # Helper functions
 │   │   ├── models/            # Drizzle ORM models
 │   │   ├── plugins/           # Auth & authorization
-│   │   ├── routes/            # API routes
 │   │   ├── services/          # Business logic
 │   │   ├── sql/               # SQL scripts
 │   │   └── types/             # TypeScript types
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── test/                       # Test suite (standalone)
-│   ├── services/              # Service tests
-│   │   ├── authServices.test.ts
-│   │   ├── houseServices.test.ts
-│   │   ├── notificationServices.test.ts
-│   │   ├── residentServices.test.ts
-│   │   └── userServices.test.ts
-│   ├── helpers/               # Test utilities
-│   ├── mock/                  # Mock data
-│   ├── run.ts                 # Test runner
-│   ├── testServer.ts          # HTTP test server
-│   ├── package.json           # Independent dependencies
-│   ├── COVERAGE.md            # Coverage report
-│   └── INSTALL.md             # Installation guide
+├── frontend/                   # Next.js Frontend
+│   ├── src/
+│   │   ├── app/               # App router
+│   │   ├── components/        # React components
+│   │   ├── lib/               # Utilities
+│   │   ├── services/          # API services
+│   │   └── types/             # TypeScript types
+│   ├── package.json
+│   └── tsconfig.json
 │
 └── docs/                       # Documentation
 ```
 
 ---
 
-## 🚀 Cài đặt Backend
+## 🔧 Yêu cầu hệ thống
 
-### Prerequisites
-- Bun (v1.0+)
-- PostgreSQL (v14+)
+### 1. Cài đặt Node.js
 
-### Setup
+**Khuyến nghị:** Node.js v18.0.0 trở lên
 
+#### Linux/macOS:
 ```bash
-# Clone repository
-git clone <repository-url>
-cd IT3180_20251_Group_6
+# Sử dụng nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-# Install dependencies
-cd backend
-bun install
+# Restart terminal, sau đó cài Node.js
+nvm install 20
+nvm use 20
 
-# Setup database
-# 1. Tạo database PostgreSQL
-# 2. Copy .env.example thành .env
-# 3. Cập nhật DATABASE_URL trong .env
-
-# Run migrations
-bun run src/sql/init.sql
-
-# Start development server
-bun run dev
+# Kiểm tra version
+node --version
+npm --version
 ```
 
-Server sẽ chạy tại `http://localhost:3000`
+#### Windows:
+- Tải Node.js từ [nodejs.org](https://nodejs.org/)
+- Chọn phiên bản LTS (Long Term Support)
+- Chạy installer và làm theo hướng dẫn
+
+### 2. Cài đặt Bun
+
+Bun là JavaScript runtime siêu nhanh, tương thích với Node.js.
+
+#### Linux/macOS:
+```bash
+# Cài đặt Bun
+curl -fsSL https://bun.sh/install | bash
+
+# Hoặc sử dụng npm
+npm install -g bun
+
+# Kiểm tra version
+bun --version
+```
+
+#### Windows:
+```bash
+# Sử dụng npm
+npm install -g bun
+
+# Hoặc sử dụng PowerShell
+powershell -c "irm bun.sh/install.ps1|iex"
+```
 
 ---
 
-## 🧪 Test Suite
+## ⚙️ Cài đặt môi trường
 
-### Tổng quan
-
-Test suite hoàn toàn độc lập với 49 test cases covering tất cả services.
-
-**Coverage Summary:**
-- ✅ **45/49 tests passing** (91.84%)
-- ⚡ **Duration:** ~0.68s
-- 📦 **5/5 test suites** completed
-
-### Quick Start
+### 1. Clone Repository
 
 ```bash
-# Bước 1: Install test dependencies (chỉ cần 1 lần)
-cd test
+git clone <repository-url>
+cd BlueMoon
+```
+
+### 2. Tạo tài khoản và dịch vụ cần thiết
+
+#### A. Neon DB (PostgreSQL Cloud)
+
+Neon là serverless PostgreSQL database.
+
+1. **Đăng ký tài khoản:**
+   - Truy cập [https://neon.tech](https://neon.tech)
+   - Đăng ký với GitHub hoặc email
+
+2. **Tạo Project:**
+   - Click "Create Project"
+   - Chọn region gần bạn nhất (ví dụ: Singapore, Tokyo)
+   - Đặt tên project: `apartment-management`
+
+3. **Lấy Connection String:**
+   - Sau khi tạo project, click vào "Connection Details"
+   - Copy **Connection String** (có dạng: `postgresql://user:password@ep-xxx.region.aws.neon.tech/dbname?sslmode=require`)
+   - Lưu lại để dùng cho `.env`
+
+4. **Cấu hình Database:**
+   ```bash
+   # Neon tự động tạo database mặc định
+   # Không cần chạy thêm lệnh setup
+   ```
+
+#### B. Upstash Redis (Cache & Session)
+
+Upstash cung cấp Redis serverless cho caching và session.
+
+1. **Đăng ký tài khoản:**
+   - Truy cập [https://upstash.com](https://upstash.com)
+   - Đăng ký với GitHub hoặc email
+
+2. **Tạo Redis Database:**
+   - Click "Create Database"
+   - Chọn type: **Regional** (miễn phí)
+   - Region: Chọn gần bạn nhất
+   - Đặt tên: `apartment-cache`
+
+3. **Lấy Connection Details:**
+   - Sau khi tạo, click vào database
+   - Tab "Details" → Copy:
+     - **UPSTASH_REDIS_REST_URL**: `https://xxx.upstash.io`
+     - **UPSTASH_REDIS_REST_TOKEN**: `AXXXxxx...`
+   - Lưu lại cho `.env`
+
+#### C. SMTP Email Service
+
+Dùng để gửi email xác thực, reset password, thông báo.
+
+**Tùy chọn 1: Gmail SMTP (Khuyến nghị cho dev)**
+
+1. **Bật 2-Step Verification:**
+   - Truy cập [Google Account Security](https://myaccount.google.com/security)
+   - Bật "2-Step Verification"
+
+2. **Tạo App Password:**
+   - Vào [App Passwords](https://myaccount.google.com/apppasswords)
+   - Select app: "Mail"
+   - Select device: "Other" → Đặt tên "Apartment System"
+   - Click "Generate"
+   - Copy password 16 ký tự (ví dụ: `abcd efgh ijkl mnop`)
+
+3. **Lưu thông tin:**
+   - SMTP Host: `smtp.gmail.com`
+   - SMTP Port: `587`
+   - SMTP User: `your-email@gmail.com`
+   - SMTP Password: App password vừa tạo
+
+**Tùy chọn 2: SendGrid (Production)**
+
+1. Đăng ký tại [https://sendgrid.com](https://sendgrid.com)
+2. Tạo API Key trong Settings → API Keys
+3. Verify Sender Identity (email hoặc domain)
+
+**Tùy chọn 3: Mailtrap (Testing)**
+
+1. Đăng ký tại [https://mailtrap.io](https://mailtrap.io)
+2. Vào Email Testing → Inboxes → Copy SMTP credentials
+
+---
+
+## 🔐 Cấu hình Environment Variables
+
+### Backend (.env)
+
+Tạo file `.env` trong thư mục `backend/`:
+
+```bash
+cd backend
+touch .env
+```
+
+Nội dung file `.env`:
+
+```env
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+# Neon DB Connection String
+# Format: postgresql://user:password@host/database?sslmode=require
+DATABASE_URL=postgresql://username:password@ep-xxx-xxx.region.aws.neon.tech/neondb?sslmode=require
+
+# ============================================
+# REDIS CONFIGURATION (Upstash)
+# ============================================
+# Upstash Redis REST API
+UPSTASH_REDIS_URL=https://xxx-xxx-xxx.upstash.io
+
+# ============================================
+# SERVER CONFIGURATION
+# ============================================
+PORT=3000
+NODE_ENV=development
+
+# ============================================
+# JWT SECRETS
+# ============================================
+# Generate strong random strings (64+ characters)
+# Có thể generate bằng: openssl rand -base64 64
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long-random-string
+
+# ============================================
+# SMTP EMAIL CONFIGURATION
+# ============================================
+# Gmail SMTP example:
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password-16-characters
+
+# ============================================
+```
+
+### Frontend (.env.local)
+
+Tạo file `.env.local` trong thư mục `frontend/`:
+
+```bash
+cd frontend
+touch .env.local
+```
+
+Nội dung file `.env.local`:
+
+```env
+# ============================================
+# API CONFIGURATION
+# ============================================
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# ============================================
+# SITE CONFIGURATION
+# ============================================
+NEXT_PUBLIC_SITE_NAME=Apartment Management
+NEXT_PUBLIC_SITE_URL=http://localhost:3001
+```
+
+### Tạo JWT Secrets ngẫu nhiên
+
+```bash
+# Linux/macOS
+openssl rand -base64 64
+
+# Hoặc dùng Node.js
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+
+# Windows PowerShell
+[Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+---
+
+## 🚀 Khởi chạy ứng dụng
+
+### 1. Cài đặt Dependencies
+
+```bash
+# Backend
+cd backend
 bun install
 
-# Bước 2: Chạy tests
-bun run test
+# Frontend
+cd ../frontend
+bun install
+# Hoặc: npm install
 ```
 
-### Chi tiết Coverage
+### 2. Khởi tạo Database
 
-#### 🔐 Auth Services (13 tests)
-- Login validation
-- Refresh token management
-- OTP operations
-- Reset password tokens
-- Cleanup expired tokens
-
-#### 🏠 House Services (6 tests)
-- CRUD operations
-- Get house by ID
-- Update house details
-
-#### 🔔 Notification Services (7 tests)
-- CRUD operations
-- User notifications
-- Mark as read
-- Scheduled notifications
-
-#### 👤 Resident Services (9 tests)
-- CRUD operations
-- Get by phone/ID/card
-- User-resident mapping
-
-#### 👥 User Services (14 tests)
-- CRUD operations
-- Pagination
-- Email verification
-- Approval workflow
-- Pending users management
-
-### Test Options
-
-#### 1. CLI Test Runner (Khuyến nghị)
 ```bash
-cd test
-bun run test
+cd backend
+
+# Seed data (optional - tạo dữ liệu mẫu)
+bun run seed
 ```
 
-Hiển thị:
-- ✅ Progress bar real-time
-- 📊 Success rate percentage
-- 🎨 Color-coded output
-- 📝 Error summary
-- ⏱️ Duration tracking
+### 3. Chạy Development Server
 
-#### 2. HTTP Test Server
+**Option 1: Chạy cả Backend và Frontend**
+
 ```bash
-cd test
-bun run test:server
+# Terminal 1: Backend
+cd backend
+bun run dev
+
+# Terminal 2: Frontend  
+cd frontend
+bun run dev
 ```
 
-Endpoints:
-- `http://localhost:3001/` - Health check
-- `http://localhost:3001/test/all` - Run all tests
-- `http://localhost:3001/test/auth` - Test Auth Service
-- `http://localhost:3001/test/house` - Test House Service
-- `http://localhost:3001/test/notification` - Test Notification Service
-- `http://localhost:3001/test/resident` - Test Resident Service
-- `http://localhost:3001/test/user` - Test User Service
-- `http://localhost:3001/test/results` - View last results
+**Option 2: Chạy từ root (nếu có script)**
 
-#### 3. Database Inspector
 ```bash
-cd test
-bun run inspect
+# Từ thư mục gốc
+bun run start
 ```
 
-Hiển thị:
-- Database connection status
-- Table counts
-- Sample data
-- Filter analysis
+### 4. Truy cập ứng dụng
 
-### Test Output Example
-
-```
-🔐 Testing Auth Services
-✓ Login with invalid email returns error
-✓ Login with wrong password returns error
-✓ Refresh token created successfully
-...
-
-═══════════════════════════════════════════════════════════════
-📊 FINAL TEST SUMMARY
-═══════════════════════════════════════════════════════════════
-Total Tests:     49
-✓ Passed:        45
-✗ Failed:        4
-Success Rate:    91.84%
-Duration:        678ms
-═══════════════════════════════════════════════════════════════
-```
-
-### Known Issues (4 failures)
-
-1. **authServices.createOtp** - Cần setup OTP table
-2. **authServices.cleanupExpiredOtps** - Assertion mismatch
-3. **notificationServices.markNotificationAsRead** - Assertion mismatch
-4. **residentServices.updateResident** - Database constraint
-
-Các lỗi này do:
-- Database constraints
-- Missing test data
-- Assertion type mismatches (có thể fix)
-
-Xem chi tiết: [test/COVERAGE.md](test/COVERAGE.md)
+- **Frontend:** http://localhost:3000 (hoặc 3001)
+- **Backend API:** http://localhost:3000
+- **API Docs:** http://localhost:3000/docs (nếu có)
 
 ---
 
 ## 📜 Scripts có sẵn
 
 ### Backend Scripts
+
 ```bash
-bun run dev              # Start development server
-bun run start            # Start production server
-bun run seed             # Seed database with test data
-```
+cd backend
 
-### Test Scripts
-```bash
-cd test
+# Development
+bun run dev              # Chạy dev server với hot reload
+bun run start            # Chạy production server
 
-bun run test             # Run all tests (CLI)
-bun run test:server      # Start HTTP test server
-bun run inspect          # Inspect database
-bun install              # Install test dependencies
-```
-
----
-
-## 🔧 Environment Variables
-
-### Backend (.env)
-```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/apartment_db
+bun run seed             # Seed dữ liệu mẫu
 
-# Server
-PORT=3000
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_REFRESH_SECRET=your-refresh-secret-key
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+# Build
+bun run build            # Build production
 ```
 
-### Test (.env hoặc test/.env)
-```env
-# Test Database (optional - fallback to DATABASE_URL)
-TEST_DATABASE_URL=postgresql://user:password@localhost:5432/test_db
+### Frontend Scripts
 
-# Test Server Port (optional - default: 3001)
-TEST_PORT=3001
+```bash
+cd frontend
+
+# Development
+npm run dev              # Chạy dev server
+npm run build            # Build production
+npm run start            # Chạy production build
+npm run lint             # Lint code
 ```
 
 ---
@@ -290,95 +388,144 @@ TEST_PORT=3001
 
 ### Backend Issues
 
-**Port đã được sử dụng:**
+#### ❌ Database connection error
+
+**Lỗi:** `Error: connect ECONNREFUSED` hoặc `Connection refused`
+
+**Giải pháp:**
 ```bash
-# Đổi PORT trong .env
+# 1. Kiểm tra DATABASE_URL trong .env
+# Đảm bảo format đúng và có ?sslmode=require ở cuối
+
+# 2. Test connection với psql
+psql "postgresql://user:pass@host/db?sslmode=require"
+
+# 3. Kiểm tra Neon DB dashboard
+# - Database có đang active không?
+# - IP có bị block không?
+```
+
+#### ❌ Redis connection error
+
+**Lỗi:** `UPSTASH_REDIS_REST_URL is not set`
+
+**Giải pháp:**
+```bash
+# 1. Kiểm tra .env có UPSTASH_REDIS_REST_URL và UPSTASH_REDIS_REST_TOKEN
+# 2. Kiểm tra Upstash dashboard - database có active không?
+# 3. Copy lại credentials từ Upstash
+```
+
+#### ❌ Email sending failed
+
+**Lỗi:** `Invalid login` hoặc `Username and Password not accepted`
+
+**Giải pháp (Gmail):**
+```bash
+# 1. Kiểm tra 2-Step Verification đã bật
+# 2. Tạo lại App Password
+# 3. Đảm bảo dùng App Password chứ không phải password Gmail thật
+# 4. Kiểm tra SMTP_HOST=smtp.gmail.com và SMTP_PORT=587
+```
+
+#### ❌ Port already in use
+
+**Lỗi:** `EADDRINUSE: address already in use :::3000`
+
+**Giải pháp:**
+```bash
+# Linux/macOS
+lsof -ti:3000 | xargs kill -9
+
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Hoặc đổi PORT trong .env
 PORT=3001
 ```
 
-**Database connection error:**
-```bash
-# Kiểm tra PostgreSQL đang chạy
-sudo systemctl status postgresql
+#### ❌ JWT errors
 
-# Kiểm tra DATABASE_URL trong .env
-# Format: postgresql://username:password@host:port/database
+**Lỗi:** `JsonWebTokenError: invalid signature`
+
+**Giải pháp:**
+```bash
+# 1. Tạo lại JWT secrets
+openssl rand -base64 64
+
+# 2. Cập nhật JWT_SECRET và JWT_REFRESH_SECRET trong .env
+# 3. Restart server
 ```
 
-**Import errors:**
+### Frontend Issues
+
+#### ❌ API connection refused
+
+**Lỗi:** `fetch failed` hoặc `ECONNREFUSED`
+
+**Giải pháp:**
 ```bash
-cd backend
-bun install
+# 1. Kiểm tra backend đang chạy
+curl http://localhost:3000
+
+# 2. Kiểm tra NEXT_PUBLIC_API_URL trong .env.local
+# 3. Kiểm tra CORS settings trong backend
 ```
 
-### Test Issues
+#### ❌ Environment variables not working
 
-**Tests fail với database errors:**
+**Lỗi:** `NEXT_PUBLIC_API_URL is undefined`
+
+**Giải pháp:**
 ```bash
-# Kiểm tra DATABASE_URL trong .env
-# Hoặc tạo test database riêng
-TEST_DATABASE_URL=postgresql://user:password@localhost:5432/test_db
+# 1. Đảm bảo file tên là .env.local (không phải .env)
+# 2. Đảm bảo biến có prefix NEXT_PUBLIC_
+# 3. Restart dev server
+npm run dev
 ```
 
-**IDE báo lỗi đỏ trong test folder:**
-```bash
-# Install dependencies trong test folder
-cd test
-bun install
+### Installation Issues
 
-# Restart IDE/TypeScript server
-```
+#### ❌ Bun command not found
 
-**Port 3001 đã được sử dụng:**
 ```bash
-# Đổi TEST_PORT trong .env
-TEST_PORT=3002
-```
-
-**Bun command not found:**
-```bash
-# Install Bun
+# Reinstall Bun
 curl -fsSL https://bun.sh/install | bash
 
-# Hoặc với npm
-npm install -g bun
+# Add to PATH (Linux/macOS)
+export PATH="$HOME/.bun/bin:$PATH"
+
+# Restart terminal
+```
+
+#### ❌ Permission denied
+
+```bash
+# Linux/macOS
+sudo chown -R $USER:$USER .
+
+# Hoặc dùng sudo
+sudo bun install
 ```
 
 ---
 
 ## 📚 Documentation
 
-- [Backend README](backend/README.md) - Backend setup guide
-- [Test Coverage](test/COVERAGE.md) - Detailed coverage report
-- [Test Installation](test/INSTALL.md) - Test setup guide
+- [API Controllers](docs/CONTROLLERS_API.md) - API endpoints documentation
 - [Workflow Diagrams](docs/Sơ%20đồ%20luồng%20hoạt%20động/) - Process flows
 
 ---
 
-## 🎯 Workflow
+## 🔗 Useful Links
 
-### Development
-```bash
-# Terminal 1: Backend
-cd backend
-bun run dev
-
-# Terminal 2: Tests (optional)
-cd test
-bun run test
-```
-
-### Testing
-```bash
-# Quick test
-cd test && bun run test
-
-# Detailed inspection
-cd test && bun run inspect
-
-# HTTP endpoints
-cd test && bun run test:server
-```
+- **ElysiaJS:** [https://elysiajs.com](https://elysiajs.com)
+- **Bun:** [https://bun.sh](https://bun.sh)
+- **Drizzle ORM:** [https://orm.drizzle.team](https://orm.drizzle.team)
+- **Next.js:** [https://nextjs.org](https://nextjs.org)
+- **Neon DB:** [https://neon.tech/docs](https://neon.tech/docs)
+- **Upstash Redis:** [https://docs.upstash.com/redis](https://docs.upstash.com/redis)
 
 ---
 
@@ -394,13 +541,4 @@ This project is part of IT3180 course at HUST.
 
 ---
 
-## 🔗 Links
-
-- [ElysiaJS Documentation](https://elysiajs.com)
-- [Bun Documentation](https://bun.sh/docs)
-- [Drizzle ORM](https://orm.drizzle.team)
-- [PostgreSQL](https://www.postgresql.org/docs/)
-
----
-
-**Last Updated:** December 19, 2025
+**Last Updated:** January 2, 2026
