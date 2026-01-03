@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardHeader, 
@@ -12,6 +12,7 @@ import {
   Loading,
   Badge,
   Modal,
+  Button,
 } from '@/components/ui';
 import { houseService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
@@ -29,10 +30,21 @@ export default function HousesPage() {
   const [limit] = React.useState(10);
   const [sortConfig, setSortConfig] = React.useState<{ field: string; order: 'asc' | 'desc' } | null>(null);
 
+  const queryClient = useQueryClient();
+
   const { data: houses = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.houses],
     queryFn: houseService.getAllHousesManager,
     staleTime: 30000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: houseService.deleteHouse,
+    onSuccess: () => {
+      toast.success('Đã xóa hộ dân');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.houses] });
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
   });
 
   // Search, sort, and pagination logic with useMemo
@@ -147,7 +159,28 @@ export default function HousesPage() {
         </Badge>
       ),
     },
-  ], []);
+    {
+      key: 'actions',
+      label: 'Hành động',
+      width: '120px',
+      render: (_, row) => (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (!row.id) return;
+              if (!confirm('Xác nhận xóa hộ dân này?')) return;
+              deleteMutation.mutate(row.id);
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      ),
+    },
+  ], [deleteMutation.isPending]);
 
   if (isLoading) {
     return <Loading text="Đang tải danh sách căn hộ..." />;

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Select, Loading } from '@/components/ui';
-import { residentService } from '@/services';
+import { residentService, houseService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
 import { createResidentSchema, type CreateResidentFormData } from '@/utils/validation';
 import { getErrorMessage } from '@/utils/helpers';
@@ -17,6 +17,12 @@ export default function ResidentProfilePage() {
   const { data, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.resident],
     queryFn: residentService.getCurrentResident,
+  });
+
+  const { data: houses = [], isLoading: housesLoading } = useQuery({
+    queryKey: [QUERY_KEYS.houses],
+    queryFn: houseService.getAllHouses,
+    enabled: data?.isNewResident === true,
   });
 
   const {
@@ -46,6 +52,10 @@ export default function ResidentProfilePage() {
 
   if (isLoading) {
     return <Loading text="Đang tải thông tin..." />;
+  }
+
+  if (housesLoading && data?.isNewResident) {
+    return <Loading text="Đang tải danh sách phòng..." />;
   }
 
   if (data?.resident && !data.isNewResident) {
@@ -175,6 +185,19 @@ export default function ResidentProfilePage() {
                   { label: 'Tạm vắng', value: 'tamvang' },
                 ]}
                 {...register('residence_status')}
+              />
+
+              <Select
+                label="Phòng/căn hộ"
+                error={errors.house_id?.message}
+                options={[
+                  { label: 'Chọn phòng', value: '', disabled: true },
+                  ...houses.map((house) => ({
+                    label: `Phòng ${house.room_number}`,
+                    value: house.id,
+                  })),
+                ]}
+                {...register('house_id')}
               />
             </div>
 

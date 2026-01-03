@@ -14,11 +14,18 @@ import {
   Modal,
 } from '@/components/ui';
 import { invoiceService } from '@/services';
-import { QUERY_KEYS } from '@/config/constants';
+import { QUERY_KEYS, ROUTES } from '@/config/constants';
 import { formatDate, formatCurrency } from '@/utils/helpers';
 import type { Invoice, TableColumn } from '@/types';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 
 export default function ResidentInvoicesPage() {
+  const { user } = useAuth();
+  const status = user?.status;
+  const isActive = status === 'active';
+
   const [sortField, setSortField] = React.useState<string>('created_at');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceId, setSelectedInvoiceId] = React.useState<string | null>(null);
@@ -27,12 +34,13 @@ export default function ResidentInvoicesPage() {
     queryKey: [QUERY_KEYS.residentInvoices],
     queryFn: invoiceService.getResidentInvoices,
     staleTime: 30000,
+    enabled: isActive,
   });
 
   const { data: invoiceDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: [QUERY_KEYS.residentInvoices, selectedInvoiceId],
     queryFn: () => invoiceService.getResidentInvoiceById(selectedInvoiceId!),
-    enabled: !!selectedInvoiceId,
+    enabled: !!selectedInvoiceId && isActive,
   });
 
   const handleSort = React.useCallback((field: string) => {
@@ -83,6 +91,24 @@ export default function ResidentInvoicesPage() {
       render: (value) => value ? formatDate(String(value)) : '-',
     },
   ];
+
+  if (!isActive) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Hóa đơn của tôi</h1>
+        {status === 'pending' ? (
+          <p className="text-muted-foreground">Thông tin cư dân đang chờ quản lý xác thực. Vui lòng đợi phê duyệt để xem hóa đơn.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-muted-foreground">Tài khoản chưa kích hoạt. Vui lòng đăng ký cư dân để xem hóa đơn.</p>
+            <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+              <Button>Đăng ký cư dân</Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <Loading text="Đang tải danh sách hóa đơn..." />;

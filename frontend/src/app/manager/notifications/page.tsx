@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardHeader, 
@@ -13,12 +13,14 @@ import {
   Badge,
   Modal,
   Pagination,
+  Button,
 } from '@/components/ui';
 import { notificationService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
 import { formatDate } from '@/utils/helpers';
 import { NOTIFICATION_TYPE_LABELS } from '@/utils/labels';
 import type { NotificationWithRelations, TableColumn } from '@/types';
+import { toast } from 'sonner';
 
 export default function NotificationsPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -29,10 +31,24 @@ export default function NotificationsPage() {
   const [selectedNotification, setSelectedNotification] = React.useState<NotificationWithRelations | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
+  const queryClient = useQueryClient();
+
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.notifications],
     queryFn: () => notificationService.getAllNotifications('manager'),
     staleTime: 30000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => notificationService.deleteNotification(id, 'manager'),
+    onSuccess: () => {
+      toast.success('Đã xóa thông báo');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.notifications] });
+    },
+    onError: (error: unknown) => {
+      console.error(error);
+      toast.error('Xóa thông báo thất bại');
+    },
   });
 
   // Filter
@@ -135,6 +151,27 @@ export default function NotificationsPage() {
       label: 'Ngày tạo',
       sortable: true,
       render: (value) => formatDate(String(value)),
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      width: '120px',
+      render: (_, row) => (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (!row.id) return;
+              if (!confirm('Xác nhận xóa thông báo này?')) return;
+              deleteMutation.mutate(row.id);
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      ),
     },
   ];
 

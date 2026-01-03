@@ -24,7 +24,7 @@ export const authService = {
 
   // Verify OTP
   verifyOtp: async (data: OtpRequest): Promise<ApiResponse> => {
-    const response = await apiClient.post<ApiResponse>('/auth/verify-otp', data);
+    const response = await apiClient.post<ApiResponse>('/auth/register/accept', data);
     return response.data;
   },
 
@@ -36,7 +36,7 @@ export const authService = {
 
   // Request OTP for password reset
   requestPasswordResetOtp: async (email: string): Promise<ApiResponse> => {
-    const response = await apiClient.post<ApiResponse>('/auth/request-password-reset-otp', { email });
+    const response = await apiClient.post<ApiResponse>('/auth/forgot-password', { email });
     return response.data;
   },
 

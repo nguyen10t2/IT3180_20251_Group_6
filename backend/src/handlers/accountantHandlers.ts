@@ -4,6 +4,7 @@ import { authorizationPlugins } from "../plugins/authorizationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { ConfirmInvoiceBody, CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
 import { confirmInvoice, createInvoice, deleteInvoice, getAll, getInvoiceById, updateInvoice } from "../services/invoiceServices";
+import { getAll as getAllHouses } from "../services/houseServices";
 import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
 import { CreateNotificationBody } from "../types/notificationTypes";
 import { getDashboardStats } from "../services/dashboardServices";
@@ -14,6 +15,15 @@ export const accountantHandlers = new Elysia({
 })
   .use(userRoutes)
   .use(authorizationPlugins('accountant'))
+  .get("/households", async ({ status }) => {
+    try {
+      const res = await getAllHouses();
+      return status(200, { households: res?.data ?? [] });
+    } catch (error) {
+      console.error(error);
+      httpErrorStatus(error);
+    }
+  })
   .get('/stats', async ({ status }) => {
     try {
       const res = await getDashboardStats();

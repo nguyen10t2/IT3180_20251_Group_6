@@ -10,13 +10,19 @@ import type {
 export const houseService = {
   // Get all houses
   getAllHouses: async (): Promise<House[]> => {
-    const response = await apiClient.get<{ houses: House[] }>('/residents/households');
-    return response.data.houses;
+    const response = await apiClient.get<{ households: House[] }>('/households');
+    return response.data.households;
   },
 
   // Get all houses (manager only)
   getAllHousesManager: async (): Promise<HouseWithResident[]> => {
     const response = await apiClient.get<{ households: HouseWithResident[] }>('/managers/households');
+    return response.data.households;
+  },
+
+  // Get all houses (accountant only)
+  getAllHousesAccountant: async (): Promise<HouseWithResident[]> => {
+    const response = await apiClient.get<{ households: HouseWithResident[] }>('/accountants/households');
     return response.data.households;
   },
 

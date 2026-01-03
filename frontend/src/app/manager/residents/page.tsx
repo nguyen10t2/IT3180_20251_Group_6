@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardHeader, 
@@ -12,6 +12,7 @@ import {
   Loading,
   Badge,
   Modal,
+  Button,
 } from '@/components/ui';
 import { residentService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
@@ -29,10 +30,23 @@ export default function ResidentsPage() {
   const [limit] = React.useState(10);
   const [sortConfig, setSortConfig] = React.useState<{ field: string; order: 'asc' | 'desc' } | null>(null);
 
+  const queryClient = useQueryClient();
+
   const { data: residents = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.residents],
     queryFn: residentService.getAllResidents,
     staleTime: 30000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: residentService.deleteResident,
+    onSuccess: () => {
+      toast.success('Đã xóa cư dân');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.residents] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
   });
 
   // Search, sort, and pagination logic with useMemo
@@ -111,6 +125,27 @@ export default function ResidentsPage() {
       key: 'id_card',
       label: 'CCCD',
       sortable: true,
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      width: '120px',
+      render: (_, row) => (
+        <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (!row.id) return;
+              if (!confirm('Xác nhận xóa cư dân này?')) return;
+              deleteMutation.mutate(row.id);
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      ),
     },
     {
       key: 'phone',

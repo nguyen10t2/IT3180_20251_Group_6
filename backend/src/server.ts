@@ -14,7 +14,8 @@ import cors from "@elysiajs/cors";
 import { householdRoutes } from "./handlers/householdHandlers";
 import { managerRoutes } from "./handlers/managerHandlers";
 
-const hostname: string = Bun.env.IP_ADDRESS || '127.0.0.1';
+// Use localhost by default so httpOnly cookies (refresh token) share domain with the frontend
+const hostname: string = Bun.env.IP_ADDRESS || 'localhost';
 const port: number = Number(Bun.env.PORT || '3000');
 
 new Elysia({

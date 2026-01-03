@@ -1,6 +1,6 @@
 'use client';
 
-import { useRequireAuth } from '@/hooks';
+import { useAuth, useRequireAuth } from '@/hooks';
 import { DashboardLayout } from '@/components/layout';
 import { 
   LayoutDashboard, 
@@ -50,7 +50,13 @@ export default function ResidentLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = useAuth();
   useRequireAuth('resident');
 
-  return <DashboardLayout sidebarItems={sidebarItems}>{children}</DashboardLayout>;
+  const isActive = user?.status === 'active';
+  const visibleSidebarItems = isActive
+    ? sidebarItems
+    : sidebarItems.filter((item) => [ROUTES.RESIDENT.DASHBOARD, ROUTES.RESIDENT.PROFILE].includes(item.href));
+
+  return <DashboardLayout sidebarItems={visibleSidebarItems}>{children}</DashboardLayout>;
 }

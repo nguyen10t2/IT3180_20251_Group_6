@@ -1,10 +1,9 @@
 import { Elysia } from "elysia";
 import { authenticationPlugins } from "../plugins/authenticationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
-import { getResidentsByHouseId, getResidentByUserId, updateResident } from "../services/residentServices";
+import { getResidentsByHouseId, getResidentByUserId, updateResident, getResidentByIdCard, getResidentByPhone, createResident } from "../services/residentServices";
 import { CreateResidentBody, UpdateResidentBody } from "../types/residentTypes";
 import { getUserById, updateResidentId } from "../services/userServices";
-import { getAll } from "../services/houseServices";
 
 export const residentRoutes = new Elysia({ prefix: "/residents", tags: ['Resident'] })
   .use(authenticationPlugins)

@@ -12,15 +12,23 @@ import {
   Badge,
 } from '@/components/ui';
 import { residentService } from '@/services';
-import { QUERY_KEYS } from '@/config/constants';
+import { QUERY_KEYS, ROUTES } from '@/config/constants';
 import { formatDate } from '@/utils/helpers';
 import type { Resident, TableColumn } from '@/types';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 
 export default function ResidentHouseholdPage() {
+  const { user } = useAuth();
+  const status = user?.status;
+  const isActive = status === 'active';
+
   const { data, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.residentHousehold],
     queryFn: residentService.getHousehold,
     staleTime: 30000,
+    enabled: isActive,
   });
 
   const household = data?.household;
@@ -53,6 +61,24 @@ export default function ResidentHouseholdPage() {
       render: (value) => value ? formatDate(String(value)) : '-',
     },
   ];
+
+  if (!isActive) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Thông tin hộ khẩu</h1>
+        {status === 'pending' ? (
+          <p className="text-muted-foreground">Thông tin cư dân đang chờ quản lý xác thực. Vui lòng đợi phê duyệt để xem hộ khẩu.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-muted-foreground">Tài khoản chưa kích hoạt. Vui lòng đăng ký cư dân để xem hộ khẩu.</p>
+            <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+              <Button>Đăng ký cư dân</Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <Loading text="Đang tải thông tin hộ khẩu..." />;

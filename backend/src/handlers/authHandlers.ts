@@ -1,5 +1,5 @@
 import { Elysia, status, t } from "elysia"
-import { createRefreshToken, loginService } from "../services/authServices";
+import { createRefreshToken, deleteRefreshToken, loginService } from "../services/authServices";
 import { BAD_REQUEST, CONFLICT, ErrorStatus, FORBIDDEN, HttpError, httpErrorStatus, NOT_FOUND, TOO_MANY_REQUESTS } from "../constants/errorConstant";
 import { LoginBody, OtpBody, ResetPasswordBody } from "../types/authTypes";
 import { ACCESSTOKEN_TTL, REFRESHTOKEN_TTL_NUMBER } from "../constants/timeConstants";
@@ -257,8 +257,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
     body: ResetPasswordBody,
   })
   .use(refreshTokenRoute)
-  .use(authenticationPlugins)
-  .post('/logout', async ({ cookie, user, status }) => {
+  .post('/logout', async ({ cookie, status }) => {
     try {
       const isProduction = Bun.env.NODE_ENV === "production";
       cookie.refreshToken.set({
@@ -269,8 +268,7 @@ export const authRoutes = new Elysia({ prefix: "/auth", detail: { tags: ['Auth']
         sameSite: isProduction ? "none" : "lax",
       })
 
-      const userId = user.id!;
-      await deleteRefreshTokensByUserId(userId);
+      await deleteRefreshToken(cookie.refreshToken.value as string);
       return status(200, { message: 'Logout thành công' })
     }
     catch (error) {

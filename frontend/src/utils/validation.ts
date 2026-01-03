@@ -31,20 +31,23 @@ export const resetPasswordSchema = z.object({
 export const createResidentSchema = z.object({
   full_name: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
   id_card: z.string().regex(/^[0-9]{9,12}$/, 'CCCD phải có 9-12 chữ số'),
-  date_of_birth: z.string().min(1, 'Ngày sinh không được để trống'),
+  date_of_birth: z.string().min(1, 'Ngày sinh không được để trống').refine(
+    (date) => new Date(date) <= new Date(),
+    'Ngày sinh không được lớn hơn hôm nay'
+  ),
   phone: z.string().regex(/^[0-9]{10}$/, 'Số điện thoại phải có 10 chữ số'),
   email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other'], {
     required_error: 'Vui lòng chọn giới tính',
   }),
-  occupation: z.string().optional(),
   house_role: z.enum(['owner', 'member', 'tenant'], {
     required_error: 'Vui lòng chọn vai trò',
   }),
-  residence_status: z.enum(['thuongtru', 'tamtru', 'tamvang', 'dachuyendi'], {
+  residence_status: z.enum(['thuongtru', 'tamtru', 'tamvang'], {
     required_error: 'Vui lòng chọn tình trạng cư trú',
   }),
-  house_id: z.string().optional(),
+  house_id: z.string().min(1, 'Vui lòng chọn phòng/căn hộ'),
+  occupation: z.string().optional(),
   move_in_date: z.string().optional(),
 });
 

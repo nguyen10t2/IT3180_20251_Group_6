@@ -83,6 +83,7 @@ export const QUERY_KEYS = {
   // Residents
   residents: 'residents',
   resident: 'resident',
+  currentResident: 'current-resident',
 
   // Houses
   houses: 'houses',

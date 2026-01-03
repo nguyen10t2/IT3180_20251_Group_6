@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ROUTES } from '@/config/constants';
 import { authService, userService } from '@/services';
 
@@ -40,8 +40,9 @@ export function useAuth() {
 
 export function useRequireAuth(requiredRole?: string) {
   const router = useRouter();
-  const { user, isAuthenticated, hasHydrated, setAuth, clearAuth } = useAuthStore();
+  const { user, accessToken, isAuthenticated, hasHydrated, setAuth, clearAuth } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const attemptedRefresh = useRef(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -69,7 +70,21 @@ export function useRequireAuth(requiredRole?: string) {
         return;
       }
 
-      // Try to refresh token
+      // If no token and already logged out, don't spam refresh
+      if (!isAuthenticated && !accessToken) {
+        setIsChecking(false);
+        router.push(ROUTES.LOGIN);
+        return;
+      }
+
+      // Try to refresh token (only once per mount)
+      if (attemptedRefresh.current) {
+        setIsChecking(false);
+        router.push(ROUTES.LOGIN);
+        return;
+      }
+      attemptedRefresh.current = true;
+
       try {
         const refreshData = await authService.refreshToken();
         const userData = await userService.getCurrentUser();

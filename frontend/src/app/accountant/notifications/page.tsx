@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardHeader, 
@@ -11,6 +11,7 @@ import {
   SearchInput,
   Loading,
   Badge,
+  Button,
 } from '@/components/ui';
 import { notificationService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
@@ -18,11 +19,23 @@ import { useSearch, usePagination, useSort } from '@/hooks';
 import { formatDate } from '@/utils/helpers';
 import { NOTIFICATION_TYPE_LABELS } from '@/utils/labels';
 import type { NotificationWithRelations, TableColumn } from '@/types';
+import { toast } from 'sonner';
 
 export default function AccountantNotificationsPage() {
+  const queryClient = useQueryClient();
+
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.notifications, 'accountant'],
     queryFn: () => notificationService.getAllNotifications('accountant'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => notificationService.deleteNotification(id, 'accountant'),
+    onSuccess: () => {
+      toast.success('Đã xóa thông báo');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.notifications, 'accountant'] });
+    },
+    onError: () => toast.error('Xóa thông báo thất bại'),
   });
 
   const { searchTerm, setSearchTerm, filteredData } = useSearch(notifications, [
@@ -82,6 +95,27 @@ export default function AccountantNotificationsPage() {
       label: 'Ngày tạo',
       sortable: true,
       render: (value) => formatDate(String(value)),
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      width: '120px',
+      render: (_, row) => (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (!row.id) return;
+              if (!confirm('Xác nhận xóa thông báo này?')) return;
+              deleteMutation.mutate(row.id);
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      ),
     },
   ];
 

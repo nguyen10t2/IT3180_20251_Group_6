@@ -16,15 +16,23 @@ import {
   Pagination,
   Button,
   Textarea,
+  Input,
+  Select,
 } from '@/components/ui';
-import { feedbackService } from '@/services';
-import { QUERY_KEYS } from '@/config/constants';
+import { feedbackService, residentService } from '@/services';
+import { QUERY_KEYS, ROUTES } from '@/config/constants';
 import { formatDate } from '@/utils/helpers';
 import { FEEDBACK_TYPE_LABELS } from '@/utils/labels';
-import type { Feedback, FeedbackWithRelations, FeedbackCommentWithUser, TableColumn } from '@/types';
-import { Send } from 'lucide-react';
+import type { Feedback, FeedbackWithRelations, FeedbackCommentWithUser, TableColumn, CreateFeedbackRequest } from '@/types';
+import { Send, Plus } from 'lucide-react';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
 
 export default function ResidentFeedbacksPage() {
+  const { user } = useAuth();
+  const status = user?.status;
+  const isActive = status === 'active';
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<string>('created_at');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
@@ -32,15 +40,32 @@ export default function ResidentFeedbacksPage() {
   const [itemsPerPage] = React.useState(10);
   const [selectedFeedback, setSelectedFeedback] = React.useState<FeedbackWithRelations | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
   const [commentText, setCommentText] = React.useState('');
+  
+  // Form state for creating feedback
+  const [newFeedback, setNewFeedback] = React.useState({
+    title: '',
+    content: '',
+    type: 'complaint',
+    priority: 'medium',
+  });
 
   const queryClient = useQueryClient();
+
+  // Get current resident to get house_id
+  const { data: residentData } = useQuery({
+    queryKey: [QUERY_KEYS.currentResident],
+    queryFn: residentService.getCurrentResident,
+    enabled: isActive,
+  });
 
   const { data: feedbacks = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.residentFeedbacks],
     queryFn: feedbackService.getResidentFeedbacks,
     staleTime: 30000,
+    enabled: isActive,
   });
 
   const addCommentMutation = useMutation({
@@ -53,6 +78,20 @@ export default function ResidentFeedbacksPage() {
       }
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.residentFeedbacks] });
       setCommentText('');
+    },
+  });
+
+  const createFeedbackMutation = useMutation({
+    mutationFn: feedbackService.createFeedback,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.residentFeedbacks] });
+      setIsCreateModalOpen(false);
+      setNewFeedback({
+        title: '',
+        content: '',
+        type: 'complaint',
+        priority: 'medium',
+      });
     },
   });
 
@@ -123,6 +162,14 @@ export default function ResidentFeedbacksPage() {
     });
   }, [selectedFeedback, commentText, addCommentMutation]);
 
+  const handleCreateFeedback = React.useCallback(() => {
+    if (!newFeedback.title.trim() || !newFeedback.content.trim() || !residentData?.resident?.house_id) return;
+    createFeedbackMutation.mutate({
+      ...newFeedback,
+      house_id: residentData.resident.house_id,
+    } as CreateFeedbackRequest);
+  }, [newFeedback, createFeedbackMutation, residentData]);
+
   const columns: TableColumn<Feedback>[] = [
     { key: 'title', label: 'Tiêu đề', sortable: true, width: '30%' },
     {
@@ -139,6 +186,24 @@ export default function ResidentFeedbacksPage() {
     { key: 'created_at', label: 'Ngày gửi', sortable: true, render: (value) => formatDate(String(value)) },
   ];
 
+  if (!isActive) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Phản ánh của tôi</h1>
+        {status === 'pending' ? (
+          <p className="text-muted-foreground">Thông tin cư dân đang chờ quản lý xác thực. Vui lòng đợi phê duyệt để gửi và xem phản ánh.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-muted-foreground">Tài khoản chưa kích hoạt. Vui lòng đăng ký cư dân để sử dụng chức năng phản ánh.</p>
+            <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+              <Button>Đăng ký cư dân</Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (isLoading) {
     return <Loading text="Đang tải phản ánh..." />;
   }
@@ -148,6 +213,13 @@ export default function ResidentFeedbacksPage() {
       <div>
         <h1 className="text-3xl font-bold">Phản ánh của tôi</h1>
         <p className="text-muted-foreground mt-1">Gửi và theo dõi các phản ánh, kiến nghị</p>
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Tạo phản ánh mới
+        </Button>
       </div>
 
       <Card>
@@ -280,6 +352,97 @@ export default function ResidentFeedbacksPage() {
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      {/* Create Feedback Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setNewFeedback({
+            title: '',
+            content: '',
+            type: 'complaint',
+            priority: 'medium',
+          });
+        }}
+        title="Tạo phản ánh mới"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Tiêu đề *</label>
+            <Input
+              value={newFeedback.title}
+              onChange={(e) => setNewFeedback({ ...newFeedback, title: e.target.value })}
+              placeholder="Nhập tiêu đề phản ánh..."
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Nội dung *</label>
+            <Textarea
+              value={newFeedback.content}
+              onChange={(e) => setNewFeedback({ ...newFeedback, content: e.target.value })}
+              placeholder="Mô tả chi tiết nội dung phản ánh..."
+              className="min-h-[120px]"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Select
+                label="Loại phản ánh *"
+                value={newFeedback.type}
+                onChange={(e) => setNewFeedback({ ...newFeedback, type: e.target.value })}
+                options={[
+                  { label: 'Khiếu nại', value: 'complaint' },
+                  { label: 'Kiến nghị', value: 'suggestion' },
+                  { label: 'Bảo trì', value: 'maintenance' },
+                  { label: 'Khác', value: 'other' },
+                ]}
+              />
+            </div>
+
+            <div>
+              <Select
+                label="Mức độ ưu tiên *"
+                value={newFeedback.priority}
+                onChange={(e) => setNewFeedback({ ...newFeedback, priority: e.target.value as 'low' | 'medium' | 'high' })}
+                options={[
+                  { label: 'Thấp', value: 'low' },
+                  { label: 'Trung bình', value: 'medium' },
+                  { label: 'Cao', value: 'high' },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                setNewFeedback({
+                  title: '',
+                  content: '',
+                  type: 'complaint',
+                  priority: 'medium',
+                });
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleCreateFeedback}
+              disabled={!newFeedback.title.trim() || !newFeedback.content.trim() || createFeedbackMutation.isPending}
+            >
+              {createFeedbackMutation.isPending ? 'Đang gửi...' : 'Gửi phản ánh'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

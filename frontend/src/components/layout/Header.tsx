@@ -9,11 +9,13 @@ import { Button } from '@/components/ui';
 import { authService } from '@/services';
 import { getInitials } from '@/utils/helpers';
 import { ROUTES } from '@/config/constants';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function Header() {
   const router = useRouter();
   const { user, clearAuth } = useAuth();
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
@@ -24,6 +26,7 @@ export function Header() {
       console.error('Logout error:', error);
     } finally {
       clearAuth();
+      queryClient.clear();
       router.push(ROUTES.LOGIN);
     }
   };

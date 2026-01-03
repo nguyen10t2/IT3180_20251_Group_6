@@ -36,7 +36,7 @@ export const notificationService = {
 
   // Mark notification as read
   markAsRead: async (id: string): Promise<ApiResponse> => {
-    const response = await apiClient.post<ApiResponse>(`/notifications/${id}/read`);
+    const response = await apiClient.put<ApiResponse>(`/notifications/${id}/read`);
     return response.data;
   },
 };

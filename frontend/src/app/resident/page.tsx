@@ -1,35 +1,90 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardContent, Loading } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Loading, Button } from '@/components/ui';
 import { useAuth } from '@/hooks';
-import { feedbackService } from '@/services';
-import { notificationService } from '@/services';
-import { invoiceService } from '@/services';
-import { QUERY_KEYS } from '@/config/constants';
+import { feedbackService, notificationService, invoiceService, residentService } from '@/services';
+import { QUERY_KEYS, ROUTES } from '@/config/constants';
 
 export default function ResidentDashboard() {
   const { user } = useAuth();
+  const status = user?.status;
+  const isActive = status === 'active';
+
+  const inactiveContent = (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Chào mừng, {user?.full_name}!</h1>
+      <p className="text-muted-foreground">
+        Tài khoản của bạn chưa được kích hoạt. Vui lòng hoàn tất đăng ký cư dân để tiếp tục.
+      </p>
+      <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+        <Button>Đăng ký cư dân</Button>
+      </Link>
+    </div>
+  );
+
+  const pendingContent = (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Chào mừng, {user?.full_name}!</h1>
+      <p className="text-muted-foreground">
+        Thông tin cư dân của bạn đang chờ quản lý xác thực. Vui lòng đợi phê duyệt để truy cập các chức năng.
+      </p>
+    </div>
+  );
+
+  const { data: residentData, isLoading: residentLoading } = useQuery({
+    queryKey: [QUERY_KEYS.resident],
+    queryFn: residentService.getCurrentResident,
+  });
+
+  const isResident = Boolean(residentData?.resident && residentData.isNewResident === false);
 
   const { data: feedbacks = [], isLoading: feedbacksLoading } = useQuery({
     queryKey: [QUERY_KEYS.residentFeedbacks],
     queryFn: feedbackService.getResidentFeedbacks,
     staleTime: 30000,
+    enabled: isResident && isActive,
   });
 
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
     queryKey: [QUERY_KEYS.residentNotifications],
     queryFn: notificationService.getResidentNotifications,
     staleTime: 30000,
+    enabled: isResident && isActive,
   });
 
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: [QUERY_KEYS.residentInvoices],
     queryFn: invoiceService.getResidentInvoices,
     staleTime: 30000,
+    enabled: isResident && isActive,
   });
 
-  const isLoading = feedbacksLoading || notificationsLoading || invoicesLoading;
+  const isLoading = residentLoading || feedbacksLoading || notificationsLoading || invoicesLoading;
+
+  if (residentLoading) {
+    return <Loading text="Đang kiểm tra hồ sơ cư dân..." />;
+  }
+
+  if (!isActive) {
+    if (status === 'pending') return pendingContent;
+    return inactiveContent;
+  }
+
+  if (!isResident) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Chào mừng, {user?.full_name}!</h1>
+        <p className="text-muted-foreground">
+          Bạn chưa có hồ sơ cư dân. Vui lòng hoàn tất đăng ký để truy cập các chức năng hóa đơn, phản ánh và thông báo.
+        </p>
+        <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+          <Button>Đăng ký cư dân</Button>
+        </Link>
+      </div>
+    );
+  }
 
   // Calculate stats
   const totalFeedbacks = feedbacks.length;

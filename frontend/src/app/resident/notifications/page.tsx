@@ -15,12 +15,19 @@ import {
   Pagination,
 } from '@/components/ui';
 import { notificationService } from '@/services';
-import { QUERY_KEYS } from '@/config/constants';
+import { QUERY_KEYS, ROUTES } from '@/config/constants';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/utils/helpers';
 import { NOTIFICATION_TYPE_LABELS } from '@/utils/labels';
 import type { Notification, TableColumn } from '@/types';
 
 export default function ResidentNotificationsPage() {
+  const { user } = useAuth();
+  const status = user?.status;
+  const isActive = status === 'active';
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<string>('published_at');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
@@ -35,12 +42,27 @@ export default function ResidentNotificationsPage() {
     queryKey: [QUERY_KEYS.residentNotifications],
     queryFn: notificationService.getResidentNotifications,
     staleTime: 30000,
+    enabled: isActive,
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: notificationService.markAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.residentNotifications] });
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: [QUERY_KEYS.residentNotifications] });
+
+      const previous = queryClient.getQueryData<Notification[]>([QUERY_KEYS.residentNotifications]);
+
+      queryClient.setQueryData<Notification[]>([QUERY_KEYS.residentNotifications], (old) => {
+        if (!old) return old;
+        return old.map((n) => (n.id === id ? { ...n, is_read: true } : n));
+      });
+
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([QUERY_KEYS.residentNotifications], context.previous);
+      }
     },
   });
 
@@ -66,10 +88,16 @@ export default function ResidentNotificationsPage() {
       );
     }
 
-    // Sort pinned first
+    // Sort: unread first, then pinned
     return filtered.sort((a, b) => {
+      // Unread first
+      if (!a.is_read && b.is_read) return -1;
+      if (a.is_read && !b.is_read) return 1;
+      
+      // Then pinned
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
+      
       return 0;
     });
   }, [notifications, searchTerm]);
@@ -123,10 +151,26 @@ export default function ResidentNotificationsPage() {
 
   const columns: TableColumn<Notification>[] = [
     {
+      key: 'is_read',
+      label: 'Trạng thái',
+      width: '10%',
+      render: (value, row) => (
+        <div className="flex items-center gap-2">
+          {!value && <span className="h-2 w-2 bg-blue-500 rounded-full" title="Chưa đọc"></span>}
+          {row.is_pinned && <Badge variant="default" className="text-xs">Ghim</Badge>}
+        </div>
+      ),
+    },
+    {
       key: 'title',
       label: 'Tiêu đề',
       sortable: true,
-      width: '40%',
+      width: '35%',
+      render: (value, row) => (
+        <span className={!row.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}>
+          {value}
+        </span>
+      ),
     },
     {
       key: 'type',
@@ -138,19 +182,30 @@ export default function ResidentNotificationsPage() {
       ),
     },
     {
-      key: 'is_pinned',
-      label: 'Trạng thái',
-      render: (value) => (
-        value ? <Badge variant="default">Ghim</Badge> : null
-      ),
-    },
-    {
       key: 'published_at',
       label: 'Ngày phát hành',
       sortable: true,
       render: (value) => formatDate(String(value)),
     },
   ];
+
+  if (!isActive) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Thông báo</h1>
+        {status === 'pending' ? (
+          <p className="text-muted-foreground">Thông tin cư dân đang chờ quản lý xác thực. Vui lòng đợi phê duyệt để xem thông báo.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-muted-foreground">Tài khoản chưa kích hoạt. Vui lòng hoàn tất đăng ký cư dân để xem thông báo.</p>
+            <Link href={ROUTES.RESIDENT.PROFILE} className="inline-block">
+              <Button>Đăng ký cư dân</Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <Loading text="Đang tải thông báo..." />;

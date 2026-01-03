@@ -170,7 +170,7 @@ export const verifyUserEmail = async (email: string) => {
 // Cập nhật resident_id cho người dùng
 export const updateResidentId = async (userId: string, residentId: string) => {
   await db.update(userSchema)
-    .set({ resident_id: residentId, updated_at: new Date() })
+    .set({ resident_id: residentId, status: 'pending', updated_at: new Date() })
     .where(and(
       eq(userSchema.id, userId),
       isNull(userSchema.deleted_at)
