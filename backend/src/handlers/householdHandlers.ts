@@ -1,6 +1,6 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
-import { createHouse, deleteHouse, getAll, getHouseById, updateHouse } from "../services/houseServices";
+import { createHouse, deleteHouse, getAll, getHouseById, updateHouse, updateHeadResident } from "../services/houseServices";
 import { CreateHouseBody, UpdateHouseBody } from "../types/houseTypes";
 import { getResidentsByHouseId } from "../services/residentServices";
 
@@ -105,4 +105,28 @@ export const householdRoutes = new Elysia({ prefix: "/households" })
       console.error(error);
       httpErrorStatus(error);
     }
+  })
+  .patch("/:household_id/head-resident", async ({ params, body, user, status }) => {
+    try {
+      const fetchHousehold = await getHouseById(params.household_id);
+      if (!fetchHousehold.data) { throw new HttpError(404, 'Không tìm thấy hộ dân'); }
+
+      const res = await updateHeadResident(
+        params.household_id,
+        body.head_resident_id,
+        body.reason || 'Đổi chủ hộ',
+        user.id!
+      );
+
+      if (res) { return status(200, { message: 'Cập nhật chủ hộ thành công' }); }
+    }
+    catch (error) {
+      console.error(error);
+      httpErrorStatus(error);
+    }
+  }, {
+    body: t.Object({
+      head_resident_id: t.String({ format: 'uuid' }),
+      reason: t.Optional(t.String())
+    })
   });

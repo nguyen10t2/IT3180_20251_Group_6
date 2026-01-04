@@ -213,7 +213,7 @@ export default function AccountantReportsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Biểu đồ thống kê</CardTitle>
+            <CardTitle>Thống kê</CardTitle>
             <Select
               value={chartView}
               onChange={(e) => setChartView(e.target.value as ChartView)}

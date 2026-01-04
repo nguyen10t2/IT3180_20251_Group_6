@@ -123,9 +123,28 @@ export function capitalize(text: string): string {
 }
 
 export function getErrorMessage(error: any): string {
+  // Nếu là string thì return trực tiếp
   if (typeof error === 'string') return error;
-  if (error?.message) return error.message;
-  if (error?.response?.data?.message) return error.response.data.message;
+  
+  // Nếu là AxiosError có response
+  if (error?.response?.data) {
+    const data = error.response.data;
+    // Trường hợp backend trả { message: "..." }
+    if (typeof data.message === 'string' && data.message) {
+      return data.message;
+    }
+    // Trường hợp backend trả { message: { ... } } (như khi error.body là object)
+    if (typeof data.message === 'object' && data.message !== null) {
+      return JSON.stringify(data.message);
+    }
+  }
+  
+  // Lấy error.message từ Error object (AxiosError, Error, etc)
+  if (error?.message && typeof error.message === 'string' && error.message) {
+    return error.message;
+  }
+  
+  // Fallback
   return 'Đã xảy ra lỗi không xác định';
 }
 

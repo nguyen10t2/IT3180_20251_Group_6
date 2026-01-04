@@ -151,9 +151,9 @@ export default function FeedbacksPage() {
       width: '25%',
     },
     {
-      key: 'user',
+      key: 'user_fullname',
       label: 'Người gửi',
-      render: (_, row) => row.user?.full_name || 'N/A',
+      render: (value) => value || 'N/A',
     },
     {
       key: 'type',
@@ -244,7 +244,7 @@ export default function FeedbacksPage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold">{selectedFeedback.title}</h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    Người gửi: {selectedFeedback.user?.full_name || 'N/A'} • 
+                    Người gửi: {(selectedFeedback as any).user_fullname || 'N/A'} • 
                     {' '}{formatDate(selectedFeedback.created_at)}
                   </p>
                 </div>

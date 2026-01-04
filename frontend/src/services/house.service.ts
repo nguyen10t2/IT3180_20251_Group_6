@@ -51,9 +51,10 @@ export const houseService = {
   },
 
   // Update head resident (manager only)
-  updateHeadResident: async (houseId: string, residentId: string): Promise<ApiResponse> => {
+  updateHeadResident: async (houseId: string, residentId: string, reason?: string): Promise<ApiResponse> => {
     const response = await apiClient.patch<ApiResponse>(`/managers/households/${houseId}/head-resident`, {
       head_resident_id: residentId,
+      reason,
     });
     return response.data;
   },

@@ -16,7 +16,7 @@ export const authorizationPlugins = (role: string) => (app: Elysia) => app
       const requiredPermissions = requiredRole.data?.permission!;
 
       if (userPermissions < requiredPermissions) {
-        throw new HttpError(403, "You do not have permission to access this resource");
+        throw new HttpError(403, `Bạn không có quyền truy cập tài nguyên này. Yêu cầu vai trò: ${role}`);
       }
     } catch (error) {
       console.error(error);

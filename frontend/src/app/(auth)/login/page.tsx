@@ -56,11 +56,11 @@ export default function LoginPage() {
           router.push(ROUTES.RESIDENT.DASHBOARD);
         }
       } catch (err) {
-        setError(getErrorMessage(err));
+        setError(`Lấy thông tin người dùng thất bại: ${getErrorMessage(err)}`);
       }
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      setError(`Đăng nhập thất bại: ${getErrorMessage(err)}`);
     },
   });
 

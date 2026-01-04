@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 
 export default function ResidentProfilePage() {
   const queryClient = useQueryClient();
+  const [selectedHouseId, setSelectedHouseId] = React.useState<string>('');
+  const [selectedHouseHasOwner, setSelectedHouseHasOwner] = React.useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.resident],
@@ -24,6 +26,14 @@ export default function ResidentProfilePage() {
     queryFn: houseService.getAllHouses,
     enabled: data?.isNewResident === true,
   });
+
+  // Kiểm tra xem hộ đã chọn có chủ hộ chưa
+  React.useEffect(() => {
+    if (selectedHouseId && houses.length > 0) {
+      const house = houses.find(h => h.id === selectedHouseId);
+      setSelectedHouseHasOwner(!!house?.head_resident_id);
+    }
+  }, [selectedHouseId, houses]);
 
   const {
     register,
@@ -42,7 +52,7 @@ export default function ResidentProfilePage() {
       toast.success('Đã tạo hồ sơ cư dân thành công');
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error));
+      toast.error(`Cập nhật thông tin thất bại: ${getErrorMessage(error)}`);
     },
   });
 
@@ -168,7 +178,7 @@ export default function ResidentProfilePage() {
                 error={errors.house_role?.message}
                 options={[
                   { label: 'Chọn vai trò', value: '', disabled: true },
-                  { label: 'Chủ hộ', value: 'owner' },
+                  { label: selectedHouseHasOwner ? 'Chủ hộ (Đã có chủ hộ)' : 'Chủ hộ', value: 'owner', disabled: selectedHouseHasOwner },
                   { label: 'Thành viên', value: 'member' },
                   { label: 'Người thuê', value: 'tenant' },
                 ]}
@@ -197,7 +207,9 @@ export default function ResidentProfilePage() {
                     value: house.id,
                   })),
                 ]}
-                {...register('house_id')}
+                {...register('house_id', {
+                  onChange: (e) => setSelectedHouseId(e.target.value)
+                })}
               />
             </div>
 

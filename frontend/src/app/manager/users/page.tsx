@@ -54,7 +54,7 @@ export default function UsersPage() {
       toast.success('Đã phê duyệt người dùng');
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error));
+      toast.error(`Phê duyệt người dùng thất bại: ${getErrorMessage(error)}`);
     },
   });
 
@@ -69,7 +69,7 @@ export default function UsersPage() {
       toast.success('Đã từ chối người dùng');
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error));
+      toast.error(`Từ chối người dùng thất bại: ${getErrorMessage(error)}`);
     },
   });
 
@@ -141,7 +141,7 @@ export default function UsersPage() {
       const detail = await userService.getUserById(userId);
       setUserDetail(detail);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(`Tải thông tin người dùng thất bại: ${getErrorMessage(error)}`);
       setShowDetailModal(false);
     } finally {
       setLoadingDetail(false);

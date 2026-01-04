@@ -94,7 +94,7 @@ export default function AccountantInvoicesPage() {
       toast.success('Đã xóa hóa đơn');
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.invoices, 'accountant'] });
     },
-    onError: () => toast.error('Xóa hóa đơn thất bại'),
+    onError: (error) => toast.error(`Xóa hóa đơn thất bại: ${error instanceof Error ? error.message : 'Lỗi không xác định'}`),
   });
 
   const createMutation = useMutation({
@@ -114,7 +114,7 @@ export default function AccountantInvoicesPage() {
       });
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Tạo hóa đơn thất bại');
+      toast.error(`Tạo hóa đơn thất bại: ${error?.message || 'Lỗi không xác định'}`);
     },
   });
 
@@ -128,7 +128,7 @@ export default function AccountantInvoicesPage() {
       setConfirmForm({ paidAmount: '', paymentNote: '' });
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Xác nhận thanh toán thất bại');
+      toast.error(`Xác nhận thanh toán thất bại: ${error?.message || 'Lỗi không xác định'}`);
     },
   });
 
@@ -438,7 +438,7 @@ export default function AccountantInvoicesPage() {
       {/* Charts */}
       <Card>
         <CardHeader>
-          <CardTitle>Biểu đồ thống kê</CardTitle>
+          <CardTitle>Thống kê</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-muted-foreground">

@@ -57,7 +57,7 @@ function VerifyOtpContent() {
       }, 2000);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      setError(`Xác thực OTP thất bại: ${getErrorMessage(err)}`);
     },
   });
 
@@ -70,7 +70,7 @@ function VerifyOtpContent() {
       setTimeout(() => setSuccess(''), 3000);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      setError(`Gửi lại OTP thất bại: ${getErrorMessage(err)}`);
     },
   });
 

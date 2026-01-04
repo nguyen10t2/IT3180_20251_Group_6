@@ -8,7 +8,9 @@ export const CreateNotificationBody = t.Object({
     type: t.Optional(enumToTypeBox(notification_type.enumValues)),
     target: t.Optional(enumToTypeBox(notification_target.enumValues)),
     target_id: t.Optional(t.String({ format: "uuid" })),
-    created_by: t.String({ format: "uuid" }),
+    is_pinned: t.Optional(t.Boolean()),
+    scheduled_at: t.Optional(t.String()),
+    expires_at: t.Optional(t.String()),
 });
 
 export const CreateScheduledNotificationBody = t.Object({

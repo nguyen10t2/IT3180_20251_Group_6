@@ -77,7 +77,7 @@ export interface TableColumn<T = any> {
 }
 
 export interface DashboardStats {
-  totalHouses: number;
+  totalHouseholds: number;
   totalResidents: number;
   totalUsers: number;
   pendingUsers: number;

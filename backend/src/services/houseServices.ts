@@ -242,6 +242,16 @@ export const transferHeadResident = async (
   return { data: updated ?? null };
 };
 
+// Cập nhật chủ hộ (alias cho transferHeadResident)
+export const updateHeadResident = async (
+  houseId: string,
+  newHeadId: string,
+  reason: string,
+  changedBy: string,
+) => {
+  return await transferHeadResident(houseId, newHeadId, reason, changedBy);
+};
+
 // Cập nhật trạng thái căn hộ
 export const updateHouseStatus = async (id: string, status: 'active' | 'inactive' | 'suspended') => {
   const [result] = await db.update(houseSchema)

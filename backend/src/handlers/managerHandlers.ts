@@ -5,8 +5,8 @@ import { approveUser, getPendingUsers, getUserById, getUsersByLastCreatedAndLimi
 import { authorizationPlugins } from "../plugins/authorizationPlugins";
 import { householdRoutes } from "./householdHandlers";
 import { userRoutes } from "./userHandlers";
-import { deleteResident, getAll as getAllResident, getResidentById, updateResident } from "../services/residentServices";
-import { UpdateResidentBody } from "../types/residentTypes";
+import { deleteResident, getAll as getAllResident, getResidentById, updateResident, createResident } from "../services/residentServices";
+import { UpdateResidentBody, CreateResidentBody } from "../types/residentTypes";
 import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
 import { CreateNotificationBody } from "../types/notificationTypes";
 import { getAll as getAllFeedback, getFeedbackById, respondToFeedback, addComment as addFeedbackComment, updateFeedbackStatus } from "../services/feedbackServices";
@@ -146,6 +146,12 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
         try {
           const fetchResident = await getResidentById(params.resident_id);
           if (!fetchResident.data) { throw new HttpError(404, 'Không tìm thấy cư dân'); }
+          
+          // Kiểm tra nếu là chủ hộ thì không cho xóa
+          if (fetchResident.data.house_role === 'owner') {
+            throw new HttpError(400, 'Không thể xóa chủ hộ. Vui lòng đổi chủ hộ trước khi xóa.');
+          }
+          
           await deleteResident(params.resident_id);
           return status(200, { message: 'Xóa cư dân thành công' });
         }
@@ -153,6 +159,22 @@ export const managerRoutes = new Elysia({ prefix: '/managers', tags: ['Manager']
           console.error(error);
           httpErrorStatus(error);
         }
+      })
+      .post('/:house_id/members', async ({ params, body, status }) => {
+        try {
+          // Tạo cư dân mới và gán vào hộ
+          const newResident = await createResident({
+            ...body,
+            house_id: params.house_id,
+          });
+          if (newResident.data) { return status(201, { message: 'Thêm cư dân vào hộ thành công', resident: newResident.data }); }
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      }, {
+        body: CreateResidentBody
       })
   )
   .group('/notifications', (app) =>

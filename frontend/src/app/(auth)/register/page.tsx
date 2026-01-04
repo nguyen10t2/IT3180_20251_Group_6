@@ -32,7 +32,7 @@ export default function RegisterPage() {
       router.push(`${ROUTES.VERIFY_OTP}?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      setError(`Đăng ký thất bại: ${getErrorMessage(err)}`);
     },
   });
 

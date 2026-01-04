@@ -48,4 +48,10 @@ export const residentService = {
     const response = await apiClient.delete<ApiResponse>(`/managers/residents/${id}`);
     return response.data;
   },
+
+  // Add resident to house (manager only)
+  addResidentToHouse: async (houseId: string, data: CreateResidentRequest): Promise<Resident> => {
+    const response = await apiClient.post<{ resident: Resident; message: string }>(`/managers/residents/${houseId}/members`, data);
+    return response.data.resident;
+  },
 };

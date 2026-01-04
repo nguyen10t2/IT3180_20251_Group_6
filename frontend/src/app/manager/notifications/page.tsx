@@ -15,9 +15,9 @@ import {
   Pagination,
   Button,
 } from '@/components/ui';
-import { notificationService } from '@/services';
+import { notificationService, houseService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
-import { formatDate } from '@/utils/helpers';
+import { formatDate, getErrorMessage } from '@/utils/helpers';
 import { NOTIFICATION_TYPE_LABELS } from '@/utils/labels';
 import type { NotificationWithRelations, TableColumn } from '@/types';
 import { toast } from 'sonner';
@@ -30,6 +30,17 @@ export default function NotificationsPage() {
   const [itemsPerPage] = React.useState(10);
   const [selectedNotification, setSelectedNotification] = React.useState<NotificationWithRelations | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    title: '',
+    content: '',
+    type: 'general',
+    target: 'all',
+    target_id: '',
+    is_pinned: false,
+    scheduled_at: '',
+    expires_at: '',
+  });
 
   const queryClient = useQueryClient();
 
@@ -37,6 +48,12 @@ export default function NotificationsPage() {
     queryKey: [QUERY_KEYS.notifications],
     queryFn: () => notificationService.getAllNotifications('manager'),
     staleTime: 30000,
+  });
+
+  const { data: houses = [] } = useQuery({
+    queryKey: [QUERY_KEYS.houses],
+    queryFn: () => houseService.getAllHousesManager(),
+    staleTime: 60000,
   });
 
   const deleteMutation = useMutation({
@@ -47,7 +64,30 @@ export default function NotificationsPage() {
     },
     onError: (error: unknown) => {
       console.error(error);
-      toast.error('Xóa thông báo thất bại');
+      toast.error(`Xóa thông báo thất bại: ${getErrorMessage(error)}`);
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: typeof formData) => notificationService.createNotification(data, 'manager'),
+    onSuccess: () => {
+      toast.success('Tạo thông báo thành công');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.notifications] });
+      setIsCreateModalOpen(false);
+      setFormData({
+        title: '',
+        content: '',
+        type: 'general',
+        target: 'all',
+        target_id: '',
+        is_pinned: false,
+        scheduled_at: '',
+        expires_at: '',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error(error);
+      toast.error(`Tạo thông báo thất bại: ${getErrorMessage(error)}`);
     },
   });
 
@@ -104,6 +144,26 @@ export default function NotificationsPage() {
     setSelectedNotification(notification);
     setIsModalOpen(true);
   }, []);
+
+  const handleCreateSubmit = React.useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.content.trim()) {
+      toast.error('Vui lòng nhập tiêu đề và nội dung');
+      return;
+    }
+    if (formData.target === 'household' && !formData.target_id) {
+      toast.error('Vui lòng chọn hộ gia đình');
+      return;
+    }
+    
+    // Chuẩn bị data để submit
+    const { target_id, ...rest } = formData;
+    const submitData = formData.target === 'all' 
+      ? rest
+      : { ...rest, target_id };
+    
+    createMutation.mutate(submitData as any);
+  }, [formData, createMutation]);
 
   const columns: TableColumn<NotificationWithRelations>[] = [
     {
@@ -192,12 +252,20 @@ export default function NotificationsPage() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Danh sách thông báo ({notifications.length})</CardTitle>
-            <SearchInput
-              placeholder="Tìm kiếm theo tiêu đề, nội dung..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="md:w-80"
-            />
+            <div className="flex items-center gap-3">
+              <SearchInput
+                placeholder="Tìm kiếm theo tiêu đề, nội dung..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="md:w-80"
+              />
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="whitespace-nowrap"
+              >
+                + Tạo thông báo
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -311,6 +379,141 @@ export default function NotificationsPage() {
             )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Tạo thông báo mới"
+      >
+        <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Tiêu đề <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="Nhập tiêu đề thông báo"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nội dung <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md min-h-32"
+              placeholder="Nhập nội dung thông báo"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Loại thông báo</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="general">Thông báo chung</option>
+                <option value="emergency">Khẩn cấp</option>
+                <option value="event">Sự kiện</option>
+                <option value="payment">Thanh toán</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Đối tượng</label>
+              <select
+                value={formData.target}
+                onChange={(e) => setFormData({ ...formData, target: e.target.value as any, target_id: '' })}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="all">Tất cả</option>
+                <option value="household">Hộ gia đình</option>
+              </select>
+            </div>
+          </div>
+
+          {formData.target === 'household' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Chọn hộ gia đình <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.target_id}
+                onChange={(e) => setFormData({ ...formData, target_id: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
+                required
+              >
+                <option value="">-- Chọn hộ --</option>
+                {houses.map((house) => (
+                  <option key={house.id} value={house.id}>
+                    Phòng {house.room_number} {house.head_resident?.full_name ? `- ${house.head_resident.full_name}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Ngày hẹn (tùy chọn)</label>
+              <input
+                type="datetime-local"
+                value={formData.scheduled_at}
+                onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Ngày hết hạn (tùy chọn)</label>
+              <input
+                type="datetime-local"
+                value={formData.expires_at}
+                onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.is_pinned}
+                onChange={(e) => setFormData({ ...formData, is_pinned: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Ghim thông báo</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateModalOpen(false)}
+              disabled={createMutation.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Đang tạo...' : 'Tạo thông báo'}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

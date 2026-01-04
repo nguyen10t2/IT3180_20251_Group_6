@@ -45,7 +45,7 @@ export default function ResidentsPage() {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.residents] });
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error));
+      toast.error(`Xóa cư dân thất bại: ${getErrorMessage(error)}`);
     },
   });
 
@@ -108,7 +108,7 @@ export default function ResidentsPage() {
       const detail = await residentService.getResidentById(residentId);
       setResidentDetail(detail);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(`Tải thông tin cư dân thất bại: ${getErrorMessage(error)}`);
       setShowDetailModal(false);
     } finally {
       setLoadingDetail(false);
@@ -181,7 +181,7 @@ export default function ResidentsPage() {
       sortable: true,
       render: (value) => formatDate(String(value)),
     },
-  ], []);
+  ], [deleteMutation]);
 
   if (isLoading) {
     return <Loading text="Đang tải danh sách cư dân..." />;
