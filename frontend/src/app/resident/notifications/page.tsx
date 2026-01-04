@@ -19,6 +19,7 @@ import { QUERY_KEYS, ROUTES } from '@/config/constants';
 import { useAuth } from '@/hooks';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { toast } from 'sonner';
 import { formatDate } from '@/utils/helpers';
 import { NOTIFICATION_TYPE_LABELS } from '@/utils/labels';
 import type { Notification, TableColumn } from '@/types';
@@ -66,6 +67,78 @@ export default function ResidentNotificationsPage() {
     },
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: notificationService.markAllAsRead,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: [QUERY_KEYS.residentNotifications] });
+
+      const previous = queryClient.getQueryData<Notification[]>([QUERY_KEYS.residentNotifications]);
+
+      queryClient.setQueryData<Notification[]>([QUERY_KEYS.residentNotifications], (old) => {
+        if (!old) return old;
+        return old.map((n) => ({ ...n, is_read: true }));
+      });
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([QUERY_KEYS.residentNotifications], context.previous);
+      }
+      toast.error('Đánh dấu tất cả thất bại');
+    },
+    onSuccess: () => {
+      toast.success('Đã đánh dấu tất cả là đã đọc');
+    },
+  });
+
+  const unreadCount = React.useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
+
+  // Selection and view options
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [showUnreadOnly, setShowUnreadOnly] = React.useState(false);
+  const [groupByDate, setGroupByDate] = React.useState(true);
+
+  const toggleSelect = React.useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = React.useCallback(() => setSelectedIds(new Set()), []);
+
+  const markSelectedAsReadMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => notificationService.markAsRead(id)));
+      return ids;
+    },
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries({ queryKey: [QUERY_KEYS.residentNotifications] });
+
+      const previous = queryClient.getQueryData<Notification[]>([QUERY_KEYS.residentNotifications]);
+
+      queryClient.setQueryData<Notification[]>([QUERY_KEYS.residentNotifications], (old) => {
+        if (!old) return old;
+        return old.map((n) => (ids.includes(n.id) ? { ...n, is_read: true } : n));
+      });
+
+      return { previous };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([QUERY_KEYS.residentNotifications], context.previous);
+      }
+      toast.error('Đánh dấu chọn thất bại');
+    },
+    onSuccess: (ids) => {
+      toast.success(`Đã đánh dấu ${ids.length} thông báo là đã đọc`);
+      setSelectedIds(new Set());
+    },
+  });
+
   // Filter - only show published and non-expired notifications
   const filteredData = React.useMemo(() => {
     const now = new Date();
@@ -88,6 +161,10 @@ export default function ResidentNotificationsPage() {
       );
     }
 
+    if (showUnreadOnly) {
+      filtered = filtered.filter((n) => !n.is_read);
+    }
+
     // Sort: unread first, then pinned
     return filtered.sort((a, b) => {
       // Unread first
@@ -100,7 +177,7 @@ export default function ResidentNotificationsPage() {
       
       return 0;
     });
-  }, [notifications, searchTerm]);
+  }, [notifications, searchTerm, showUnreadOnly]);
 
   // Sort
   const sortedData = React.useMemo(() => {
@@ -151,13 +228,45 @@ export default function ResidentNotificationsPage() {
 
   const columns: TableColumn<Notification>[] = [
     {
+      key: 'select',
+      label: '',
+      width: '3%',
+      render: (_value, row) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(row.id)}
+          onChange={(e) => {
+            e.stopPropagation();
+            toggleSelect(row.id, e.target.checked);
+          }}
+          className="w-4 h-4"
+        />
+      ),
+    },
+    {
       key: 'is_read',
       label: 'Trạng thái',
-      width: '10%',
+      width: '12%',
       render: (value, row) => (
         <div className="flex items-center gap-2">
-          {!value && <span className="h-2 w-2 bg-blue-500 rounded-full" title="Chưa đọc"></span>}
-          {row.is_pinned && <Badge variant="default" className="text-xs">Ghim</Badge>}
+          {!value && (
+            <Badge variant="destructive" className="text-xs">
+              Chưa đọc
+            </Badge>
+          )}
+          {row.is_pinned && (
+            <Badge variant="default" className="text-xs">
+              Ghim
+            </Badge>
+          )}
+          {row.expires_at && (() => {
+            const now = new Date();
+            const diff = Math.ceil((new Date(row.expires_at).getTime() - now.getTime()) / (1000*60*60*24));
+            if (diff >= 0 && diff <= 3) {
+              return <Badge variant="warning" className="text-xs">Hết hạn sau {diff} ngày</Badge>;
+            }
+            return null;
+          })()}
         </div>
       ),
     },
@@ -224,23 +333,119 @@ export default function ResidentNotificationsPage() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Danh sách thông báo ({filteredData.length})</CardTitle>
-            <SearchInput
-              placeholder="Tìm kiếm thông báo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="md:w-80"
-            />
+            <div className="flex items-center gap-3">
+              <SearchInput
+                placeholder="Tìm kiếm thông báo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="md:w-80"
+              />
+
+              <div className="flex items-center gap-2">
+                <button
+                  className={`px-2 py-1 rounded-md text-sm ${showUnreadOnly ? 'bg-blue-600 text-white' : 'bg-muted/30 text-muted-foreground'}`}
+                  onClick={() => setShowUnreadOnly((s) => !s)}
+                >
+                  {showUnreadOnly ? 'Chỉ chưa đọc' : 'Tất cả'}
+                </button>
+
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={groupByDate} onChange={(e) => setGroupByDate(e.target.checked)} className="w-4 h-4" />
+                  Nhóm theo ngày
+                </label>
+
+                <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'} className="text-sm">
+                  Chưa đọc: {unreadCount}
+                </Badge>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => markAllAsReadMutation.mutate()}
+                  disabled={unreadCount === 0 || markAllAsReadMutation.isLoading}
+                >
+                  {markAllAsReadMutation.isLoading ? 'Đang xử lý...' : 'Đánh dấu tất cả'}
+                </Button>
+
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2 ml-2">
+                    <span className="text-sm">Đã chọn: {selectedIds.size}</span>
+                    <Button
+                      size="sm"
+                      onClick={() => markSelectedAsReadMutation.mutate(Array.from(selectedIds))}
+                      disabled={markSelectedAsReadMutation.isLoading}
+                    >
+                      {markSelectedAsReadMutation.isLoading ? 'Đang...' : 'Đánh dấu đã đọc'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={clearSelection}>Bỏ chọn</Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={paginatedData}
-            columns={columns}
-            onSort={handleSort}
-            sortField={sortField}
-            sortOrder={sortOrder}
-            onRowClick={handleRowClick}
-          />
+          {filteredData.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <div className="mb-4 text-2xl">Không có thông báo</div>
+              <p className="mb-4">Bạn đang ở chế độ {showUnreadOnly ? 'Chỉ hiển thị chưa đọc' : 'Tất cả thông báo'}.</p>
+              <div className="flex justify-center gap-2">
+                <Button onClick={() => queryClient.invalidateQueries([QUERY_KEYS.residentNotifications])}>Làm mới</Button>
+                <Button variant="outline" onClick={() => setShowUnreadOnly(false)}>Hiển thị tất cả</Button>
+              </div>
+            </div>
+          ) : (
+            groupByDate ? (
+              // Group current page data by date buckets
+              (() => {
+                const groups = new Map<string, Notification[]>();
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                paginatedData.forEach((n) => {
+                  const d = new Date(n.published_at);
+                  const key = d.toDateString() === today.toDateString() ? 'Hôm nay'
+                    : d.toDateString() === yesterday.toDateString() ? 'Hôm qua'
+                    : 'Trước đó';
+                  if (!groups.has(key)) groups.set(key, []);
+                  groups.get(key)!.push(n);
+                });
+
+                return (
+                  <div className="space-y-6">
+                    {Array.from(groups.entries()).map(([label, items]) => (
+                      <div key={label}>
+                        <div className="mb-2 text-sm font-medium text-muted-foreground">{label} ({items.length})</div>
+                        <DataTable
+                          data={items}
+                          columns={columns}
+                          rowClassName={(row) => !row.is_read ? 'bg-blue-50 hover:bg-blue-100' : ''}
+                          onSort={handleSort}
+                          sortField={sortField}
+                          sortOrder={sortOrder}
+                          onRowClick={handleRowClick}
+                          emptyMessage="Không có thông báo trong nhóm này"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
+            ) : (
+              <DataTable
+                data={paginatedData}
+                columns={columns}
+                rowClassName={(row) =>
+                  !row.is_read ? 'bg-blue-50 hover:bg-blue-100' : ''
+                }
+                onSort={handleSort}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onRowClick={handleRowClick}
+              />
+            )
+          )}
           {totalPages > 1 && (
             <div className="mt-4 flex justify-center">
               <Pagination

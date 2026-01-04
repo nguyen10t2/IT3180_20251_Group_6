@@ -39,4 +39,10 @@ export const notificationService = {
     const response = await apiClient.put<ApiResponse>(`/notifications/${id}/read`);
     return response.data;
   },
+
+  // Mark all notifications as read (resident)
+  markAllAsRead: async (): Promise<ApiResponse> => {
+    const response = await apiClient.put<ApiResponse>(`/notifications/read-all`);
+    return response.data;
+  },
 };
