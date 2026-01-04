@@ -8,7 +8,19 @@ export const householdRoutes = new Elysia({ prefix: "/households" })
   .get("/", async ({ status }) => {
     try {
       const res = await getAll();
-      return status(200, { households: res.data });
+      const households = (res.data || []).map((house: any) => ({
+        ...house,
+        members_count: house.members_count ?? 0,
+        head_resident: house.head_resident_id
+          ? {
+            id: house.head_resident_id,
+            full_name: house.head_fullname ?? '',
+            phone: house.head_phone ?? null,
+          }
+          : null,
+      }));
+
+      return status(200, { households });
     }
     catch (error) {
       console.error(error);
@@ -31,7 +43,20 @@ export const householdRoutes = new Elysia({ prefix: "/households" })
     try {
       const res = await getHouseById(params.household_id);
       if (!res.data) { throw new HttpError(404, 'Không tìm thấy hộ dân'); }
-      if (res.data) { return status(200, { household: res.data }); }
+
+      const residents = res.data.residents || [];
+      const headResident = res.data.head_resident_id
+        ? residents.find((resident: any) => resident.id === res.data?.head_resident_id) || null
+        : null;
+
+      return status(200, {
+        household: {
+          ...res.data,
+          members_count: res.data.members_count ?? residents.length,
+          head_resident: headResident,
+          residents,
+        }
+      });
     }
     catch (error) {
       console.error(error);

@@ -129,7 +129,7 @@ export default function ResidentInvoicesPage() {
             <CardTitle>Danh sách hóa đơn ({invoices.length})</CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
-                Chưa thanh toán: {invoices.filter(i => i.status === 'unpaid').length}
+                Chưa thanh toán: {invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').length}
               </Badge>
               <Badge variant="outline">
                 Đã thanh toán: {invoices.filter(i => i.status === 'paid').length}

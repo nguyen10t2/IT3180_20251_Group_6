@@ -89,7 +89,7 @@ export default function ResidentDashboard() {
   // Calculate stats
   const totalFeedbacks = feedbacks.length;
   const unreadNotifications = notifications.filter(n => !n.is_read).length;
-  const unpaidInvoices = invoices.filter(i => i.status === 'unpaid').length;
+  const unpaidInvoices = invoices.filter(i => ['pending', 'overdue'].includes(String(i.status))).length;
 
   if (isLoading) {
     return <Loading text="Đang tải dữ liệu..." />;

@@ -1,4 +1,4 @@
-import { eq, asc, and, isNull, getTableColumns } from 'drizzle-orm';
+import { eq, asc, and, isNull, getTableColumns, ne } from 'drizzle-orm';
 import { db } from '../database/db';
 import { residentSchema, type NewResident } from '../models/residentSchema';
 import { houseSchema } from '../models/houseSchema';
@@ -123,26 +123,89 @@ export const getResidentByIdCard = async (idCard: string) => {
 
 // Tạo cư dân mới
 export const createResident = async (data: NewResident) => {
-  const [result] = await db.insert(residentSchema)
-    .values({
-      ...data,
-      move_in_date: data.move_in_date ?? new Date(),
-    })
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [result] = await tx.insert(residentSchema)
+      .values({
+        ...data,
+        move_in_date: data.move_in_date ?? new Date(),
+      })
+      .returning();
 
-  return { data: result };
+    if (result.house_id && result.house_role === 'owner') {
+      await tx.update(residentSchema)
+        .set({ house_role: 'member', updated_at: new Date() })
+        .where(and(
+          eq(residentSchema.house_id, result.house_id),
+          eq(residentSchema.house_role, 'owner'),
+          isNull(residentSchema.deleted_at),
+          ne(residentSchema.id, result.id),
+        ));
+
+      await tx.update(houseSchema)
+        .set({ head_resident_id: result.id, updated_at: new Date() })
+        .where(and(eq(houseSchema.id, result.house_id), isNull(houseSchema.deleted_at)));
+    }
+
+    return { data: result };
+  });
 };
 
 // Cập nhật cư dân
 export const updateResident = async (id: string, data: UpdateResidentBodyType) => {
-  const [result] = await db.update(residentSchema)
-    .set(data)
-    .where(and(
-      eq(residentSchema.id, id),
-      isNull(residentSchema.deleted_at)
-    ))
-    .returning();
-  return { data: result ?? null };
+  return await db.transaction(async (tx) => {
+    const [current] = await tx.select()
+      .from(residentSchema)
+      .where(and(
+        eq(residentSchema.id, id),
+        isNull(residentSchema.deleted_at)
+      ))
+      .limit(1);
+
+    if (!current) {
+      return { data: null };
+    }
+
+    const [result] = await tx.update(residentSchema)
+      .set({
+        ...data,
+        updated_at: new Date(),
+      })
+      .where(and(
+        eq(residentSchema.id, id),
+        isNull(residentSchema.deleted_at)
+      ))
+      .returning();
+
+    if (!result) {
+      return { data: null };
+    }
+
+    if (current.house_role === 'owner' && current.house_id && result.house_role !== 'owner') {
+      await tx.update(houseSchema)
+        .set({ head_resident_id: null, updated_at: new Date() })
+        .where(and(
+          eq(houseSchema.id, current.house_id),
+          eq(houseSchema.head_resident_id, id)
+        ));
+    }
+
+    if (result.house_role === 'owner' && result.house_id) {
+      await tx.update(residentSchema)
+        .set({ house_role: 'member', updated_at: new Date() })
+        .where(and(
+          eq(residentSchema.house_id, result.house_id),
+          eq(residentSchema.house_role, 'owner'),
+          isNull(residentSchema.deleted_at),
+          ne(residentSchema.id, id),
+        ));
+
+      await tx.update(houseSchema)
+        .set({ head_resident_id: id, updated_at: new Date() })
+        .where(and(eq(houseSchema.id, result.house_id), isNull(houseSchema.deleted_at)));
+    }
+
+    return { data: result };
+  });
 };
 
 // Soft delete cư dân

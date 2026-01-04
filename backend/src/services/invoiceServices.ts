@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, isNull } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 import { db } from "../database/db";
 import { invoiceSchema } from "../models/invoiceSchema";
 import { invoiceDetailSchema } from "../models/invoiceDetailSchema";
@@ -7,6 +7,7 @@ import { feeTypeSchema } from "../models/feeTypeSchema";
 import type { FeeStatusEnum } from "../models/pgEnum";
 import { Static } from "elysia";
 import { UpdateInvoiceBody } from "../types/invoiceTypes";
+import { invoiceTypeSchema } from "../models/invoiceTypeSchema";
 
 // Lấy tất cả hóa đơn (chưa bị xóa)
 export const getAll = async () => {
@@ -141,7 +142,7 @@ export const confirmInvoice = async (id: string, confirmedBy: string, paidAmount
     })
     .where(and(
       eq(invoiceSchema.id, id),
-      eq(invoiceSchema.status, 'pending'),
+      inArray(invoiceSchema.status, ['pending', 'overdue']),
       isNull(invoiceSchema.deleted_at)
     ))
     .returning();
@@ -217,4 +218,13 @@ export const markAsOverdue = async (id: string) => {
     .returning();
 
   return { data: result ?? null };
+};
+
+// Lấy danh sách loại hóa đơn
+export const getInvoiceTypes = async () => {
+  const rows = await db.select()
+    .from(invoiceTypeSchema)
+    .orderBy(invoiceTypeSchema.id);
+
+  return { data: rows };
 };

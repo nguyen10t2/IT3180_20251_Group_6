@@ -7,10 +7,9 @@ export const CreateInvoiceBody = t.Object({
     period_month: t.Number({error: 'Không được để trống tháng của kỳ thanh toán'}),
     period_year: t.Number({error: 'Không được để trống năm của kỳ thanh toán'}),
     total_amount: t.String({error: 'Không được để trống số tiền của hóa đơn' }),
-    due_date: t.Date({error: 'Không được để trống hạn thanh toán hóa đơn'}),
-    invoice_type: t.Number({error: 'Không được để trống loại hóa đơn'}),
+    due_date: t.Union([t.Date({error: 'Không được để trống hạn thanh toán hóa đơn'}), t.String({ error: 'Không được để trống hạn thanh toán hóa đơn' })]),
+    invoice_types: t.Number({error: 'Không được để trống loại hóa đơn'}),
     notes: t.Optional(t.String()),
-    created_by: t.String({ format: "uuid", error: 'Không được để trống người tạo hóa đơn' }),
 });
 
 export const UpdateInvoiceBody = t.Object({
@@ -18,8 +17,8 @@ export const UpdateInvoiceBody = t.Object({
     period_month: t.Optional(t.Number()),
     period_year: t.Optional(t.Number()),
     total_amount: t.Optional(t.String()),
-    due_date: t.Optional(t.Date()),
-    invoice_type: t.Optional(t.Number()),
+    due_date: t.Optional(t.Union([t.Date(), t.String()])),
+    invoice_types: t.Optional(t.Number()),
     notes: t.Optional(t.String()),
     status: t.Optional(enumToTypeBox(fee_status.enumValues)),
     paid_at: t.Optional(t.Date()),

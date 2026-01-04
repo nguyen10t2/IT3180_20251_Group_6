@@ -3,7 +3,7 @@ import { userRoutes } from "./userHandlers";
 import { authorizationPlugins } from "../plugins/authorizationPlugins";
 import { HttpError, httpErrorStatus } from "../constants/errorConstant";
 import { ConfirmInvoiceBody, CreateInvoiceBody, UpdateInvoiceBody } from "../types/invoiceTypes";
-import { confirmInvoice, createInvoice, deleteInvoice, getAll, getInvoiceById, updateInvoice } from "../services/invoiceServices";
+import { confirmInvoice, createInvoice, deleteInvoice, getAll, getInvoiceById, updateInvoice, getInvoiceTypes } from "../services/invoiceServices";
 import { getAll as getAllHouses } from "../services/houseServices";
 import { createNotification, deleteNotification, getAll as getAllNotification, getNotificationById } from "../services/notificationServices";
 import { CreateNotificationBody } from "../types/notificationTypes";
@@ -36,6 +36,16 @@ export const accountantHandlers = new Elysia({
   })
   .group('/invoices', (app) =>
     app
+      .get('/types', async ({ status }) => {
+        try {
+          const res = await getInvoiceTypes();
+          return status(200, { invoiceTypes: res?.data ?? [] });
+        }
+        catch (error) {
+          console.error(error);
+          httpErrorStatus(error);
+        }
+      })
       .get('/', async ({ status }) => {
         try {
           const res = await getAll();
@@ -60,10 +70,19 @@ export const accountantHandlers = new Elysia({
       .post('/', async ({ body, user, status }) => {
         try {
           const userId = user.id!;
+          const dueDate = new Date(body.due_date as unknown as string);
+
+          if (Number.isNaN(dueDate.getTime())) {
+            throw new HttpError(400, 'Hạn thanh toán không hợp lệ');
+          }
+
           const formattedBody = {
             ...body,
+            invoice_types: body.invoice_types,
+            due_date: dueDate,
             created_by: userId
-          }
+          };
+
           await createInvoice(formattedBody);
           return status(200, { message: 'Tạo hóa đơn thành công' });
 
@@ -80,7 +99,13 @@ export const accountantHandlers = new Elysia({
           const fetchInvoice = await getInvoiceById(params.invoice_id);
           if (!fetchInvoice.data) { throw new HttpError(404, 'Không tìm thấy hóa đơn'); }
 
-          const res = await updateInvoice(params.invoice_id, body);
+          const payload = {
+            ...body,
+            due_date: body?.due_date ? new Date(body.due_date as unknown as string) : undefined,
+            invoice_types: body?.invoice_types,
+          };
+
+          const res = await updateInvoice(params.invoice_id, payload);
           if (res.data) { return status(200, { message: 'Cập nhật hóa đơn thành công' }); }
         }
         catch (error) {
@@ -111,7 +136,11 @@ export const accountantHandlers = new Elysia({
           const confirmerId = user.id!;
           const res = await confirmInvoice(params.invoice_id, confirmerId, body?.paidAmount, body?.paymentNote);
 
-          if (res.data) { return status(200, { message: 'Xác nhận thanh toán hóa đơn thành công' }); }
+          if (!res.data) {
+            throw new HttpError(400, 'Hóa đơn không ở trạng thái chờ hoặc đã được xử lý');
+          }
+
+          return status(200, { message: 'Xác nhận thanh toán hóa đơn thành công' });
         }
         catch (error) {
           console.error(error);

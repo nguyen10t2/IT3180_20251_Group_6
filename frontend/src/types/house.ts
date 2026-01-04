@@ -15,6 +15,7 @@ export interface House {
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+  members_count?: number;
 }
 
 export interface HouseWithResident extends House {

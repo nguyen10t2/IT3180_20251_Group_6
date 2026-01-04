@@ -1,4 +1,4 @@
-import { eq, and, isNull, asc, sql } from "drizzle-orm";
+import { eq, and, isNull, asc, sql, getTableColumns, ne } from "drizzle-orm";
 import { db } from "../database/db";
 import { houseSchema } from "../models/houseSchema";
 import { residentSchema } from "../models/residentSchema";
@@ -58,6 +58,12 @@ export const getHouseById = async (id: string) => {
 
     head_fullname: residentSchema.full_name,
     head_phone: residentSchema.phone,
+    members_count: sql<number>`(
+      SELECT COUNT(*)::int
+      FROM ${residentSchema}
+      WHERE ${residentSchema.house_id} = ${houseSchema.id}
+      AND ${residentSchema.deleted_at} IS NULL
+    )`.as('members_count'),
   })
     .from(houseSchema)
     .leftJoin(residentSchema, eq(houseSchema.head_resident_id, residentSchema.id))
@@ -66,55 +72,115 @@ export const getHouseById = async (id: string) => {
       isNull(houseSchema.deleted_at)
     ));
 
-  return { data: rows[0] ?? null };
+  const house = rows[0] ?? null;
+  if (!house) {
+    return { data: null };
+  }
+
+  const residents = await db.select({
+    ...getTableColumns(residentSchema)
+  })
+    .from(residentSchema)
+    .where(and(
+      eq(residentSchema.house_id, id),
+      isNull(residentSchema.deleted_at)
+    ))
+    .orderBy(asc(residentSchema.full_name));
+
+  return { data: { ...house, residents } };
 };
 
 // Tạo căn hộ mới
 export const createHouse = async (data: CreateHouseBodyType) => {
-  let headResidentId = null;
+  return await db.transaction(async (tx) => {
+    let headResidentId = null;
 
-  if (data.head_resident_id) {
-    const resident = await db.select({ id: residentSchema.id })
-      .from(residentSchema)
-      .where(and(
-        eq(residentSchema.id, data.head_resident_id),
-        isNull(residentSchema.deleted_at)
-      ))
-      .limit(1);
-    
-    if (resident.length > 0) {
-      headResidentId = data.head_resident_id;
+    if (data.head_resident_id) {
+      const resident = await tx.select({ id: residentSchema.id })
+        .from(residentSchema)
+        .where(and(
+          eq(residentSchema.id, data.head_resident_id),
+          isNull(residentSchema.deleted_at)
+        ))
+        .limit(1);
+      
+      if (resident.length > 0) {
+        headResidentId = data.head_resident_id;
+      }
     }
-  }
 
-  const [result] = await db.insert(houseSchema).values({
-    room_number: data.room_number,
-    room_type: data.room_type,
-    building: data.building,
-    area: data.area?.toString() ?? '0',
-    head_resident_id: headResidentId,
-    notes: data.notes ?? null,
-  }).returning();
+    const [result] = await tx.insert(houseSchema).values({
+      room_number: data.room_number,
+      room_type: data.room_type,
+      building: data.building,
+      area: data.area?.toString() ?? '0',
+      head_resident_id: headResidentId,
+      notes: data.notes ?? null,
+    }).returning();
 
-  return { data: result };
+    if (headResidentId) {
+      await tx.update(residentSchema)
+        .set({ house_role: 'member', updated_at: new Date() })
+        .where(and(
+          eq(residentSchema.house_id, result.id),
+          eq(residentSchema.house_role, 'owner'),
+          isNull(residentSchema.deleted_at),
+          ne(residentSchema.id, headResidentId),
+        ));
+
+      await tx.update(residentSchema)
+        .set({ house_role: 'owner', house_id: result.id, updated_at: new Date() })
+        .where(eq(residentSchema.id, headResidentId));
+    }
+
+    return { data: result };
+  });
 };
 
 // Cập nhật căn hộ
 export const updateHouse = async (id: string, data: UpdateHouseBodyType) => {
+  return await db.transaction(async (tx) => {
+    const [currentHouse] = await tx.select({ head_resident_id: houseSchema.head_resident_id })
+      .from(houseSchema)
+      .where(and(
+        eq(houseSchema.id, id),
+        isNull(houseSchema.deleted_at)
+      ))
+      .limit(1);
 
-  const [result] = await db.update(houseSchema)
-    .set({
-      ...data,
-      area: data.area ? data.area.toString() : undefined,
-      updated_at: new Date(),
-    })
-    .where(and(
-      eq(houseSchema.id, id),
-      isNull(houseSchema.deleted_at)
-    ))
-    .returning();
+    if (!currentHouse) {
+      return { data: null };
+    }
 
-  return { data: result ?? null };
+    const [result] = await tx.update(houseSchema)
+      .set({
+        ...data,
+        area: data.area ? data.area.toString() : undefined,
+        updated_at: new Date(),
+      })
+      .where(and(
+        eq(houseSchema.id, id),
+        isNull(houseSchema.deleted_at)
+      ))
+      .returning();
+
+    if (data.head_resident_id && data.head_resident_id !== currentHouse.head_resident_id) {
+      await tx.update(residentSchema)
+        .set({ house_role: 'member', updated_at: new Date() })
+        .where(and(
+          eq(residentSchema.house_id, id),
+          eq(residentSchema.house_role, 'owner'),
+          isNull(residentSchema.deleted_at),
+          ne(residentSchema.id, data.head_resident_id),
+        ));
+
+      await tx.update(residentSchema)
+        .set({ house_role: 'owner', house_id: id, updated_at: new Date() })
+        .where(eq(residentSchema.id, data.head_resident_id));
+    }
+
+    return { data: result ?? null };
+  });
 };
 
 // Soft delete căn hộ

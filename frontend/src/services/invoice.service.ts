@@ -6,6 +6,7 @@ import type {
   UpdateInvoiceRequest,
   ConfirmInvoiceRequest,
   ApiResponse,
+  InvoiceType,
 } from '@/types';
 
 export const invoiceService = {
@@ -43,6 +44,12 @@ export const invoiceService = {
   confirmInvoice: async (id: string, data: ConfirmInvoiceRequest): Promise<ApiResponse> => {
     const response = await apiClient.patch<ApiResponse>(`/accountants/invoices/${id}/confirm`, data);
     return response.data;
+  },
+
+  // Get invoice types (accountant)
+  getInvoiceTypes: async (): Promise<InvoiceType[]> => {
+    const response = await apiClient.get<{ invoiceTypes: InvoiceType[] }>(`/accountants/invoices/types`);
+    return response.data.invoiceTypes;
   },
 
   // Get resident invoices

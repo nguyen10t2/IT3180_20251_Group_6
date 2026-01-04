@@ -21,15 +21,15 @@ import { invoiceService, houseService } from '@/services';
 import { QUERY_KEYS } from '@/config/constants';
 import { useSearch, usePagination, useSort } from '@/hooks';
 import { formatDate, formatCurrency } from '@/utils/helpers';
-import type { InvoiceWithDetails, TableColumn, CreateInvoiceRequest } from '@/types';
+import type { InvoiceWithDetails, TableColumn, CreateInvoiceRequest, InvoiceType } from '@/types';
 import { toast } from 'sonner';
 
-type InvoiceStatus = 'all' | 'paid' | 'unpaid' | 'overdue';
+type InvoiceStatus = 'all' | 'paid' | 'pending' | 'overdue';
 
 const STATUS_TABS = [
   { key: 'all' as InvoiceStatus, label: 'Tất cả' },
   { key: 'paid' as InvoiceStatus, label: 'Đã thanh toán' },
-  { key: 'unpaid' as InvoiceStatus, label: 'Chưa thanh toán' },
+  { key: 'pending' as InvoiceStatus, label: 'Chưa thanh toán' },
   { key: 'overdue' as InvoiceStatus, label: 'Quá hạn' },
 ] as const;
 
@@ -49,6 +49,8 @@ export default function AccountantInvoicesPage() {
   const [houseFilter, setHouseFilter] = React.useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithDetails | null>(null);
+  const [confirmingInvoice, setConfirmingInvoice] = React.useState<InvoiceWithDetails | null>(null);
+  const [confirmForm, setConfirmForm] = React.useState({ paidAmount: '', paymentNote: '' });
   const [formData, setFormData] = React.useState<InvoiceFormData>({
     house_id: '',
     period_month: new Date().getMonth() + 1,
@@ -68,6 +70,23 @@ export default function AccountantInvoicesPage() {
     queryKey: [QUERY_KEYS.houses],
     queryFn: houseService.getAllHousesAccountant,
   });
+
+  const { data: invoiceTypes = [], isLoading: invoiceTypesLoading } = useQuery({
+    queryKey: [QUERY_KEYS.invoices, 'types'],
+    queryFn: invoiceService.getInvoiceTypes,
+  });
+
+  React.useEffect(() => {
+    if (!invoiceTypesLoading && invoiceTypes.length > 0 && !formData.invoice_types) {
+      setFormData((prev) => ({ ...prev, invoice_types: invoiceTypes[0].id }));
+    }
+  }, [invoiceTypesLoading, invoiceTypes, formData.invoice_types]);
+
+  React.useEffect(() => {
+    if (isCreateDialogOpen && houses.length > 0 && !formData.house_id) {
+      setFormData((prev) => ({ ...prev, house_id: houses[0].id }));
+    }
+  }, [isCreateDialogOpen, houses, formData.house_id]);
 
   const deleteMutation = useMutation({
     mutationFn: invoiceService.deleteInvoice,
@@ -90,12 +109,26 @@ export default function AccountantInvoicesPage() {
         period_year: new Date().getFullYear(),
         total_amount: '',
         due_date: '',
-        invoice_types: 1,
+        invoice_types: invoiceTypes?.[0]?.id ?? 0,
         notes: '',
       });
     },
     onError: (error: any) => {
       toast.error(error?.message || 'Tạo hóa đơn thất bại');
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: ({ id, paidAmount, paymentNote }: { id: string; paidAmount?: string; paymentNote?: string; }) =>
+      invoiceService.confirmInvoice(id, { paidAmount, paymentNote }),
+    onSuccess: () => {
+      toast.success('Đã xác nhận thanh toán');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.invoices, 'accountant'] });
+      setConfirmingInvoice(null);
+      setConfirmForm({ paidAmount: '', paymentNote: '' });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Xác nhận thanh toán thất bại');
     },
   });
 
@@ -105,7 +138,7 @@ export default function AccountantInvoicesPage() {
     return invoices.filter((invoice) => {
       if (statusFilter === 'all') return true;
       if (statusFilter === 'paid') return invoice.paid_at !== null;
-      if (statusFilter === 'unpaid') return invoice.paid_at === null && new Date(invoice.due_date) >= now;
+      if (statusFilter === 'pending') return invoice.paid_at === null && new Date(invoice.due_date) >= now;
       if (statusFilter === 'overdue') return invoice.paid_at === null && new Date(invoice.due_date) < now;
       return true;
     });
@@ -135,7 +168,7 @@ export default function AccountantInvoicesPage() {
         return invoices.length;
       case 'paid':
         return invoices.filter((i) => i.paid_at !== null).length;
-      case 'unpaid':
+      case 'pending':
         return invoices.filter((i) => i.paid_at === null && new Date(i.due_date) >= now).length;
       case 'overdue':
         return invoices.filter((i) => i.paid_at === null && new Date(i.due_date) < now).length;
@@ -186,7 +219,20 @@ export default function AccountantInvoicesPage() {
       label: 'Hành động',
       width: '120px',
       render: (_, row) => (
-        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          {row.status !== 'paid' && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={confirmMutation.isPending}
+              onClick={() => {
+                setConfirmingInvoice(row);
+                setConfirmForm({ paidAmount: row.total_amount ?? '', paymentNote: '' });
+              }}
+            >
+              Xác nhận
+            </Button>
+          )}
           <Button
             variant="destructive"
             size="sm"
@@ -218,7 +264,19 @@ export default function AccountantInvoicesPage() {
           </p>
         </div>
         <Button
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => {
+            // Reset form when opening modal and auto-fill defaults
+            setFormData({
+              house_id: houses[0]?.id ?? '',
+              period_month: new Date().getMonth() + 1,
+              period_year: new Date().getFullYear(),
+              total_amount: '',
+              due_date: '',
+              invoice_types: invoiceTypes?.[0]?.id ?? 0,
+              notes: '',
+            });
+            setIsCreateDialogOpen(true);
+          }}
           disabled={createMutation.isPending}
         >
           + Tạo hóa đơn
@@ -242,7 +300,7 @@ export default function AccountantInvoicesPage() {
             </Button>
             <Button
               onClick={() => {
-                if (!formData.house_id || !formData.total_amount || !formData.due_date) {
+                if (!formData.house_id || !formData.total_amount || !formData.due_date || !formData.invoice_types) {
                   toast.error('Vui lòng điền tất cả các trường bắt buộc');
                   return;
                 }
@@ -301,6 +359,18 @@ export default function AccountantInvoicesPage() {
                 }
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Loại hóa đơn *</label>
+            <Select
+              value={formData.invoice_types}
+              onChange={(e) => setFormData({ ...formData, invoice_types: Number(e.target.value) })}
+              options={invoiceTypes.length > 0
+                ? invoiceTypes.map((type: InvoiceType) => ({ label: type.name, value: type.id }))
+                : [{ label: invoiceTypesLoading ? 'Đang tải...' : 'Chưa có loại hóa đơn', value: '', disabled: true }]}
+              disabled={invoiceTypesLoading || invoiceTypes.length === 0}
+            />
           </div>
 
           <div>
@@ -491,6 +561,70 @@ export default function AccountantInvoicesPage() {
             )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={!!confirmingInvoice}
+        onClose={() => {
+          setConfirmingInvoice(null);
+          setConfirmForm({ paidAmount: '', paymentNote: '' });
+        }}
+        title={`Xác nhận thanh toán ${confirmingInvoice?.invoice_number ?? ''}`}
+        size="md"
+        footer={
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmingInvoice(null);
+                setConfirmForm({ paidAmount: '', paymentNote: '' });
+              }}
+              className="flex-1"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => {
+                if (!confirmingInvoice?.id) return;
+                confirmMutation.mutate({
+                  id: confirmingInvoice.id,
+                  paidAmount: confirmForm.paidAmount || undefined,
+                  paymentNote: confirmForm.paymentNote || undefined,
+                });
+              }}
+              disabled={confirmMutation.isPending}
+              className="flex-1"
+            >
+              {confirmMutation.isPending ? 'Đang xác nhận...' : 'Xác nhận'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Tổng tiền</p>
+            <p className="font-semibold">{formatCurrency(String(confirmingInvoice?.total_amount ?? 0))}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Số tiền đã thanh toán</label>
+            <Input
+              type="number"
+              step="0.01"
+              value={confirmForm.paidAmount}
+              onChange={(e) => setConfirmForm({ ...confirmForm, paidAmount: e.target.value })}
+              placeholder="Mặc định sẽ dùng tổng tiền nếu bỏ trống"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Ghi chú thanh toán</label>
+            <Textarea
+              value={confirmForm.paymentNote}
+              onChange={(e) => setConfirmForm({ ...confirmForm, paymentNote: e.target.value })}
+              placeholder="Ví dụ: Chuyển khoản, tiền mặt..."
+              className="h-20"
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );
